@@ -581,6 +581,29 @@ _3rd_png () {
     )
 }
 
+### Convert some png to pdf##Usage: pdf [dir...]
+_3rd_pdf () {
+    which convert >/dev/null 2>&1 || exit 1; # convert command not found
+    local i OLDPWD="$PWD";
+    for i in "$@"; do
+        [ -d "$i" ] || {
+            printf "%s\n" "$i not a dir" >&2;
+            continue
+        };
+        # http://www.imagemagick.org/Usage/blur/
+        # http://www.imagemagick.org/Usage/resize/#resize_unsharp
+        # http://www.imagemagick.org/Usage/convolve/#unsharpen
+
+        # convert -sharpen 0x3.3 *.png -resize 48% zongzhi-3.3.pdf
+        # convert *.png -filter spline -resize 48% -unsharp 0x1 zongzhi+.pdf
+        cd "$i" && convert *.png -resize 620x-1 -define convolve:scale=-100,200% -morphology Convolve 'Gaussian:0x2' ../"${PWD##*/}".pdf
+
+    done
+    cd "$OLDPWD";
+
+}
+
+
 ### Replace brew source #rewurl [app_name] #
 # _3rd_brewurl () {
 #     [ "$1" ] || exit 1; # first args is empty

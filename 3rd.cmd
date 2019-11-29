@@ -391,7 +391,7 @@ REM     exit /b 0
     ) do docker.exe stop %%a
     exit /b 0
 
-::: "Compress PNG images" "Usage: %~n0 png [src_dir] [out_dir]" "" "    [WARN] only support ascii name"
+::: "Compress PNG images" "Usage: %~n0 png [src_dir] [out_dir]"
 :::: "option invalid" "pngquant command not found" "source path not exist" "output path not set" "out put dir is same" "pngquant error"
 :3rd\png
     call :this\path\--contain pngquant.exe || exit /b 2

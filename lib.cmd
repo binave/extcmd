@@ -2915,9 +2915,10 @@ REM download and set in path
     REM Version 16.0.11615.33602
     REM Version 16.0.11617.33601
     REM Version 16.0.11901.20022
+    REM Version 16.0.12130-20272
 
     call :lib\download ^
-            https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A7D4A7E/officedeploymenttool_11901-20022.exe ^
+            https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A7D4A7E/officedeploymenttool_12130-20272.exe ^
             %temp%\%~1\officedeploymenttool16.exe || exit /b 1
 
     %temp%\%~1\officedeploymenttool16.exe /extract:%temp%\%~1 /quiet || exit /b 1

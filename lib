@@ -791,6 +791,17 @@ _lib_str () {
     esac
 }
 
+### show cpu times.
+_lib_cpu () {
+    [[ $OSTYPE == darwin* ]] && exit 1; # Not support macOS (OS X)
+    local REPLY;
+    while true; do
+        read < /proc/stat; printf "$REPLY\n";
+        sleep 1;
+    done | \
+        awk '{printf "%s, %5.1f%\n", strftime("%F %T"), (1 - ($5 - idle) / ($1+$2+$3+$4+$5+$6+$7 - totel)) * 100; idle=$5; totel=$1+$2+$3+$4+$5+$6+$7;}'
+}
+
 ### Show/find IPv4 ##Usage: ip [option] [args...] ##    --list, -l            Show IPv4 #    --find, -f [mac_addr] Search IPv4 by MAC or Host name, #                          support alias, see lib hosts #    --test, -t [str]      Test string is ipv4 ##
 _lib_ip () {
     case $1 in
