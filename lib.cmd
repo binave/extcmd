@@ -2324,6 +2324,7 @@ REM for wim
     echo ;
     for /f "usebackq delims=" %%a in (`
         wmic.exe baseboard get Manufacturer^,Product^,Version ^&
+        wmic.exe bios get serialnumber^,SMBIOSBIOSVersion^,Version ^&
         wmic.exe csproduct get Name^,UUID^,Vendor^,Version ^&
         wmic.exe cpu get Name^,NumberOfCores^,NumberOfLogicalProcessors ^&
         wmic.exe memphysical get MaxCapacity ^&
