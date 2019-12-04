@@ -659,7 +659,18 @@ REM for :this\dir\--clean
 REM OS version
 :this\oset\--version
 :this\oset\-v
-    if not exist "%~1" exit /b 3
+    if "%~1"=="" (
+        REM for /f "usebackq delims==" %%a in (`
+        REM     ver
+        REM `) do for %%b in (
+        REM     %%a
+        REM ) do if "%%~xb" neq "" echo %%~nb
+        for /f "usebackq tokens=1* delims==" %%a in (
+            `wmic.exe os get Version /value`
+        ) do if "%%b" neq "" echo %%b
+        goto :eof
+    )
+    if "%~1" neq "" if not exist "%~1" exit /b 3
     if "%~1"=="%~d1" (
         call :oset\version %~1\ %2
     ) else if "%~dp1"=="%~f1" (
