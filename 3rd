@@ -55,7 +55,7 @@ _3rd_version () {
     return 0
 }
 
-### Lan manage ##Usage: tags [option] [args...] ##    --restart,   -r [lan_name] [[-f|--force]] #        e.g. */1 * * * * 3rd lan --restart en0 ##
+### Lan manage ##Usage: lan [option] [args...] ##    --restart,   -r [lan_name] [[-f|--force]] #        e.g. */1 * * * * 3rd lan --restart en0 ##
 _3rd_lan () {
     local PATH="$PATH:/usr/bin:/usr/sbin:/sbin"; # for 'crontab'
     case $1 in
@@ -150,35 +150,33 @@ _3rd_gitbak () {
 
 }
 
-### Get docker tags ##Usage: tags [image_name] ##
-_3rd_tags () {
-    [ "$1" ] || exit 1; # args is empty
-    curl --location --connect-timeout 30 --silent https://index.docker.io/v1/repositories/$1/tags 2>/dev/null | \
-        awk -F '[{},]' -v tag="$1" '{for(i=1; i<NF; i++)if($i ~ /name/){gsub(/"/, "", $i); sub(/ name: /, tag ":" , $i); print $i}}' | sort --version-sort;
-    return 0
-}
-
 ### VirtualBox Manage (Not complete) ##Usage: vbox [start|stop|stopall] ##
 _3rd_vbox () {
     [ -f /Applications/VirtualBox.app\Contents\MacOS\VBoxManage ] || exit 1; # need install VirtualBox
     return 0
 }
 
-### Docker batch command ##Usage: dockers [start/stop] ##
+### Docker batch command ##Usage: dockers [option] [args...]##    start                Start all exited containers#    stop                 Stop all running containers#    tags [image_name]    Get docker tags#    bridge               Print containers network info##
 _3rd_dockers () {
     which docker >/dev/null 2>&1 || exit 1; # docker client command not found
     case $1 in
-        start|star|sta)
+        start)
             docker ps -f status=exited | awk 'NR>1 {print "docker start " $1 | "sh"}'
         ;;
-        stop|sto)
+        stop)
             docker ps | awk 'NR>1 {print "docker stop " $1 | "sh"}'
         ;;
-        "")
-            exit 1; # args is empty
+        tags)
+            [ "$2" ] || exit 1; # args is empty
+            curl --location --connect-timeout 30 --silent https://index.docker.io/v1/repositories/$2/tags 2>/dev/null | \
+                awk -F '[{},]' -v tag="$2" '{for(i=1; i<NF; i++)if($i ~ /name/){gsub(/"/, "", $i); sub(/ name: /, tag ":" , $i); print $i}}' | sort --version-sort;
         ;;
-        # *)
-        # ;;
+        bridge)
+            docker network inspect --format '{{range .Containers}}{{printf "%-18s %s  %s\n" .Name .MacAddress .IPv4Address}}{{end}}' bridge
+        ;;
+        *)
+            exit 1; # invalid option
+        ;;
     esac;
     return 0
 }
