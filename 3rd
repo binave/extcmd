@@ -79,82 +79,87 @@ _3rd_lan () {
     esac;
 }
 
-### remote git bundle ##Usage: rbundle [[user@host:]target_path] [[user@host:]source_path] ##
-_3rd_rbundle () {
-    [ "$1" ] || exit 1; # target path is empty
-    [ "$2" ] || exit 1; # source path is empty
-    local target_host target_dir source_host source_dir;
+### git toolsUsage: git [option] [args...] ##    backup        Backup git repositories#    rbundle [[user@host:]target_path] [[user@host:]source_path]#                  Remote git bundle##
+_3rd_git () {
+    case $1 in
+        backup)
+            which git >/dev/null 2>&1 || exit 1; # git command not found
+            local l o name tamp;
 
-    target_dir="${1#*:}";
-    [ "$target_dir" == "$1" ] || target_host=${1%%:*};
+            while read l; do
+                l=${l%/*};
 
-    source_dir="${2#*:}";
-    [ "$source_dir" == "$2" ] || source_host=${2%%:*};
+                # project name
+                name=${l/\/\.git/};
+                name=${name/\.git/};
+                name=${name##*/};
 
-    function __rbundle () {
-        printf %s 'git --git-dir="'"$2"'" bundle create - --all' | ssh $1 bash
-    }
+                tamp=`git --git-dir="$l" log -1 --all --pretty=format:%cd --date=format:%y%m%d%H%M`;
 
-    function __rcatver () {
-        ssh $1 'cat > "'"$2"'" && git bundle verify "'"$2"'"'
-    }
+                [ "$tamp" ] || {
+                    echo skip: $l;
+                    continue
+                };
 
-    if [ "$target_host" -a "$source_host" ]; then
-        # both
-        __rbundle $source_host $source_dir | __rcatver $target_host "$target_dir"
-    elif [ "$target_host" ]; then
-        # local -> remote
-        [ -d "$source_dir" ] || exit 1; # path not exist
-        git --git-dir="$source_dir" bundle create - --all | __rcatver $target_host "$target_dir"
-    else
-        # remote -> local
-        __rbundle $source_host $source_dir > "$target_dir";
-        git bundle verify "$1";
-    fi
-    return 0
+                o="./${name}_$tamp.git";
+
+                [ -f "$o" ] && {
+                    echo exist: $o;
+                    continue
+                };
+
+                echo create bundle: $name;
+                # git --git-dir="$l" bundle create "$o" HEAD master;
+                git --git-dir="$l" bundle create "$o" --all && git bundle verify "$o";
+                git --git-dir="$l" gc;
+                echo
+            done < <(find . -type d -name "hooks")
+        ;;
+        rbundle)
+            shift;
+            [ "$1" ] || exit 1; # target path is empty
+            [ "$2" ] || exit 1; # source path is empty
+            local target_host target_dir source_host source_dir;
+
+            target_dir="${1#*:}";
+            [ "$target_dir" == "$1" ] || target_host=${1%%:*};
+
+            source_dir="${2#*:}";
+            [ "$source_dir" == "$2" ] || source_host=${2%%:*};
+
+            function __rbundle () {
+                printf %s 'git --git-dir="'"$2"'" bundle create - --all' | ssh $1 bash
+            }
+
+            function __rcatver () {
+                ssh $1 'cat > "'"$2"'" && git bundle verify "'"$2"'"'
+            }
+
+            if [ "$target_host" -a "$source_host" ]; then
+                # both
+                __rbundle $source_host $source_dir | __rcatver $target_host "$target_dir"
+            elif [ "$target_host" ]; then
+                # local -> remote
+                [ -d "$source_dir" ] || exit 1; # path not exist
+                git --git-dir="$source_dir" bundle create - --all | __rcatver $target_host "$target_dir"
+            else
+                # remote -> local
+                __rbundle $source_host $source_dir > "$target_dir";
+                git bundle verify "$1";
+            fi
+            return 0
+        ;;
+        *)
+            exit 1; # invalid option
+        ;;
+    esac;
 }
 
-### Backup git repositories
-_3rd_gitbak () {
-    which git >/dev/null 2>&1 || exit 1; # git command not found
-    local l o name tamp;
-
-    while read l; do
-        l=${l%/*};
-
-        # project name
-        name=${l/\/\.git/};
-        name=${name/\.git/};
-        name=${name##*/};
-
-        tamp=`git --git-dir="$l" log -1 --all --pretty=format:%cd --date=format:%y%m%d%H%M`;
-
-        [ "$tamp" ] || {
-            echo skip: $l;
-            continue
-        };
-
-        o="./${name}_$tamp.git";
-
-        [ -f "$o" ] && {
-            echo exist: $o;
-            continue
-        };
-
-        echo create bundle: $name;
-        # git --git-dir="$l" bundle create "$o" HEAD master;
-        git --git-dir="$l" bundle create "$o" --all && git bundle verify "$o";
-        git --git-dir="$l" gc;
-        echo
-    done < <(find . -type d -name "hooks");
-
-}
-
-### VirtualBox Manage (Not complete) ##Usage: vbox [start|stop|stopall] ##
-_3rd_vbox () {
-    [ -f /Applications/VirtualBox.app\Contents\MacOS\VBoxManage ] || exit 1; # need install VirtualBox
-    return 0
-}
+# ### VirtualBox Manage (Not complete) ##Usage: vbox [start|stop|stopall] ##
+# _3rd_vbox () {
+#     [ -f /Applications/VirtualBox.app\Contents\MacOS\VBoxManage ] || exit 1; # need install VirtualBox
+#     return 0
+# }
 
 ### Docker batch command ##Usage: dockers [option] [args...]##    start                Start all exited containers#    stop                 Stop all running containers#    tags [image_name]    Get docker tags#    bridge               Print containers network info##
 _3rd_dockers () {
