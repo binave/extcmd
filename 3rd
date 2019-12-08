@@ -163,7 +163,7 @@ _3rd_git () {
 
 ### Docker batch command ##Usage: dockers [option] [args...]##    start                Start all exited containers#    stop                 Stop all running containers#    tags [image_name]    Get docker tags#    bridge               Print containers network info##
 _3rd_dockers () {
-    which docker >/dev/null 2>&1 || exit 1; # docker client command not found
+    [ "$1" == "tags" ] || which docker >/dev/null 2>&1 || exit 1; # docker client command not found
     case $1 in
         start)
             docker ps -f status=exited | awk 'NR>1 {print "docker start " $1 | "sh"}'
