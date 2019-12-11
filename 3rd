@@ -166,7 +166,7 @@ _3rd_dockers () {
     [ "$1" == "tags" ] || which docker >/dev/null 2>&1 || exit 1; # docker client command not found
     case $1 in
         start)
-            docker ps -f status=exited | awk 'NR>1 {print "docker start " $1 | "sh"}'
+            docker ps --filter status=exited | awk 'NR>1 {print "docker start " $1 | "sh"}'
         ;;
         stop)
             docker ps | awk 'NR>1 {print "docker stop " $1 | "sh"}'
