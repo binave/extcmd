@@ -621,7 +621,7 @@ REM for :this\dir\--clean
     goto :eof
 
 
-::: "Operating system setting" "" "usage: %~n0 oset [option] [...]" "" "    --vergeq,   -vg    [version]                  Test current version is greater than the given value" "    --cleanup,  -c     [[path]]                   Component Cleanup" "    --version,  -v     [os_path] [[var_name]]     Get OS version" "    --bit,      -b     [os_path] [[var_name]]     Get OS bit" "    --language, -lang  [var_name] [[os_path]]     Get OS current language" "    --sid,      -s     [[user_name]] [[var_name]] Get sid by username. if not set path, will get online info" "" "    --feature-info,   -fi                         Get Feature list" "    --feature-enable, -fe  [name ...]             Enable Features" "    --set-power,      -sp                         Set power config as server type" "    --unsecure-write, -usw [--allow/--deny]       Allow / Deny write access to 'fixed' and 'removable' drives" "    --regedit,        -reg [--on/--off]" "    --gpedit,         -gp  [--on/--off]"
+::: "Operating system setting" "" "usage: %~n0 oset [option] [...]" "" "    --vergeq,   -vg    [version]                  Test current version is greater than the given value" "    --cleanup,  -c     [[path]]                   Component Cleanup" "    --version,  -v     [os_path] [[var_name]]     Get OS version" "    --bit,      -b     [os_path] [[var_name]]     Get OS bit" "    --language, -lang  [var_name] [[os_path]]     Get OS current language" "    --sid,      -s     [[user_name]] [[var_name]] Get sid by username. if not set path, will get online info" "" "    --feature-info,   -fi                         Get Feature list" "    --feature-enable, -fe  [name ...]             Enable Features" "    --set-power,      -sp                         Set power config as server type" "    --unsecure-write, -usw [--allow/--deny]       Allow / Deny write access to 'fixed' and 'removable' drives" "    --regedit,        -reg [--on/--off]" "    --gpedit,         -gp  [--on/--off]" "    --drop-rdp                                    Remove remote desktop config by user name"
 :::: "invalid option" "Parameter is empty or Not a float" "not a directory" "Not OS path or Low OS version" "parameter is empty" "System version is too old" "not operating system directory" "not support" "reg error" "scratch directory not exist"
 :lib\oset
     if "%~1"=="" call :this\annotation %0 & goto :eof
@@ -1053,6 +1053,14 @@ REM deny write access to fixed/removable drives not protected by BitLocker
                 add HKLM\System\CurrentControlSet\Policies\Microsoft\FVE ^
                     /v %%aDenyWriteAccess /f
     >&3 echo complete.
+    exit /b 0
+
+:this\oset\--drop-rdp
+    if "%~1"=="" exit /b 2
+    for /f "usebackq tokens=1-3" %%a in (`
+        reg.exe query "HKCU\Software\Microsoft\Terminal Server Client\Default"
+    `) do if "%%b"=="REG_SZ" if /i "%%c"=="%~1" reg.exe delete ^
+        "HKCU\Software\Microsoft\Terminal Server Client\Default" /v %%a /f
     exit /b 0
 
 ::: "Thread lock" "" "usage: %~n0 lock [option] [...]" "" "    --ratelimit, -rl   [dir_path] [sec]       rate limit"
