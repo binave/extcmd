@@ -103,7 +103,7 @@ exit /b 0
     endlocal
     exit /b 0
 
-::: "Maven repository tools" "" "usage: %~n0 m2 [option]" "    --trim, -c        Print broken file from local maven repository"
+::: "Maven repository tools" "" "usage: %~n0 m2 [option]" "    --trim, -c   [[repo_path]]      Print broken file from local maven repository"
 :::: "option invalid"
 :3rd\m2
     if "%~1"=="" call :this\annotation %0 & goto :eof
