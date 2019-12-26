@@ -3152,7 +3152,7 @@ REM     REM x86
 REM     ) else call :this\getCab %%~na 0/A/A/0AA382BA-48B4-40F6-8DD0-BEBB48B6AC18/adk eacac0698d5fa03569c86b25f90113b5 fil6e1d5042624c9d5001511df2bfe4c40b
 REM     exit /b 0
 
-::: "String manage" "" "usage: %~n0 str [option] ..." "" "    --now,    -n [var_name] [[head_str]] [[tail_str]]    Display Time at [YYYYMMDDhhmmss]" "    --random, -r [count]                                 Print random string" "    --uuid,   -u [[var_name]]                            Get UUID string" "    --convert-pwd, -cp    [string] [[var_name]]          Encode password to base64 string for unattend.xml" "    --length,      -l     [string] [[var_name]]          Get string length" "    --2col-left,   -2l    [str_1] [str_2]                Make the second column left-aligned, default size is 15" "    --lcs                 [str1] [str2] [[var_name]]     Longest common subsequence"
+::: "String manage" "" "usage: %~n0 str [option] ..." "" "    --now,    -n [var_name] [[head_str]] [[tail_str]]    Display Time at [YYYYMMDDhhmmss]" "    --random, -r [count]                                 Print random string" "    --uuid,   -u [[var_name]]                            Get UUID string" "    --lower,       -lo    [str]                          Convert lower case" "    --upper,       -up    [str]                          Convert upper case" "    --convert-pwd, -cp    [string] [[var_name]]          Encode password to base64 string for unattend.xml" "    --length,      -l     [string] [[var_name]]          Get string length" "    --2col-left,   -2l    [str_1] [str_2]                Make the second column left-aligned, default size is 15" "    --lcs                 [str1] [str2] [[var_name]]     Longest common subsequence"
 :::: "invalid option" "variable name is empty" "System version is too old" "Args is empty" "string is empty"
 :lib\str
     if "%~1"=="" call :this\annotation %0 & goto :eof
@@ -3258,6 +3258,77 @@ REM for :this\str\--2col-left and :this\txt\--all-col-left and
     if "%_str:~31,1%"=="" exit /b 0
     goto %0
 
+:this\str\--upper
+:this\str\-up
+    if "%~1"=="" exit /b 2
+    setlocal
+    set _0=%~1
+    set _0=%_0:a=A%
+    set _0=%_0:b=B%
+    set _0=%_0:c=C%
+    set _0=%_0:d=D%
+    set _0=%_0:e=E%
+    set _0=%_0:f=F%
+    set _0=%_0:g=G%
+    set _0=%_0:h=H%
+    set _0=%_0:i=I%
+    set _0=%_0:j=J%
+    set _0=%_0:k=K%
+    set _0=%_0:l=L%
+    set _0=%_0:m=M%
+    set _0=%_0:n=N%
+    set _0=%_0:o=O%
+    set _0=%_0:p=P%
+    set _0=%_0:q=Q%
+    set _0=%_0:r=R%
+    set _0=%_0:s=S%
+    set _0=%_0:t=T%
+    set _0=%_0:u=U%
+    set _0=%_0:v=V%
+    set _0=%_0:w=W%
+    set _0=%_0:x=X%
+    set _0=%_0:y=Y%
+    set _0=%_0:z=Z%
+    endlocal & if "%~2"=="" (
+        echo %_0%
+    ) else set %~2=%_0%
+    goto :eof
+
+:this\str\--lower
+:this\str\-lo
+    if "%~1"=="" exit /b 2
+    setlocal
+    set _0=%~1
+    set _0=%_0:A=a%
+    set _0=%_0:B=b%
+    set _0=%_0:C=c%
+    set _0=%_0:D=d%
+    set _0=%_0:E=e%
+    set _0=%_0:F=f%
+    set _0=%_0:G=g%
+    set _0=%_0:H=h%
+    set _0=%_0:I=i%
+    set _0=%_0:J=j%
+    set _0=%_0:K=k%
+    set _0=%_0:L=l%
+    set _0=%_0:M=m%
+    set _0=%_0:N=n%
+    set _0=%_0:O=o%
+    set _0=%_0:P=p%
+    set _0=%_0:Q=q%
+    set _0=%_0:R=r%
+    set _0=%_0:S=s%
+    set _0=%_0:T=t%
+    set _0=%_0:U=u%
+    set _0=%_0:V=v%
+    set _0=%_0:W=w%
+    set _0=%_0:X=x%
+    set _0=%_0:Y=y%
+    set _0=%_0:Z=z%
+    endlocal & if "%~2"=="" (
+        echo %_0%
+    ) else set %~2=%_0%
+    goto :eof
 
 REM Longest common subsequence
 :this\str\--lcs
@@ -3444,6 +3515,23 @@ REM EOF nul "rem "
     ) do for %%b in (%0) do call :this\hash %%~nb "%%~a" || exit /b 1
     exit /b 0
 
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: SHA1 hash of jdk-8u201-windows-x64.exe:
+:: 62458b3ccb68fc5eea1eac4dee11e0eeca37b1fd
+:: CertUtil: -hashfile command completed successfully.
+::
+:: SHA1 的 jdk-8u201-windows-x64.exe 哈希:
+:: 62458b3ccb68fc5eea1eac4dee11e0eeca37b1fd
+:: CertUtil: -hashfile 命令成功完成。
+::
+:: SHA1 hash of file jdk-8u201-windows-x64.exe:
+:: 62 45 8b 3c cb 68 fc 5e ea 1e ac 4d ee 11 e0 ee ca 37 b1 fd
+:: CertUtil: -hashfile command completed successfully.
+::
+:: SHA1 哈希(文件 jdk-8u201-windows-x64.exe):
+:: 62 45 8b 3c cb 68 fc 5e ea 1e ac 4d ee 11 e0 ee ca 37 b1 fd
+:: CertUtil: -hashfile 命令成功完成。
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :this\hash
     if exist "%~2" for /f "usebackq delims=" %%a in (
         `certutil.exe -hashfile %2 %~1`
@@ -3475,18 +3563,13 @@ REM EOF nul "rem "
             "[System.BitConverter]::ToString((New-Object -TypeName System.Security.Cryptography.%~1CryptoServiceProvider).ComputeHash([Console]::OpenStandardInput())).ToString() -replace \"-\""`
     ) do set _hash=%%a
     if "%_hash%"=="" exit /b 2
-    set _hash=%_hash:A=a%
-    set _hash=%_hash:B=b%
-    set _hash=%_hash:C=c%
-    set _hash=%_hash:D=d%
-    set _hash=%_hash:E=e%
-    set _hash=%_hash:F=f%
+    call :this\str\--lower %_hash% _hash
     endlocal & echo %_hash%   -
     exit /b 0
 
 :hash\trim
     setlocal
-    set _str=%~1
+    call :this\str\--lower %1 _str
     echo %_str: =%   %2
     endlocal
     goto :eof
