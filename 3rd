@@ -510,7 +510,7 @@ _3rd_urls () {
     esac
 }
 
-### Maven repository tools ##usage: %~n0 m2 [option] #    --download, -d [groupId]/[artifactId][[/version]] #                    Get Download maven file to ~/.m2/repository #    --trim,    -c     Print broken file from local maven repository.
+### Maven repository tools ##usage: m2 [option] #    --download, -d [groupId]/[artifactId][[/version]] #                                       Get Download maven file to $HOME/.m2/repository #    --trim,     -c [[repo_path]]       Print broken file from local maven repository. ##
 _3rd_m2 () {
     case $1 in
         --download|-d)
@@ -518,6 +518,7 @@ _3rd_m2 () {
             _m2_download "$@"
         ;;
         --trim|-c)
+            local _lu=0 line _hash _h;
             while read line; do
                 unset _hash _h;
                 case ${line##*.} in
@@ -543,6 +544,9 @@ _3rd_m2 () {
 
             printf "# lastUpdated: $_lu\n"
         ;;
+        *)
+            exit 1; # invalid option
+        ;;
     esac
 }
 
@@ -561,8 +565,8 @@ _m2_download () {
     # Replace period to '/'
     _m2=${_m2//\./\/}/${_ver};
 
-    # link target to ~/.m2/repository
-    ln -s ~/.m2/repository /tmp/maven2 2>/dev/null || {
+    # link target to $HOME/.m2/repository
+    ln -s $HOME/.m2/repository /tmp/maven2 2>/dev/null || {
         ps -ef | awk '/repo1.maven.org\/maven2/' >/dev/null && exit 1 # m2 command is already running
     };
 
