@@ -45,6 +45,7 @@ _lib_cur () {
     case $1 in
         --hide|-)
             printf '\033[?25l'
+            # trap 'printf "\033[?25h"; exit' INT; # show cursor after CTRL-C
         ;;
         --show|+)
             printf '\033[?25h'

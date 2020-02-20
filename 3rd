@@ -218,7 +218,7 @@ _3rd_play () {
     which ffplay >/dev/null 2>&1 || exit 1; # ffplay command not found
     which lib >/dev/null 2>&1 || exit 1; # lib command not found
 
-    local a i line list ran media=() maxdepth stream_specifier skip=0 ext regex;
+    local file_list media=() maxdepth stream_specifier skip=0 ext regex;
 
     # args
     while [ $# -gt 0 ]; do
@@ -230,7 +230,7 @@ _3rd_play () {
                 } || exit 1; # max depth must be a number
             ;;
             -*random | -r)
-                list=1;
+                file_list=1;
             ;;
             -*ast | -a)
                 # -ast stream_specifier  #select desired audio stream
@@ -246,9 +246,7 @@ _3rd_play () {
                 } || exit 1; # skip must be a number
             ;;
             *)
-                if [ -f "$1" ]; then
-                    media[${#media[@]}]="$1"
-                elif [ -d "$1" ]; then
+                if [ -f "$1" -o -d "$1" ]; then
                     media[${#media[@]}]="$1"
                 else
                     exit 1; # not path
@@ -270,7 +268,8 @@ _3rd_play () {
     mkdir -p "$HOME/.playlist";
 
     function __playlist_index () {
-        local index=$(cat "$1.index");
+        local index;
+        read index < "$1.index";
         : ${index:=0};
         [ $index == $(cat "$1"[+-] | grep -c '\.') ] && {
             printf $index;
@@ -280,19 +279,19 @@ _3rd_play () {
     } 2>/dev/null;
 
     function __sort_play () {
-        __playlist_index "$2" || exit 1; # playlist error
+        # __playlist_index "$2" || exit 1; # playlist error
         __play_ff "$1" && {
-            echo "$1" >> "$2+";
+            printf "%s\n" "$1" >> "$2+";
             :
-        } || echo "$1" >> "$2-"
+        } || printf "%s\n" "$1" >> "$2-"
     };
 
     function __play_title () {
-        echo -e "\n\nProgress $1";
+        printf "\n\nProgress $1";
         shift;
         [ "$1" ] && {
             sleep 0.5;
-            echo "Next track '$@'"
+            printf "%s\n" "Next track '$*'"
         } &
     };
 
@@ -305,7 +304,7 @@ _3rd_play () {
                 ffplay -hide_banner $stream_specifier -ac 2 -sn -autoexit -af "volume=0.85" "$1" || return 1
             ;;
             alac|ape|flac|m4a|mp3|ogg|tta|tak|wav|webm|wma)
-                ffplay -hide_banner -nodisp -autoexit -af "volume=0.05" "$1" || return 1
+                ffplay -hide_banner -nodisp -autoexit -af "volume=0.15" "$1" || return 1
             ;;
             *)
                 exit 1; # unknown suffix
@@ -314,20 +313,17 @@ _3rd_play () {
         return 0
     };
 
-    local last_index hash_str playlist cache_line line_count;
+    local i line path last_index playlist cache_line line_count;
 
-    for a in "${media[@]}"; do
-        if [ -d "$a" ]; then
+    for path in "${media[@]}"; do
+        if [ -d "$path" ]; then
 
             # full path
-            a="$(cd "$a"; pwd)";
-            hash_str=`shasum -a 256 <<< "${a/ [0-9]/}"`; # darwin only
-            hash_str=${hash_str%% *}; # trim tail
-            play_list="$HOME/.playlist/$hash_str.list";
+            play_list="$HOME/.playlist/`openssl sha256 <<< "$(cd "$path"; pwd)"`.list";
 
             # random playlist
-            if [ "$list" ]; then
-                list=();
+            if [ "$file_list" ]; then
+                file_list=();
                 if [ -s "$play_list" ]; then
                     # line num
                     line_count=`grep -c '\.' "$play_list"`;
@@ -337,22 +333,37 @@ _3rd_play () {
                     };
                 else
                     # random list
+                    local len cols sub ran;
+                    printf '\033[?25l'; # hidden cursor
+                    trap 'printf "\033[?25h"; exit' INT; # show cursor after CTRL-C
                     while read line; do
-                        i=${#list[@]};
+                        sub="${line#$path}";
+                        sub="${sub#/}";
+                        # `tput lines` `tput cols` = `stty size` = $LINES $COLUMNS
+                        cols=${COLUMNS:-`tput cols`}; # may change during execution
+                        len=0;
+                        for ((i=0; i<${#sub}; i++)); do
+                            [ $((++len)) -ge $cols ] && break;
+                            # [^0-z!\"#$%&\'()*+,-.\/{|\}~]
+                            [[ ${sub:$i:1} == [^0-z!\"\#$%\&\'\(\)*+,-.\/{\|\}~] ]] && ((++len))
+                        done
+                        printf "%*s\r${sub:0:$i}\r" $cols;
+                        i=${#file_list[@]};
                         [ $i -gt 1 ] && {
                             ran=$((RANDOM % $i));
-                            list[$i]=${list[$ran]};
-                            list[$ran]="$line"
-                        } || list[$i]="$line"
-                    done < <(find $ext "$a" $maxdepth -type f -iregex $regex);
+                            file_list[$i]=${file_list[$ran]};
+                            file_list[$ran]="$line"
+                        } || file_list[$i]="$line"
+                    done < <(find $ext "$path" $maxdepth -type f -iregex $regex);
+                    printf '%*s\r\033[?25h' $cols;
 
-                    [ ${#list[@]} == 0 ] && exit 1; # media file not found
+                    [ ${#file_list[@]} == 0 ] && exit 1; # media file not found
 
                     for i in `seq 0 $i`; do
-                        echo "${list[$i]}"
+                        printf "%s\n" "${file_list[$i]}"
                     done > "$play_list";
 
-                    line_count=${#list[@]} last_index=0;
+                    line_count=${#file_list[@]} last_index=0;
                     > "$play_list.index";
                 fi
 
@@ -362,31 +373,31 @@ _3rd_play () {
                     if [ -f "$cache_line" ]; then
                         __play_title "#$((i - 1)) / $line_count, RANDOM" $line;
                         __sort_play "$cache_line" "$play_list";
-                        echo $((i - 1)) > "$play_list.index";
+                        printf "%s" $((i - 1)) > "$play_list.index";
                     fi
-                    cache_line=$line
+                    cache_line="$line"
                 done < "$play_list";
-                __sort_play "$line" "$play_list"
+                __sort_play "$cache_line" "$play_list"
 
                 # TODO
 
             else
-                list=();
+                file_list=();
                 while read line; do
-                    list[${#list[@]}]="$line"
-                done < <(find $ext "$a" $maxdepth -type f -iregex $regex | sort);
+                    file_list[${#file_list[@]}]="$line"
+                done < <(find $ext "$path" $maxdepth -type f -iregex $regex | sort);
 
-                [ ${#list[@]} == 0 ] && exit 1; # media file not found
+                [ ${#file_list[@]} == 0 ] && exit 1; # media file not found
 
-                i=$((${#list[@]} - 1));
+                i=$((${#file_list[@]} - 1));
                 [ $skip -gt $i ] && exit 1; # skip out of bound
                 for i in `seq $skip $i`; do
-                    __play_title "#$((i + 1)) / ${#list[@]}" ${list[$((i + 1))]};
-                    __play_ff "${list[$i]}"
+                    __play_title "#$((i + 1)) / ${#file_list[@]}" ${file_list[$((i + 1))]};
+                    __play_ff "${file_list[$i]}"
                 done
             fi
-        elif [ -f "$a" ]; then
-            __play_ff "$a"
+        elif [ -f "$path" ]; then
+            __play_ff "$path"
         else
             exit 1; # target not exist
         fi
