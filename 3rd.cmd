@@ -103,6 +103,49 @@ exit /b 0
     endlocal
     exit /b 0
 
+::: "Maven repository tools" "" "usage: %~n0 m2 [option]" "    --trim, -c   [[repo_path]]      Print broken file from local maven repository"
+:::: "option invalid"
+:3rd\m2
+    if "%~1"=="" call :this\annotation %0 & goto :eof
+    call :this\m2\%* 2>nul
+    goto :eof
+
+:this\m2\--trim
+:this\m2\-c
+    setlocal
+    set _lu=0
+    set _m2_repo=%~1
+    if not defined _m2_repo set _m2_repo=%userprofile%\.m2
+    for /r "%_m2_repo%" %%a in (
+        *.md5 *.sha1 *.lastUpdated
+    ) do call :m2\show-trim-info "%%~a"
+    echo REM lastUpdated: %_lu%
+    endlocal
+    goto :eof
+
+:m2\show-trim-info
+    if /i "%~x1"==".lastUpdated" erase %1 && set /a _lu+=1 && goto :eof
+    set _hash=
+    set _t=
+    set /p _hash=<%1
+    if "%_hash%"=="" (set /p _hash=&set /p _hash=)<%1
+    if "%~x1"==".sha1" set _hash=%_hash:~0,40%&set _t=SHA1
+    if "%~x1"==".md5" set _hash=%_hash:~0,32%&set _t=MD5
+    call :this\hash %_t% "%~dpn1" _h
+    if /i "%_h%" neq "%_hash%" echo echo %_t% %_hash%, %_h% ^& erase %~dpn1* && goto :eof
+    goto :eof
+
+:this\hash [type] [file_path] [var]
+    if "%~3"=="" exit /b 1
+    setlocal
+    set _0=
+    for /f "usebackq delims=" %%a in (
+        `certutil.exe -hashfile %2 %~1`
+    ) do for /f "usebackq tokens=1,2 delims=:" %%b in (
+        '%%a'
+    ) do if "%%a"=="%%b" call set "_0=%%a"
+    endlocal & set %~3=%_0: =%
+    exit /b 0
 
 ::: "Oracle service start\stop"
 :::: "Sid is empty, default is orcl"
@@ -372,20 +415,20 @@ REM     exit /b 0
     endlocal
     exit /b 0
 
-::: "Docker batch command" "Usage: %~n0 docker [start/stop]"
+::: "Docker batch command" "Usage: %~n0 dockers [start/stop]"
 :::: "option invalid" "docker client command not found"
-:3rd\docker
+:3rd\dockers
     call :this\path\--contain docker.exe || exit /b 2
     call :this\docker\%* 2>nul
     goto :eof
 
-:this\docker\start
+:this\dockers\start
     for /f "usebackq skip=1" %%a in (
         `docker.exe ps -f status=exited`
     ) do docker.exe start %%a
     exit /b 0
 
-:this\docker\stop
+:this\dockers\stop
     for /f "usebackq skip=1" %%a in (
         `docker.exe ps`
     ) do docker.exe stop %%a
