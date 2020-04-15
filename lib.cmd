@@ -621,8 +621,8 @@ REM for :this\dir\--clean
     goto :eof
 
 
-::: "Operating system setting" "" "usage: %~n0 oset [option] [...]" "" "    --vergeq,   -vg    [version]                  Test current version is greater than the given value" "    --cleanup,  -c     [[path]]                   Component Cleanup" "    --version,  -v     [os_path] [[var_name]]     Get OS version" "    --bit,      -b     [os_path] [[var_name]]     Get OS bit" "    --language, -lang  [var_name] [[os_path]]     Get OS current language" "    --sid,      -s     [[user_name]] [[var_name]] Get sid by username. if not set path, will get online info" "" "    --feature-info,   -fi                         Get Feature list" "    --feature-enable, -fe  [name ...]             Enable Features" "    --set-power,      -sp                         Set power config as server type" "    --unsecure-write, -usw [--allow/--deny]       Allow / Deny write access to 'fixed' and 'removable' drives" "    --regedit,        -reg [--on/--off]" "    --gpedit,         -gp  [--on/--off]" "    --drop-rdp                                    Remove remote desktop config by user name"
-:::: "invalid option" "Parameter is empty or Not a float" "not a directory" "Not OS path or Low OS version" "parameter is empty" "System version is too old" "not operating system directory" "not support" "reg error" "scratch directory not exist"
+::: "Operating system setting" "" "usage: %~n0 oset [option] [...]" "" "    --vergeq,   -vg    [version]                  Test current version is greater than the given value" "    --cleanup,  -c     [[path]]                   Component Cleanup" "    --version,  -v     [os_path] [[var_name]]     Get OS version" "    --bit,      -b     [os_path] [[var_name]]     Get OS bit" "    --language, -lang  [var_name] [[os_path]]     Get OS current language" "    --sid,      -s     [[user_name]] [[var_name]] Get sid by username. if not set path, will get online info" "" "    --feature-info,   -fi                         Get Feature list" "    --feature-enable, -fe  [name ...]             Enable Features" "    --set-power,      -sp                         Set power config as server type" "    --unsecure-write, -usw [--allow/--deny]       Allow / Deny write access to 'fixed' and 'removable' drives" "    --regedit,        -reg [--on/--off]" "    --gpedit,         -gp  [--on/--off]" "    --drop-rdp                                    Remove remote desktop config by user name" "    --rdp-port             [[port]]               Change remote desktop server port"
+:::: "invalid option" "Parameter is empty or Not a float" "not a directory" "Not OS path or Low OS version" "parameter is empty" "System version is too old" "not operating system directory" "not support" "reg error" "scratch directory not exist" "port num not support"
 :lib\oset
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :this\oset\%*
@@ -1063,9 +1063,34 @@ REM deny write access to fixed/removable drives not protected by BitLocker
         "HKCU\Software\Microsoft\Terminal Server Client\Default" /v %%a /f
     exit /b 0
 
+:this\oset\--rdp-port
+    setlocal
+    if "%~1"=="" (
+        set _port=3389
+
+    ) else set _port=%~1
+    if "%~1" neq "" if "%_port%" neq "%~1" exit /b 11
+    if %_port% lss 3000 exit /b 11
+    if %_port% gtr 65535 exit /b 11
+
+    reg.exe add ^
+        "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" ^
+        /v PortNumber ^
+        /t REG_DWORD ^
+        /d %_port% /f || exit /b 9
+
+    echo new RDP port: %_port%.
+
+    if "%~1" neq "" netsh.exe advfirewall firewall ^
+        add rule name="rdp " dir=in action=allow protocol=TCP localport=%_port%
+
+    endlocal
+    exit /b 0
+
 ::: "Thread lock" "" "usage: %~n0 lock [option] [...]" "" "    --ratelimit, -rl   [dir_path] [sec]       rate limit"
 :::: "" "args not int"
 :lib\lock
+    REM TODO
     goto :eof
 
 :lock\--ratelimit   [dir_path] [sec]
@@ -1479,6 +1504,23 @@ REM Trusted Platform Module (TPM)
         %%~a
     ) do if /i "%%b"=="(0x8900002A)" exit /b 0
     exit /b 30
+
+::: "Convert int to hex" "" "usage: %~n0 2hex [int]"
+:::: "Not integer"
+:lib\2hex
+    setlocal
+    set _0f=0123456789abcdef
+    set /a _int=%~1
+    if "%_int%" neq "%~1" exit /b 1
+    :2hex_loop
+    set /a _index=_int %% 16, _int /= 16
+    call set _hex=%%_0f:~%_index%,1%%%_hex%
+    if %_int% geq 10 goto 2hex_loop
+    if %_int% neq 0 set _hex=%_int%%_hex%
+    endlocal & if "%~2"=="" (
+        echo 0x%_hex%
+    ) else set %~2=0x%_hex%
+    goto :eof
 
 ::: "Uncompress package" "" "usage: %~n0 un [target_path]"
 :::: "Format not supported" "Target not found" "System version is too old" "chm file not found" "not chm file" "out put file allready exist" "file format not msi" "cabarc.exe file not found"
