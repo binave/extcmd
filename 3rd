@@ -404,7 +404,7 @@ _3rd_play () {
     done
 }
 
-### Camera tools ##Usage: cam [option] [args] ##    --list, -l          List camera device #    --show, -s [video_id] [audio_id] [[size] [fps]] #                        Display target camera ##
+### Camera tools ##Usage: cam [option] [args] ##    --list, -l          List camera device #    --show, -s   [video_id[:audio_id]] [[[width]x[height]] [[num]fps]] #                        Display target camera #                        e.g. #                            cam -s 3 720x480 15fps ##
 _3rd_cam () {
     case $1 in
         --list|-l)
