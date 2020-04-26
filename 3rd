@@ -404,7 +404,7 @@ _3rd_play () {
     done
 }
 
-### Camera tools ##Usage: cam [option] [args] ##    --list, -l          List camera device #    --show, -s [video_id] [audio_id] [[size]] #                        Display target camera ##
+### Camera tools ##Usage: cam [option] [args] ##    --list, -l          List camera device #    --show, -s [video_id] [audio_id] [[size] [fps]] #                        Display target camera ##
 _3rd_cam () {
     case $1 in
         --list|-l)
@@ -423,23 +423,25 @@ _3rd_cam () {
             which ffplay >/dev/null 2>&1 || exit 1; # ffplay command not found
             which lib >/dev/null 2>&1 || exit 1; # lib command not found
             lib inum $1 || exit 1; # first args error
-            lib inum $2 || exit 1; # secend args error
-            local size dev
-            case $3 in
-                720|"")
-                    size=1280x720
-                ;;
-                1080)
-                    size=1920x1080
-                ;;
-                # "")
-                #     size=1920x1200
-                # ;;
-                *)
-                    exit 1; # Args not support
-                ;;
-            esac
-            [[ $OSTYPE == darwin* ]] && dev=avfoundation || dev=x11grab;
+            local device_index=$1 fmt framerate video_size
+            shift
+            while [ "$1" ]; do
+                case $1 in
+                    [0-9]|[1-9][0-9])
+                        device_index=$device_index:$1;
+                        shift
+                    ;;
+                    *[0-9]x[1-9]*)
+                        video_size="-video_size $1";
+                        shift
+                    ;;
+                    [1-9][0-9]*fps)
+                        framerate="-framerate ${1%%[^0-9]*}";
+                        shift
+                    ;;
+                esac
+            done
+            [[ $OSTYPE == darwin* ]] && fmt=avfoundation || fmt=x11grab;
 
             # Supported pixel formats:
             #     uyvy422
@@ -448,8 +450,10 @@ _3rd_cam () {
             #     0rgb
             #     bgr0
 
-            ffplay -hide_banner -f $dev -video_size $size -framerate 25 -pixel_format bgr0 -probesize 20M -i "$1":"$2" 2>&1
-            # ffplay -f avfoundation -video_size 1280x720 -framerate 25 -pixel_format 0rgb -probesize 10M -i "XI100DUSB-HDMI":"XI100DUSB-HDMI Audio" 2>&1
+            # probesize: 5M (more slow)
+
+            ffplay -hide_banner -f $fmt $video_size $framerate -pixel_format bgr0 -i $device_index 2>&1
+            # ffplay -f avfoundation $video_size -framerate 29 -pixel_format 0rgb -i "XI100DUSB-HDMI":"XI100DUSB-HDMI Audio" 2>&1
         ;;
         *)
             exit 1; # invalid option
