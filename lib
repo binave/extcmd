@@ -521,6 +521,101 @@ _lib_oset () {
     esac
 }
 
+### Certificate tools ##Usage: cert [option] [args...] ##    https --host [cn] --email [e]    Create certificate for https #    ssh   [[suffix]]                 Certificate for ssh ##
+_lib_cert () {
+    case $1 in
+        https)
+            # nginx
+            shift;
+            local host email country="CN" state="BJ" city="BJ" company="ORG" section="dev" days=365;
+            while [ "$2" ]; do
+                case $1 in
+                    --host|-cn)
+                        # Common Name (eg, YOUR name) []:                               /CN             ($IP / $hostname / $alias)
+                        host="$2";
+                        shift;
+                        shift
+                    ;;
+                    --email|-e)
+                        # Email Address []:                                             /emailAddress   mail@example.com
+                        email="$2";
+                        shift;
+                        shift
+                    ;;
+                    --country|-c)
+                        # Country Name (2 letter code) [AU]:                            /C
+                        country="$2";
+                        shift;
+                        shift
+                    ;;
+                    --state|-st)
+                        # State or Province Name (full name) [Some-State]:              /ST
+                        state="$2";
+                        shift;
+                        shift
+                    ;;
+                    --city|-l)
+                        # Locality Name (eg, city) []:                                  /L
+                        city="$2";
+                        shift;
+                        shift
+                    ;;
+                    --company|-o)
+                        # Organization Name (eg, company) [Internet Widgits Pty Ltd]:   /O
+                        company="$2";
+                        shift;
+                        shift
+                    ;;
+                    --section|-ou)
+                        # Organizational Unit Name (eg, section) []:                    /OU
+                        section="$2";
+                        shift;
+                        shift
+                    ;;
+                    --days)
+                        days="$2";
+                        shift;
+                        shift
+                    ;;
+                    *)
+                        exit 1; # invalid option
+                    ;;
+                esac
+            done
+            [ "$host" ] || exit 1; # hostname is empty!
+            [ "$email" ] || exit 1; # emailAddress is empty!
+            local SUBJECT="/C=$country/ST=$state/L=$city/O=$company/OU=$section/CN=$host/emailAddress=$email" \
+                SERVER_CERT="./$host/fullchain.pem" \
+                SERVER_KEY="./$host/privkey.pem" \
+                SERVER_CSR="/tmp/${host}_server.csr" \
+                CA_KEY="/tmp/${host}_ca-cert.pem" \
+                CA_CERT="./$host/ca.crt";
+
+            mkdir -p "$host";
+
+            # Create the CA
+            openssl genrsa -out $CA_KEY 4096;
+            openssl req -new -x509 -days $days -key $CA_KEY -out $CA_CERT -subj "$SUBJECT";
+
+            # Create the Server Key
+            openssl genrsa -out $SERVER_KEY 4096;
+
+            # Create the Server CSR
+            openssl req -new -key $SERVER_KEY -out $SERVER_CSR -subj "$SUBJECT";
+
+            # Self-sign the Server CSR
+            openssl x509 -req -days $days -in $SERVER_CSR -CA $CA_CERT -CAkey $CA_KEY -set_serial 01 -out $SERVER_CERT;
+
+        ;;
+        ssh)
+            ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa$2;
+        ;;
+        *)
+            exit 1; # invalid option
+        ;;
+    esac
+}
+
 ### Display device info
 _lib_drv () {
     case $1 in
@@ -596,7 +691,8 @@ _lib_vol () {
                     exit 1; # need to run the 'install app' and exit before 'reboot'
                 fi
             };
-            sudo "$tmp" --volume "$2" --applicationpath "${tmp%/Contents*}" --nointeraction;
+            # sudo "$tmp" --volume "$2" --applicationpath "${tmp%/Contents*}" --nointeraction;
+            sudo "$tmp" --volume "$2" --nointeraction;
         ;;
         *)
             exit 1; # invalid option
