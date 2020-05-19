@@ -150,14 +150,12 @@ A:
 
 1. mac 和 linux 下新建 sh 文件，并写入以下内容（注意赋予可执行权限）。
 
-    ```sh
+    ```shell
     #!/bin/bash
 
     #################################################
     #               Custom Functions                #
       # # # # # # # # # # # # # # # # # # # # # # #
-
-
     ### somefunc ##Usage: somefunc info # need modify
     _pre_somefunc () {
         : # function body
@@ -245,8 +243,9 @@ A:
 
     2>nul call :pre\%*
 
+    if not errorlevel 0 exit /b 1
+
     REM Test type function
-    if errorlevel 30 exit /b 1
     if errorlevel 1 call :this\annotation :pre\%* & goto :eof
     exit /b 0
 
@@ -254,85 +253,129 @@ A:
     ::             Custom Functions              ::
        :: :: :: :: :: :: :: :: :: :: :: :: :: ::
 
-    ::: "Update hosts by ini"
-    :::: "no ini file found"
+    ::: "do some thing"
     :pre\somefunc
         REM function body
-        exit /b 1
+        exit /b 2 REM error message
         goto :eof
+
+    ::: "do multi things" "" "usage: %~n0 multifunc [option]" ""
+    :pre\multifunc
+        if "%~1"=="" call :this\annotation %0 & goto :eof
+        call :arg\multifunc\%*
+        goto :eof
+
+    ::: "    --arg      run something"
+    :arg\multifunc\--arg
+        exit /b 11 REM error message
+        exit /b 0
 
        :: :: :: :: :: :: :: :: :: :: :: :: :: ::
     ::             Custom Functions              ::
     :::::::::::::::::::::::::::::::::::::::::::::::
 
-    REM Show INFO or ERROR
+    REM Show function list, func info or error message, complete function name
     :this\annotation
-        setlocal enabledelayedexpansion & call :this\var\--set-errorlevel %errorlevel%
-        for /f "usebackq skip=73 tokens=1,2* delims=\ " %%a in (
+        setlocal enabledelayedexpansion & set /a _err_code=%errorlevel%
+        set _annotation_more=
+        set _err_msg=
+        for /f "usebackq skip=82 delims=" %%a in (
             "%~f0"
+        ) do for /f "usebackq tokens=1,2* delims=\	 " %%b in (
+            '%%a'
         ) do (
-            REM Set annotation, errorlevel will reset after some times
-            if %errorlevel% geq 1 (
-                if /i "%%~a"=="::::" set _tmp=%errorlevel% %%b %%c
-            ) else if /i "%%~a"==":::" set _tmp=%%b %%c
+            if /i "%%~b"==":::" (
+                set _annotation=%%a
+                set _annotation=!_annotation:* =!
 
-            if /i "%%~a"==":pre" (
-                REM Display func info or error
-                if /i "%%~a\%%~b"=="%~1" (
-                    if %errorlevel% geq 1 (
-                        REM Inherit errorlevel
-                        call :this\var\--set-errorlevel %errorlevel%
-                        call %0\error %%~a\%%~b !_tmp!
-                    ) else call %0\more !_tmp!
-                    goto :eof
+            ) else if defined _func_eof (
+                if %_err_code% gtr 1 (
+                    set _err_msg=%%~a
+                    set _un_space=!_err_msg: =!
+                    REM match error message
+                    if "!_un_space:exit/b%_err_code%=!" neq "!_un_space!" >&2 ^
+                        echo [ERROR] !_err_msg:* REM =! ^(%~f0!_func_eof!^)&& exit /b 1
+
+                ) else if %_err_code%==1 >&2 echo [ERROR] invalid option '%~2' ^(%~f0!_func_eof!^)&& exit /b 1
+            )
+
+            REM match arguments, sub function
+            if /i "%%~b\%%~c"==":arg\%~nx1" (
+                set _func_eof=%%~a
+                if defined _annotation if %_err_code%==0 call %0\more !_annotation!
+                set _annotation=
+
+            ) else if /i "%%~b"==":pre" (
+                REM match new function, clear function name
+                if defined _annotation_more exit /b 0
+                if defined _err_msg >&2 echo unknown error.& exit /b 1
+                set _func_eof=
+
+                REM match target function
+                if /i "%%~b\%%~c"=="%~1" (
+                    set _func_eof=%%~a
+                    if defined _annotation if %_err_code%==0 call %0\more !_annotation!
+                    set _annotation=
+
                 )
                 REM init func var, for display all func, or show sort func name
-                set _args\%%~b=!_tmp! ""
-                REM Clean var
-                set _tmp=
+                set _prefix_4_auto_complete\%%~c=!_annotation! ""
+
             )
+
         )
+
+        if defined _annotation_more exit /b 0
+        if defined _err_msg >&2 echo unknown error.& exit /b 1
 
         REM Foreach func list
         call :pre\cols _col
         set /a _i=0, _col/=16
-        for /f usebackq^ tokens^=1^,2^ delims^=^=^" %%a in (
-            `2^>nul set _args\%~n1`
-        ) do if "%~1" neq "" (
+        for /f usebackq^ tokens^=1^,2^ delims^=^=^" %%a in (`
+            2^>nul set _prefix_4_auto_complete\%~n1
+        `) do if "%~1" neq "" (
             REM " Sort func name expansion
             set /a _i+=1
-            set _target=%%~nxa %2 %3 %4 %5 %6 %7 %8 %9
-            if !_i!==1 set _tmp=%%~nxa
-            if !_i!==2 call :this\txt\--all-col-left !_tmp! %_col%
-            if !_i! geq 2 call :this\txt\--all-col-left %%~nxa %_col%
-        ) else call :this\str\--2col-left %%~nxa "%%~b"
+            if !_i!==1 (
+                set _cache_arg=%%~nxa
+                if "%~2" neq "" (
+                    set _args=%*
+                    set _args=%%~nxa !_args:* =!
+                ) else set _args=%%~nxa
+
+            ) else if !_i!==2 (
+                call :arg\txt\--all-col-left !_cache_arg! %_col%
+                call :arg\txt\--all-col-left %%~nxa %_col%
+
+            ) else if !_i! geq 2 call :arg\txt\--all-col-left %%~nxa %_col%
+
+        ) else call :arg\str\--2col-left %%~nxa "%%~b"
+
         REM Close lals
-        if !_i! gtr 0 call :this\txt\--all-col-left 0 0
+        if !_i! gtr 0 call :arg\txt\--all-col-left 0 0
+
         REM Display func or call func
         endlocal & if %_i% gtr 1 (
             echo.
-            >&2 echo Warning: function sort name conflict
+            >&2 echo [WARN] function sort name conflict
             exit /b 1
-        ) else if %_i%==0 (
-            if "%~1" neq "" >&2 echo Error: No function found& exit /b 1
-        ) else if %_i%==1 call :pre\%_target% || call %0 :pre\%_target%
-        goto :eof
 
-    :this\annotation\error
-        for /l %%a in (1,1,%2) do shift /2
-        if "%~2"=="" goto :eof
-        REM color 0c
-        >&2 echo.Error: %~2 (%~s0%~1)
+        ) else if %_i%==0 (
+            if "%~1" neq "" >&2 echo [ERROR] No function found& exit /b 1
+
+        ) else if %_i%==1 2>nul call :pre\%_args% || call %0 :pre\%_args%
         goto :eof
 
     :this\annotation\more
         echo.%~1
         shift /1
-        if "%~1%~2" neq "" goto %0
+        if "%~1" neq "" goto %0
+        if .%1==."" goto %0
+        set _annotation_more=true
         exit /b 0
 
     ::: "Get cmd cols" "" "usage: pre cols [[var_name]]"
-    :lib\cols
+    :pre\cols
         for /f "usebackq skip=4 tokens=2" %%a in (
             `mode.com con`
         ) do (
@@ -342,6 +385,38 @@ A:
             exit /b 0
         )
         exit /b 0
+
+    :arg\txt\--all-col-left
+        if "%~1"=="" exit /b 10
+        if "%~2" neq "" if 1%~2 lss 12 (if defined _acl echo. & set _acl=) & exit /b 0
+        setlocal enabledelayedexpansion
+        set _str=%~10123456789abcdef
+        if "%_str:~31,1%" neq "" call :strModulo
+        if "%~2" neq "" if 1%_acl% geq 1%~2 echo. & set /a _acl-=%~2-1
+        set /a _len=0x%_str:~15,1%
+        set "_spaces=                "
+        >&3 set /p=%~1!_spaces:~0,%_len%!<nul
+        set /a _acl+=1
+        if "%~2" neq "" if 1%_acl% geq 1%~2 echo. & set _acl=
+        endlocal & set _acl=%_acl%
+        exit /b 0
+
+    :arg\str\--2col-left
+        if "%~2"=="" exit /b 5
+        setlocal enabledelayedexpansion
+        set _str=%~10123456789abcdef
+        if "%_str:~31,1%" neq "" call :strModulo
+        set /a _len=0x%_str:~15,1%
+        set "_spaces=                "
+        echo %~1!_spaces:~0,%_len%!%~2
+        endlocal
+        exit /b 0
+
+    :strModulo
+        set /a _acl+=1
+        set _str=%_str:~15%
+        if "%_str:~31,1%"=="" exit /b 0
+        goto %0
 
     ```
 
