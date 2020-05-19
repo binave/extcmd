@@ -279,7 +279,7 @@ A:
         setlocal enabledelayedexpansion & set /a _err_code=%errorlevel%
         set _annotation_more=
         set _err_msg=
-        for /f "usebackq skip=82 delims=" %%a in (
+        for /f "usebackq skip=20 delims=" %%a in (
             "%~f0"
         ) do for /f "usebackq tokens=1,2* delims=\	 " %%b in (
             '%%a'
@@ -434,9 +434,9 @@ A:
 >
 >    3.  支持简单的多进程控制。（`hosts` 函数）
 >
->    4.  包含“虚拟磁盘控制”，“`wim` 文件控制”，“字符喘操作”，>“`hash` 计算”等功能
+>    4.  包含“虚拟磁盘控制”，“`wim` 文件控制”，“字符喘操作”，“`hash` 计算”等功能
 >
->    5.  使用 `lib vbs` 命令会调用 `lib.vbs` 脚本中的方法。进行诸如>下载、转码一类的操作。
+>    5.  使用 `lib vbs` 命令会调用 `lib.vbs` 脚本中的方法。进行诸如下载、转码一类的操作。
 >
 
 --------

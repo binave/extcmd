@@ -22,17 +22,20 @@
 ::         Print the functions list.
 ::
 ::     e.g.
-::         ::: "[brief_introduction]" "" "[description_1]" "[description_2]" ...
-::         :::: "[error_description_1]" "[error_description_2]" ...
+::         ::: "[brief_introduction]" "" "[description]" ...
 ::         :[script_name_without_suffix]\[function_name]
 ::             ...
-::             [function_body]
-::             ...
-::             REM exit and display [error_description_1]
-::             exit /b 1
+::             REM call sub function
+::             call :arg\[function_name]\%*
 ::             ...
 ::             REM return false status
-::             exit /b 10
+::             exit /b -1
+::
+::         ::: "[description_sub_function]" ...
+::         :arg\[function_name]\[--arg]
+::             ...
+::             REM exit and display [error_description_1]
+::             exit /b 2 REM [error_description_1]
 
 ::::::::::::::::::::::::::
 :: Third-Party Programs ::
@@ -47,10 +50,11 @@ for %%a in (%~nx0) do if "%%~$path:a"=="" set path=%path%;%~dp0
 if "%~2"=="-h" call :this\annotation :%~n0\%~1 & goto :eof
 if "%~2"=="--help" call :this\annotation :%~n0\%~1 & goto :eof
 
-call :%~n0\%* 2>nul
+2>nul call :%~n0\%*
+
+if not errorlevel 0 exit /b 1
 
 REM Test type function
-if errorlevel 10 exit /b 1
 if errorlevel 1 call :this\annotation :%~n0\%* & goto :eof
 exit /b 0
 
@@ -62,13 +66,12 @@ exit /b 0
 
 ::: "Output version and exit"
 :3rd\version
-    >&3 echo 0.18.3
+    >&3 echo 0.20.5.1
     exit /b 0
 
 ::: "Backup git repositories"
-:::: "git command not found"
 :3rd\gitb
-    call :this\path\--contain git.exe || exit /b 1
+    call :this\path\--contain git.exe || exit /b 2 REM git command not found
     setlocal enabledelayedexpansion
 
     for /r /d %%a in (
@@ -103,15 +106,15 @@ exit /b 0
     endlocal
     exit /b 0
 
-::: "Maven repository tools" "" "usage: %~n0 m2 [option]" "    --trim, -c   [[repo_path]]      Print broken file from local maven repository"
-:::: "option invalid"
+::: "Maven repository tools" "" "usage: %~n0 m2 [option]" ""
 :3rd\m2
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :this\m2\%* 2>nul
+    call :arg\m2\%* 2>nul
     goto :eof
 
-:this\m2\--trim
-:this\m2\-c
+::: "    --trim, -c   [[repo_path]]      Print broken file from local maven repository"
+:arg\m2\--trim
+:arg\m2\-c
     setlocal
     set _lu=0
     set _m2_repo=%~1
@@ -136,7 +139,7 @@ exit /b 0
     goto :eof
 
 :this\hash [type] [file_path] [var]
-    if "%~3"=="" exit /b 1
+    if "%~3"=="" exit /b 2
     setlocal
     set _0=
     for /f "usebackq delims=" %%a in (
@@ -148,9 +151,8 @@ exit /b 0
     exit /b 0
 
 ::: "Oracle service start\stop"
-:::: "Sid is empty, default is orcl"
-:3rd\orcl
-    if "%~1"=="" exit /b 1
+:3rd\orcld
+    if "%~1"=="" exit /b 2 REM Sid is empty, default is orcl
     setlocal
     set _sid=OracleService%~1
     for /f "usebackq tokens=1,3" %%a in (
@@ -158,9 +160,9 @@ exit /b 0
     ) do if /i "%%a"=="STATE" (
         set _srv=OracleOraDb11g_home1TNSListener
         if "%%b"=="4" (
-            call :orcl\setService
-            call :orcl STOP START
-        ) else call :orcl START STOP
+            call :orcld\setService
+            call :orcld STOP START
+        ) else call :orcld START STOP
     )
     if not defined _srv >&2 echo Error: No %_sid% Service
     echo.
@@ -168,7 +170,7 @@ exit /b 0
     exit /b 0
 
 REM For :3rd\orcl
-:orcl
+:orcld
     echo Oracle Service allready %~2, Press {Enter} to %~1
     set /p _input=or type any characters to EXIT.
     if defined _input exit /b 0
@@ -178,7 +180,7 @@ REM For :3rd\orcl
     exit /b 0
 
 REM For :3rd\orcl
-:orcl\setService
+:orcld\setService
     for /f "usebackq tokens=1,3" %%a in (
         `sc.exe qc %_srv%`
     ) do if /i "%%a%%b" == "START_TYPE2" >nul (
@@ -196,30 +198,28 @@ REM For :3rd\orcl
     exit /b 0
 
 REM ::: "Get docker tags" "" "    %~n0 tags [image_name]"
-REM :::: "no bash.exe found, need install git for windows, and add it in environment variabl"
 REM :3rd\tags
-REM     for %%a in (bash.exe) do if "%%~$path:a"=="" exit /b 1
+REM     for %%a in (bash.exe) do if "%%~$path:a"=="" exit /b 2 REM no bash.exe found, need install git for windows, and add it in environment variabl
 REM     for /f "usebackq tokens=2,4 " %%a in (
 REM         `bash.exe -c 'curl https://index.docker.io/v1/repositories/%1/tags 2^>nul ^^^| sed -e "s/\}, /\n/g;s/,//g;s/\}\]//g"`
 REM     ) do echo %%~a %1:%%~b
 REM     exit /b 0
 
-::: "VirtualBox Manage" "" "usage: %~n0 vbox [args] [[vm_name]]" "" "    start       Start VM by name" "    stop/save   Stop VM by name" "    stopAll     Stop all vm"
-:::: "need install vbox" "No eula text found"
+::: "VirtualBox Manage" "" "usage: %~n0 vbox [args] [[vm_name]]" ""
 :3rd\vbox
     setlocal enabledelayedexpansion
     REM Add vbox path
     set path=%path%;%VBOX_MSI_INSTALL_PATH%
     REM Test VBoxManage command
-    call :this\path\--contain VBoxManage.exe || exit /b 1
+    call :this\path\--contain VBoxManage.exe || exit /b 2 REM need install vbox
 
-    call :this\vbox\%* 2>nul
-    if %errorlevel%==1 if "%~2"=="" call :this\vbox\start %*
+    2>nul call :arg\vbox\%*
+    if %errorlevel%==1 if "%~2"=="" call :arg\vbox\start %*
     endlocal & exit /b %errorlevel%
 
 REM List all VM name, tag running VM
 REM todo MAC VBoxManage.exe showvminfo %_vms% --machinereadable | find "macaddress"
-:this\vbox\
+:arg\vbox\
     call :vbox\setVar vms _vms
     call :vbox\setVar runningvms _run
     for /f "usebackq delims==" %%a in (
@@ -233,7 +233,8 @@ REM todo MAC VBoxManage.exe showvminfo %_vms% --machinereadable | find "macaddre
     exit /b 0
 
 REM Start VM
-:this\vbox\start
+::: "    start       Start VM by name"
+:arg\vbox\start
     call :vbox\init %1 || exit /b 0
     if defined _run\%vm% (
         echo %vm% is running...
@@ -241,8 +242,9 @@ REM Start VM
     exit /b 0
 
 REM Stop VM
-:this\vbox\stop
-REM :this\vbox\save
+::: "    stop/save   Stop VM by name"
+:arg\vbox\stop
+REM :arg\vbox\save
     call :vbox\init %1 || exit /b 0
     if defined _run\%vm% (
         VBoxManage.exe controlvm %vm% poweroff
@@ -250,11 +252,21 @@ REM :this\vbox\save
     exit /b 0
 
 REM Stop All VM
-:this\vbox\stopAll
+::: "    stopAll     Stop all vm"
+:arg\vbox\stopAll
     for /f "usebackq" %%a in (
         `VBoxManage.exe list runningvms`
     ) do VBoxManage.exe controlvm %%~a poweroff
     echo All vm stop
+    exit /b 0
+
+::: "" "    ova     [vm_name] [eula_file_path] " "                Package vm to ova format"
+:arg\vbox\ova
+    if "%~1"=="" exit /b 51 REM vm name is empty
+    if not exist "%~2" exit /b 52 REM eula file not found
+    setlocal enabledelayedexpansion
+    call :vbox\init %1 && VBoxManage.exe export %vm% -o ".\%vm%.ova" --legacy09 --manifest --options nomacs --vsys 0 --eulafile %2
+    endlocal
     exit /b 0
 
 REM Set vm variable
@@ -290,14 +302,19 @@ REM Reg VM names
     ) do set %2\%%~a=%%b
     exit /b 0
 
-::::::::::::
-:: ffmpeg ::
-::::::::::::
+:::::::::::::
+:: Convert ::
+:::::::::::::
 
-::: "Convert alac,ape,m4a,tta,tak,wav to flac format" "" "    need changes the current directory at target"
-:::: "ffmpeg command not found"
-:3rd\2flac
-    call :this\path\--contain ffmpeg.exe || exit /b 1
+::: "Convert to" "" "usage: %~n0 c2 [option] ..." ""
+:3rd\c2
+    if "%~1"=="" call :this\annotation %0 & goto :eof
+    call :this\path\--contain ffmpeg.exe || exit /b 2 REM ffmpeg command not found
+    call :arg\c2\%*
+    goto :eof
+
+::: "    2flac        Convert alac,ape,m4a,tta,tak,wav to flac format" "" "    need changes the current directory at target"
+:arg\c2\2flac
     pushd "%cd%"
     for /r . %%a in (
         *.alac *.ape *.m4a *.tta *.tak *.wav
@@ -307,6 +324,21 @@ REM Reg VM names
     )
     popd
     exit /b 0
+
+::: "vob2   [drive:] [output_file_path]    Convert dvd" "  e.g. %~n0 vob2 D: E:\out.mkv"
+:arg\c2\vob2
+    if not exist "%~dp2" exit /b 22 REM output path not found
+    if "%~x2"=="" exit /b 23 REM no output suffix
+    REM if /i "%~d1"=="%~d2" exit /b 4
+    setlocal enabledelayedexpansion
+    set _src=
+    for /f "usebackq delims=" %%a in (
+        `dir /b %~d1\VTS_01_*.VOB`
+    ) do if defined _src (
+        set _src=!_src!^|%~d1\%%a
+    ) else set _src=%~d1\%%a
+    endlocal & ffmpeg.exe -hide_banner -i concat:"%_src%" "%~f2"
+    goto :eof
 
 ::: "Play all multi-media in directory" "" "usage: %~n0 play [options] ... [directory...]" "" "    --random, -r" "    --ast,    -a " "    --skip,   -j [count]"
 :::: "ffplay command not found" "args is empty"
@@ -358,12 +390,12 @@ REM Reg VM names
 
     for /f "usebackq tokens=2 delims==" %%a in (
         `set _track 2^>nul`
-    ) do set /a _i+=1& call :this\ffplay "%%a"
+    ) do set /a _i+=1& call :this\ff "%%a"
 
     endlocal
     exit /b 0
 
-:this\ffplay
+:this\ff
     echo Progress #%_i% / %_c%, %_random%
     REM -sn ::disable subtitling
     REM -ac 2 ::ED..A... set number of audio channels (from 0 to INT_MAX) (default 0) ::Convert the 5.1 track to stereo
@@ -375,72 +407,46 @@ REM Reg VM names
     ) do if /i "%~x1"==".%%a" start /b /wait /min ffplay.exe -hide_banner -autoexit -af "volume=0.05" %1 2>&1
     exit /b 0
 
-REM :3rd\lcam
+REM :3rd\cam
+REM     if "%~1"=="" call :this\annotation %0 & goto :eof
+REM     call :this\path\--contain ffmpeg.exe || exit /b 2 REM ffmpeg command not found
+REM     call :arg\cam\%*
+REM     goto :eof
+REM
+REM :arg\cam\--list
+REM :arg\cam\-l
 REM     ffmpeg.exe -hide_banner -f dshow -list_devices true -i "" 2>&1 | find.exe "]"
 REM     exit /b 0
-
-REM :3rd\scam
+REM
+REM :arg\cam\--show
+REM :arg\cam\-s
 REM     ffplay.exe -hide_banner -f dshow -video_size $size -framerate 25 -pixel_format 0rgb -probesize 10M -i "0":"0" 2>&1
 REM     exit /b 0
 
-::: "Convert dvd" "" "usage: %~n0 vob2 [drive:] [output_file_path]" "  e.g. %~n0 vob2 D: E:\out.mkv
-:::: "ffmpeg command not found" "output path not found" "no output suffix"
-:3rd\vob2
-    call :this\path\--contain ffmpeg.exe || exit /b 1
-    if not exist "%~dp2" exit /b 2
-    if "%~x2"=="" exit /b 3
-    REM if /i "%~d1"=="%~d2" exit /b 4
-    setlocal enabledelayedexpansion
-    set _src=
-    for /f "usebackq delims=" %%a in (
-        `dir /b %~d1\VTS_01_*.VOB`
-    ) do if defined _src (
-        set _src=!_src!^|%~d1\%%a
-    ) else set _src=%~d1\%%a
-    endlocal & ffmpeg.exe -hide_banner -i concat:"%_src%" "%~f2"
-    goto :eof
-
-::: "Package vm to ova format" "" "usage: %~n0 ova [vm_name] [eula_file_path]"
-:::: "vm name is empty" "eula file not found" "need install vbox"
-:3rd\ova
-    if "%~1"=="" exit /b 1
-    if not exist "%~2" exit /b 2
-    setlocal enabledelayedexpansion
-    REM Add vbox path
-    set path=%path%;%VBOX_MSI_INSTALL_PATH%
-    REM Test VBoxManage command
-    call :this\path\--contain VBoxManage.exe || exit /b 3
-
-    call :vbox\init %1 && VBoxManage.exe export %vm% -o ".\%vm%.ova" --legacy09 --manifest --options nomacs --vsys 0 --eulafile %2
-    endlocal
-    exit /b 0
-
 ::: "Docker batch command" "Usage: %~n0 dockers [start/stop]"
-:::: "option invalid" "docker client command not found"
-:3rd\dockers
-    call :this\path\--contain docker.exe || exit /b 2
-    call :this\docker\%* 2>nul
+:3rd\moby
+    call :this\path\--contain docker.exe || exit /b 2 REM docker client command not found
+    2>nul call :arg\moby\%*
     goto :eof
 
-:this\dockers\start
+:arg\moby\start
     for /f "usebackq skip=1" %%a in (
         `docker.exe ps -f status=exited`
     ) do docker.exe start %%a
     exit /b 0
 
-:this\dockers\stop
+:arg\moby\stop
     for /f "usebackq skip=1" %%a in (
         `docker.exe ps`
     ) do docker.exe stop %%a
     exit /b 0
 
 ::: "Compress PNG images" "Usage: %~n0 png [src_dir] [out_dir]"
-:::: "option invalid" "pngquant command not found" "source path not exist" "output path not set" "out put dir is same" "pngquant error"
 :3rd\png
-    call :this\path\--contain pngquant.exe || exit /b 2
-    if not exist "%~f1" exit /b 3
-    if "%~2"=="" exit /b 4
-    if /i "%~f1"=="%~f2" exit /b 5
+    call :this\path\--contain pngquant.exe || exit /b 2 REM pngquant command not found
+    if not exist "%~f1" exit /b 3 REM source path not exist
+    if "%~2"=="" exit /b 4 REM output path not set
+    if /i "%~f1"=="%~f2" exit /b 5 REM out put dir is same
 
     setlocal enabledelayedexpansion
     set "_src=%~f1"
@@ -459,14 +465,12 @@ REM     exit /b 0
     exit /b 0
 
 ::: "tar.gz compresses by 7za" "" "Usage: %~n0 tar.gz [path]"
-:::: "7za not fount" "target not found"
 :3rd\tar.gz
 ::: "tar.bz2 compresses by 7za" "" "Usage: %~n0 tar.bz2 [path]"
-:::: "7za not fount" "target not found"
 :3rd\tar.bz2
-    call :this\path\--contain 7za.exe || exit /b 1
+    call :this\path\--contain 7za.exe || exit /b 10 REM 7za not fount
     setlocal enabledelayedexpansion
-    if not exist "%~1" exit /b 2
+    if not exist "%~1" exit /b 2 REM target not found
 	if "%~2"=="" call :this\equalsDeputySuffix %1 .tar && (
 		call :this\tarDecompresses %1
 		goto :eof
@@ -529,49 +533,25 @@ REM for :3rd\tar.*
 	exit /b 1
 
 
-::: "Init golang"
-:::: "go or git not in path" "Not a golang path"
-:3rd\goinit
-    for %%a in (go.exe git.exe) do if "%%~$path:a"=="" exit /b 1
-    call :go\isGoPath || exit /b 2
-    set GOPATH=%cd%
-    if not exist .\bin\gocode.exe go.exe get -u -v github.com/nsf/gocode
-    if not exist .\bin\godef.exe go.exe get -u -v github.com/rogpeppe/godef
-    if not exist .\bin\golint.exe go.exe get -u -v github.com/golang/lint/golint
-    if not exist .\bin\go-outline.exe go.exe get -u -v github.com/lukehoban/go-outline
-    if not exist .\bin\goreturns.exe go.exe get -u -v sourcegraph.com/sqs/goreturns
-    if not exist .\bin\gorename.exe go.exe get -u -v golang.org/x/tools/cmd/gorename
-    if not exist .\bin\gopkgs.exe go.exe get -u -v github.com/tpng/gopkgs
-    if not exist .\bin\go-symbols.exe go.exe get -u -v github.com/newhook/go-symbols
-    if not exist .\bin\guru.exe go.exe get -u -v golang.org/x/tools/cmd/guru
-    REM https://github.com/derekparker/delve/tree/master/Documentation/installation
-    if not exist .\bin\dlv.exe go.exe get -u -v github.com/derekparker/delve/cmd/dlv
-    exit /b 0
-
-REM Test go file
-:go\isGoPath
-    for /r .\src %%a in (*.go) do exit /b 0
-    exit /b 1
-
 REM :3rd\ftp
 REM 	>%temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d (
-REM 		call :this\ftpInit [ip] [name] [password] [dir]
+REM 		call :this\ftp\init [ip] [name] [password] [dir]
 REM 		if "%~1"=="" (
-REM 			call :this\ftpDir
-REM 		) else call :this\ftpUpload %*
+REM 			call :this\ftp\dir
+REM 		) else call :this\ftp\upload %*
 REM 	)
 REM  	ftp.exe -s:%temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d
 REM  	erase %temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d
 REM     exit /b 0
-
-REM :this\ftpInit
+REM
+REM :this\ftp\init
 REM 	echo open %~1
 REM 	echo %~2
 REM 	echo %3
 REM 	echo cd %4
 REM 	goto :eof
-
-REM :this\ftpUpload
+REM
+REM :this\ftp\upload
 REM 	echo binary
 REM 	for %%a in (
 REM 		%*
@@ -579,8 +559,8 @@ REM 	) do if exist "%%~a" echo put "%%~a"
 REM 	echo close
 REM 	echo quit
 REM 	goto :eof
-
-REM :this\ftpDir
+REM
+REM :this\ftp\dir
 REM 	echo dir
 REM 	echo quit
 REM 	goto :eof
@@ -590,12 +570,12 @@ REM 	goto :eof
   :: :: :: :: ::
 
 REM Test target in $path
-:this\path\--contain
+:arg\path\--contain
     if "%~1" neq "" if "%~$path:1" neq "" exit /b 0
     exit /b 1
 
 REM Test string if Num \* @see lib.cmd *\
-:this\is\--integer
+:arg\is\--integer
     if "%~1"=="" exit /b 10
     setlocal
     set _tmp=
@@ -605,7 +585,7 @@ REM Test string if Num \* @see lib.cmd *\
     endlocal & exit /b %_code%
 
 REM Test path is directory \* @see dis.cmd *\
-:this\dir\--isdir
+:arg\dir\--isdir
     setlocal
     set _path=%~a1-
     REM quick return
@@ -614,7 +594,7 @@ REM Test path is directory \* @see dis.cmd *\
     endlocal & exit /b %_code%
 
 REM Display Time at [YYYYMMDDhhmmss] \* @see lib.cmd *\
-:this\str\--now
+:arg\str\--now
     if "%~1"=="" exit /b 2
     set date=
     set time=
@@ -634,74 +614,108 @@ REM Display Time at [YYYYMMDDhhmmss] \* @see lib.cmd *\
 ::                 Framework                 ::
    :: :: :: :: :: :: :: :: :: :: :: :: :: ::
 
-REM Show INFO or ERROR
+REM Show function list, func info or error message, complete function name
 :this\annotation
-    setlocal enabledelayedexpansion & call :this\var\--set-errorlevel %errorlevel%
-    for /f "usebackq skip=62 tokens=1,2* delims=\ " %%a in (
+    setlocal enabledelayedexpansion & set /a _err_code=%errorlevel%
+    set _annotation_more=
+    set _err_msg=
+    for /f "usebackq skip=65 delims=" %%a in (
         "%~f0"
+    ) do for /f "usebackq tokens=1,2* delims=\	 " %%b in (
+        '%%a'
     ) do (
-        REM Set annotation, errorlevel will reset after some times
-        if %errorlevel% geq 1 (
-            if /i "%%~a"=="::::" set _tmp=%errorlevel% %%b %%c
-        ) else if /i "%%~a"==":::" set _tmp=%%b %%c
+        if /i "%%~b"==":::" (
+            set _annotation=%%a
+            set _annotation=!_annotation:* =!
 
-        if /i "%%~a"==":%~n0" (
-            REM Display func info or error
-            if /i "%%~a\%%~b"=="%~1" (
-                if %errorlevel% geq 1 (
-                    REM Inherit errorlevel
-                    call :this\var\--set-errorlevel %errorlevel%
-                    call %0\error %%~a\%%~b !_tmp!
-                ) else call %0\more !_tmp!
-                goto :eof
+        ) else if defined _func_eof (
+            if %_err_code% gtr 1 (
+                set _err_msg=%%~a
+                set _un_space=!_err_msg: =!
+                REM match error message
+                if "!_un_space:exit/b%_err_code%=!" neq "!_un_space!" >&2 ^
+                    echo [ERROR] !_err_msg:* REM =! ^(%~f0!_func_eof!^)&& exit /b 1
+
+            ) else if %_err_code%==1 >&2 echo [ERROR] invalid option '%~2' ^(%~f0!_func_eof!^)&& exit /b 1
+        )
+
+        REM match arguments, sub function
+        if /i "%%~b\%%~c"==":arg\%~nx1" (
+            set _func_eof=%%~a
+            if defined _annotation if %_err_code%==0 call %0\more !_annotation!
+            set _annotation=
+
+        ) else if /i "%%~b"==":%~n0" (
+            REM match new function, clear function name
+            if defined _annotation_more exit /b 0
+            if defined _err_msg >&2 echo unknown error.& exit /b 1
+            set _func_eof=
+
+            REM match target function
+            if /i "%%~b\%%~c"=="%~1" (
+                set _func_eof=%%~a
+                if defined _annotation if %_err_code%==0 call %0\more !_annotation!
+                set _annotation=
+
             )
             REM init func var, for display all func, or show sort func name
-            set _args\%%~b=!_tmp! ""
-            REM Clean var
-            set _tmp=
+            set _prefix_4_auto_complete\%%~c=!_annotation! ""
+
         )
+
     )
 
+    if defined _annotation_more exit /b 0
+    if defined _err_msg >&2 echo unknown error.& exit /b 1
+
     REM Foreach func list
-    call :this\cols _col
+    call :lib\cols _col
     set /a _i=0, _col/=16
-    for /f usebackq^ tokens^=1^,2^ delims^=^=^" %%a in (
-        `set _args\%~n1 2^>nul`
-    ) do if "%~1" neq "" (
+    for /f usebackq^ tokens^=1^,2^ delims^=^=^" %%a in (`
+        2^>nul set _prefix_4_auto_complete\%~n1
+    `) do if "%~1" neq "" (
         REM " Sort func name expansion
         set /a _i+=1
-        set _target=%%~nxa %2 %3 %4 %5 %6 %7 %8 %9
-        if !_i!==1 set _tmp=%%~nxa
-        if !_i!==2 call :this\txt\--all-col-left !_tmp! %_col%
-        if !_i! geq 2 call :this\txt\--all-col-left %%~nxa %_col%
-    ) else call :this\str\--2col-left %%~nxa "%%~b"
-    REM Close make all column left-aligned
-    if !_i! gtr 0 call :this\txt\--all-col-left 0 0
+        if !_i!==1 (
+            set _cache_arg=%%~nxa
+            if "%~2" neq "" (
+                set _args=%*
+                set _args=%%~nxa !_args:* =!
+            ) else set _args=%%~nxa
+
+        ) else if !_i!==2 (
+            call :arg\txt\--all-col-left !_cache_arg! %_col%
+            call :arg\txt\--all-col-left %%~nxa %_col%
+
+        ) else if !_i! geq 2 call :arg\txt\--all-col-left %%~nxa %_col%
+
+    ) else call :arg\str\--2col-left %%~nxa "%%~b"
+
+    REM Close lals
+    if !_i! gtr 0 call :arg\txt\--all-col-left 0 0
+
     REM Display func or call func
     endlocal & if %_i% gtr 1 (
         echo.
-        >&2 echo Warning: function sort name conflict
+        >&2 echo [WARN] function sort name conflict
         exit /b 1
-    ) else if %_i%==0 (
-        if "%~1" neq "" >&2 echo Error: No function found& exit /b 1
-    ) else if %_i%==1 call :%~n0\%_target% || call %0 :%~n0\%_target%
-    goto :eof
 
-:this\annotation\error
-    for /l %%a in (1,1,%2) do shift /2
-    if "%~2"=="" goto :eof
-    REM color 0c
-    >&2 echo.Error: %~2 (%~s0%~1)
+    ) else if %_i%==0 (
+        if "%~1" neq "" >&2 echo [ERROR] No function found& exit /b 1
+
+    ) else if %_i%==1 2>nul call :%~n0\%_args% || call %0 :%~n0\%_args%
     goto :eof
 
 :this\annotation\more
     echo.%~1
     shift /1
-    if "%~1%~2" neq "" goto %0
+    if "%~1" neq "" goto %0
+    if .%1==."" goto %0
+    set _annotation_more=true
     exit /b 0
 
 REM Make the second column left-aligned
-:this\str\--2col-left
+:arg\str\--2col-left
     if "%~2"=="" exit /b 1
     setlocal enabledelayedexpansion
     set _str=%~10123456789abcdef
@@ -713,7 +727,7 @@ REM Make the second column left-aligned
     exit /b 0
 
 REM Use right pads spaces, make all column left-aligned
-:this\txt\--all-col-left
+:arg\txt\--all-col-left
     if "%~1"=="" exit /b 1
     if "%~2" neq "" if 1%~2 lss 12 (if defined _acl echo. & set _acl=) & exit /b 0
     setlocal enabledelayedexpansion
@@ -736,7 +750,7 @@ REM for :this\txt\--all-col-left
     goto %0
 
 REM Get cmd cols
-:this\cols
+:lib\cols
     for /f "usebackq skip=4 tokens=2" %%a in (`mode.com con`) do (
         if "%~1"=="" (
             echo %%a
@@ -744,11 +758,6 @@ REM Get cmd cols
         exit /b 0
     )
     exit /b 0
-
-REM Set errorlevel variable
-:this\var\--set-errorlevel
-    if "%~1"=="" goto :eof
-    exit /b %1
 
    :: :: :: :: :: :: :: :: :: :: :: :: :: ::
 ::                 Framework                 ::
