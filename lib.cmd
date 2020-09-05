@@ -2030,19 +2030,28 @@ REM Enable ServicesForNFS
     call :arg\vhd\%*
     goto :eof
 
-::: "    --new,    -n  [new_vhd_path] [size[GB]] [[mount letter or path]]" "                                                       Creates a virtual disk file." ""
+::: "    --new,    -n  [new_vhd_path] [size[GB]] [[mount letter or path][-]]" "                                                       Creates a virtual disk file." "                                            [-]        Not attach and format" ""
 :arg\vhd\--new
 :arg\vhd\-n
     if "%~1"=="" exit /b 13 REM path is empty
     if not exist "%~dp1" exit /b 14 REM no volume find
     if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 12 REM file suffix not vhd/vhdx
     if "%~2"=="" exit /b 15 REM vhd size is empty
+
+    call set /a _size=%2 * 1024 + 8
+
+    if "%~3"=="-" (
+        echo create vdisk file="%~f1" maximum=%_size% type=expandable | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 17 REM diskpart error:
+        exit /b 0
+    )
+
+    REM make vhd
     if "%~3" neq "" (
         if /i "%~d3"=="%~3" if exist "%~d3" exit /b 16 REM letter already use
         if /i "%~d3" neq "%~3" if not exist "%~3" exit /b 18 REM not a letter or path
     )
-    REM make vhd
-    call set /a _size=%2 * 1024 + 8
+
+
     (
         echo create vdisk file="%~f1" maximum=%_size% type=expandable
         echo attach vdisk
