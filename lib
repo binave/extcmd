@@ -253,12 +253,12 @@ __get_pkg () {
     wait
 }
 
-### Remote tools ##Usage: remote [option] [args...] ##    -rsa [[user@]host] [[alias]]  Copy rsa public key to remote #    -tar [option] [[user@host:]target_path] [[user@host:]source_path] #                                  remote tar command #    -scp [pass_word] [command...] Auto scp with password ##
+### Remote tools ##Usage: remote [option] [args...] ##    -ed25519 [[user@]host] [[alias]]  Copy ed25519 public key to remote #    -tar [option] [[user@host:]target_path] [[user@host:]source_path] #                                  remote tar command #    -scp [pass_word] [command...] Auto scp with password ##
 _lib_remote () {
     case $1 in
-        -rsa)
+        -ed25519)
             shift;
-            __remote_rsa "$@"
+            __remote_ed25519 "$@"
         ;;
         -scp)
             shift;
@@ -275,12 +275,12 @@ _lib_remote () {
 }
 
 # for _lib_remote
-__remote_rsa () {
+__remote_ed25519 () {
      [ "$1" ] || exit 1; # first args is empty
-    local rsa_pub;
-    [ -s ~/.ssh/id_rsa$2.pub ] || ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa$2;
+    local ed25519_pub;
+    [ -s ~/.ssh/id_ed25519$2.pub ] || ssh-keygen -t ed25519 -P "" -f ~/.ssh/id_ed25519$2;
     printf %s 'mkdir ~/.ssh 2>/dev/null;
-printf %s "'`cat ~/.ssh/id_rsa$2.pub 2>/dev/null`'" >> ~/.ssh/authorized_keys;
+printf %s "'`cat ~/.ssh/id_ed25519$2.pub 2>/dev/null`'" >> ~/.ssh/authorized_keys;
 chmod 600 ~/.ssh/authorized_keys;
 chmod 700 ~/.ssh
 ' | ssh $1 bash || exit 1; # Unknown Error
@@ -292,7 +292,7 @@ chmod 700 ~/.ssh
     HostName        $host
     Port            22
     User            $user
-    IdentityFile    ~/.ssh/id_rsa$2
+    IdentityFile    ~/.ssh/id_ed25519$2
 "
     return 0
 }
