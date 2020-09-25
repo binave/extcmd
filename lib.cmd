@@ -2744,6 +2744,7 @@ REM for Operating System, [WARN] must call from ':lib\kms'
         ServerDatacenter_100_17134@2HXDN-KRXHB-GPYC7-YCKFJ-7FVDG
         ServerDatacenter_100_17763@WMDGN-G9PQG-XVVXX-R3X43-63DFG
         ServerDatacenter_100_18362@6NMRW-2C8FM-D24W7-TQWMY-CWH2D
+        ServerDatacenterACor_100@6NMRW-2C8FM-D24W7-TQWMY-CWH2D
 
         ServerEssentials_63@KNC87-3J2TX-XB4WP-VCPJV-M4FWM
         ServerEssentials_100_14393@JCKRF-N37P4-C2D82-9YXRT-4M63B
@@ -2758,6 +2759,7 @@ REM for Operating System, [WARN] must call from ':lib\kms'
         ServerStandard_100_17134@PTXN8-JFHJM-4WC78-MPCBR-9W4KR
         ServerStandard_100_17763@N69g4-B89J2-4G8F4-WWYCC-J464C
         ServerStandard_100_18362@N2KJX-J94YW-TQVFB-DG9YT-724CC
+        ServerStandardACor_100@N2KJX-J94YW-TQVFB-DG9YT-724CC
     ) do for /f "usebackq tokens=1* delims=@" %%a in (
         '%%~k'
     ) do if /i "%_editionid%_%_verm10%"=="%%a" (
