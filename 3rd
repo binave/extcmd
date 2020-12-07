@@ -423,12 +423,12 @@ _3rd_cam () {
             which ffplay >/dev/null 2>&1 || exit 1; # ffplay command not found
             which lib >/dev/null 2>&1 || exit 1; # lib command not found
             lib inum $1 || exit 1; # first args error
-            local device_index=$1 fmt framerate video_size
+            local device_index fmt framerate video_size
             shift
             while [ "$1" ]; do
                 case $1 in
                     [0-9]|[1-9][0-9])
-                        device_index=$device_index:$1;
+                        device_index=$1;
                         shift
                     ;;
                     *[0-9]x[1-9]*)
@@ -453,9 +453,11 @@ _3rd_cam () {
             #     0rgb
             #     bgr0
 
-            # probesize: 5M (more slow)
+            # -probesize 32
+            # -tune zerolatency
+            # -fflags nobuffer
 
-            ffplay -hide_banner -f $fmt $video_size $framerate -pixel_format bgr0 -i $device_index 2>&1
+            ffplay -hide_banner -f $fmt $video_size $framerate -fflags nobuffer -pixel_format bgr0 -i $device_index 2>&1
             # ffplay -f avfoundation $video_size -framerate 29 -pixel_format 0rgb -i "XI100DUSB-HDMI":"XI100DUSB-HDMI Audio" 2>&1
         ;;
         *)

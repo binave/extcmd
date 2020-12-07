@@ -194,14 +194,18 @@ __get_pkg () {
 
     };
 
-    local i anchor count_cache=0 pkg=() tmp=/private/var/tmp countdown=$((${1-1} * 60)) sec_on=$(date +%s);
+    local i anchor count_cache=0 pkg=() tmp=/private/var/tmp store_agent countdown=$((${1-1} * 60 * 5)) sec_on=$(date +%s);
 
     {
 
-        printf "Will listen \033[4m$countdown\033[0m sec.\n";
+        printf "Init...\n"
+
+        store_agent=$(find /private/var/folders -type d -regex ".*/com.apple.appstoreagent/com.apple.appstore" 2>/dev/null);
+
+        printf "Will listen \033[4m%s\033[0m sec.\n" $(($countdown / 5));
 
         # Reg hard link from /private/var/tmp
-        ___get_pkg_serial_number $tmp;
+        ___get_pkg_serial_number "$store_agent";
 
         # Infinite loop
         while :; do
@@ -211,10 +215,11 @@ __get_pkg () {
                 printf "Exit.\n";
                 break
             };
-            [ $countdown == 0 ] && printf "Listening \033[4mstop\033[0m.\n";
+
+            [ $((countdown -= 1)) == 0 ] && printf "Listening \033[4mstop\033[0m.\n";
 
             # Search download pkg
-            [ $((countdown -= 2)) -ge 0 ] && ___get_pkg_serial_number /private/var/folders;
+            ___get_pkg_serial_number "$store_agent";
 
             # foreach pkg array
             [ ${#pkg[@]} -gt 0 ] && for i in ${!pkg[@]}; do
@@ -244,7 +249,7 @@ __get_pkg () {
                 count_cache=${#pkg[@]}
             };
 
-            sleep 1;
+            sleep 0.2
         done;
 
     } | _lib_prefix "%F %T, GPKG, "
