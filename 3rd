@@ -161,8 +161,8 @@ _3rd_git () {
 #     return 0
 # }
 
-### Docker batch command ##Usage: dockers [option] [args...]##    start                Start all exited containers#    stop                 Stop all running containers#    tags [image_name]    Get docker tags#    bridge               Print containers network info##
-_3rd_dockers () {
+### Docker batch command ##Usage: moby [option] [args...]##    start                Start all exited containers#    stop                 Stop all running containers#    tags [image_name]    Get docker tags#    bridge               Print containers network info##
+_3rd_moby () {
     [ "$1" == "tags" ] || which docker >/dev/null 2>&1 || exit 1; # docker client command not found
     case $1 in
         start)
@@ -404,7 +404,7 @@ _3rd_play () {
     done
 }
 
-### Camera tools ##Usage: cam [option] [args] ##    --list, -l          List camera device #    --show, -s   [video_id[:audio_id]] [[[width]x[height]] [[num]fps]] #                        Display target camera #                        e.g. #                            cam -s 3 720x480 15fps ##
+### Camera tools ##Usage: cam [option] [args] ##    --list, -l          List camera device #    --show, -s   [video_id [audio_id]] [[[width]x[height]] [[num]fps]] #                        Display target camera #                        e.g. #                            cam -s 3 720x480 15fps ##
 _3rd_cam () {
     case $1 in
         --list|-l)
@@ -438,6 +438,9 @@ _3rd_cam () {
                     [1-9][0-9]*fps)
                         framerate="-framerate ${1%%[^0-9]*}";
                         shift
+                    ;;
+                    *)
+                        exit 1; # invalid option
                     ;;
                 esac
             done

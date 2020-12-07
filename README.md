@@ -256,17 +256,19 @@ A:
     ::: "do some thing"
     :pre\somefunc
         REM function body
-        exit /b 2 REM error message
+        exit /b 2 REM error message, [`注意`] 请不要使用错误代码 `1`。
         goto :eof
 
+    REM `:pre\` 和多个 `:sub\` 组成一个方法组，方法组之间的代码不可以交叉。
+    REM 不同的方法组，可以重复使用大于 `1` 的错误代码，方法组内的错误代码不可重复。
     ::: "do multi things" "" "usage: %~n0 multifunc [option]" ""
     :pre\multifunc
         if "%~1"=="" call :this\annotation %0 & goto :eof
-        call :arg\multifunc\%*
+        call :sub\multifunc\%*
         goto :eof
 
     ::: "    --arg      run something"
-    :arg\multifunc\--arg
+    :sub\multifunc\--arg
         exit /b 11 REM error message
         exit /b 0
 
@@ -300,7 +302,7 @@ A:
             )
 
             REM match arguments, sub function
-            if /i "%%~b\%%~c"==":arg\%~nx1" (
+            if /i "%%~b\%%~c"==":sub\%~nx1" (
                 set _func_eof=%%~a
                 if defined _annotation if %_err_code%==0 call %0\more !_annotation!
                 set _annotation=
@@ -344,15 +346,15 @@ A:
                 ) else set _args=%%~nxa
 
             ) else if !_i!==2 (
-                call :arg\txt\--all-col-left !_cache_arg! %_col%
-                call :arg\txt\--all-col-left %%~nxa %_col%
+                call :sub\txt\--all-col-left !_cache_arg! %_col%
+                call :sub\txt\--all-col-left %%~nxa %_col%
 
-            ) else if !_i! geq 2 call :arg\txt\--all-col-left %%~nxa %_col%
+            ) else if !_i! geq 2 call :sub\txt\--all-col-left %%~nxa %_col%
 
-        ) else call :arg\str\--2col-left %%~nxa "%%~b"
+        ) else call :sub\str\--2col-left %%~nxa "%%~b"
 
         REM Close lals
-        if !_i! gtr 0 call :arg\txt\--all-col-left 0 0
+        if !_i! gtr 0 call :sub\txt\--all-col-left 0 0
 
         REM Display func or call func
         endlocal & if %_i% gtr 1 (
@@ -386,7 +388,7 @@ A:
         )
         exit /b 0
 
-    :arg\txt\--all-col-left
+    :sub\txt\--all-col-left
         if "%~1"=="" exit /b 10
         if "%~2" neq "" if 1%~2 lss 12 (if defined _acl echo. & set _acl=) & exit /b 0
         setlocal enabledelayedexpansion
@@ -401,7 +403,7 @@ A:
         endlocal & set _acl=%_acl%
         exit /b 0
 
-    :arg\str\--2col-left
+    :sub\str\--2col-left
         if "%~2"=="" exit /b 5
         setlocal enabledelayedexpansion
         set _str=%~10123456789abcdef
