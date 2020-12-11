@@ -466,7 +466,7 @@ _3rd_cam () {
     esac
 }
 
-### Get some urls ##Usage: urls [options] [args...] ##    --chrome,    -c  [mac|win64|win32]  Get chrome url which last stable version #    --jetbrains, -j                     Get jetbrains urls which last stable version ##
+### Get some urls ##Usage: urls [options] [args...] ##    --chrome,    -c  [mac|win64|win32]  Get chrome url which last stable version #    --jetbrains, -j                     Get jetbrains urls which last stable version #    --eclipse,   -e                     Get last version eclipse and sha1 ##
 _3rd_urls () {
     case $1 in
         --chrome|-c)
@@ -523,6 +523,21 @@ _3rd_urls () {
             curl --location --connect-timeout 20 \
                 'https://data.services.jetbrains.com/products/releases?code=IIC,IIU,PCP,PCC,WS,PS,RD,CL,DG,RM,AC,GO&latest=true&type=release' \
                 2>/dev/null | awk -F \" '{for(i=1; i<=NF; i++) {if($i ~ /download\.jetbrains\.com\// && $i !~ /-no-|-patch-/){print $i}}}' | uniq
+        ;;
+        --eclipse|-e)
+            # 1       https://download.eclipse.org
+            # 1093    https://mirrors.ustc.edu.cn/eclipse
+            # 1275    https://mirrors.tuna.tsinghua.edu.cn/eclipse
+            # 1142    https://mirrors.neusoft.edu.cn/eclipse
+            # 1290    https://mirrors.nju.edu.cn/eclipse
+            # curl -L https://www.eclipse.org/downloads/packages/ 2>/dev/null | \
+            #     awk '/>Eclipse IDE [^<>]+ Packages</{gsub(/.*IDE | Pack.*/, ""); system("curl -L \"https://www.eclipse.org/downloads/packages/admin/release_tracker/json/" $0 "/macosx\" 2>/dev/null")}' | \
+            #     awk -F \" '{for(i=1; i<=NF; i++) if($i ~ /download.php/) {gsub(/\\/, "", $i); system("curl -L \"" $i "&mirror_id=1093\" 2>/dev/null" )}}' | \
+            #     awk -F \" '/click here/{for(i=1; i<=NF; i++) if($i ~ /^http/) print $i}'
+            curl -L https://www.eclipse.org/downloads/packages/ 2>/dev/null | \
+                awk '/>Eclipse IDE [^<>]+ Packages</{gsub(/.*IDE | Pack.*/, ""); system("curl -L \"https://www.eclipse.org/downloads/packages/admin/release_tracker/json/" $0 "/macosx\" 2>/dev/null")}' | \
+                awk -F \" '{for(i=1; i<=NF; i++) if($i ~ /download.php/) {gsub(/\\/, "", $i); sub(/.*=/, "", $i); a[j++]=$i; print "https:\/\/mirrors.ustc.edu.cn\/eclipse" $i}};END{for(i in a)system("curl -L \"https://www.eclipse.org/downloads/sums.php?file=" a[i] "&type=sha1\"; echo");}'
+
         ;;
         *)
             exit 1; # Args not support
