@@ -521,7 +521,7 @@ _3rd_urls () {
         ;;
         --jetbrains|-j)
             curl --location --connect-timeout 20 \
-                'https://data.services.jetbrains.com/products/releases?code=IIU,PCP,WS,PS,RD,CL,DG,RM,AC,GO&latest=true' \
+                'https://data.services.jetbrains.com/products/releases?code=IIC,IIU,PCP,PCC,WS,PS,RD,CL,DG,RM,AC,GO&latest=true&type=release' \
                 2>/dev/null | awk -F \" '{for(i=1; i<=NF; i++) {if($i ~ /download\.jetbrains\.com\// && $i !~ /-no-|-patch-/){print $i}}}' | uniq
         ;;
         *)
