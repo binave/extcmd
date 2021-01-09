@@ -478,7 +478,7 @@ _3rd_urls () {
                         # https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg
                         platform='mac';
                         version='10.13';
-                        arch='';
+                        arch='x64'; # arm64
                         appid='com.google.Chrome';
                         ap=''
                     ;;
