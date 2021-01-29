@@ -17,6 +17,7 @@
 !LICENSE
 !?lib
 !3rd
+!xjar
 
 # Ignore some directory
 .*/

@@ -232,10 +232,10 @@ A:
     ```bat
     @echo off
 
-    REM init errorlevel
+    @REM init errorlevel
     set errorlevel=
 
-    REM Init PATH
+    @REM Init PATH
     for %%a in (%~nx0) do if "%%~$path:a"=="" set path=%path%;%~dp0
 
     if "%~2"=="-h" call :this\annotation :pre\%~1 & exit /b 0
@@ -245,7 +245,7 @@ A:
 
     if not errorlevel 0 exit /b 1
 
-    REM Test type function
+    @REM Test type function
     if errorlevel 1 call :this\annotation :pre\%* & goto :eof
     exit /b 0
 
@@ -255,12 +255,12 @@ A:
 
     ::: "do some thing"
     :pre\somefunc
-        REM function body
-        exit /b 2 REM error message, [`注意`] 请不要使用错误代码 `1`。
+        @REM function body
+        exit /b 2 @REM error message, [`注意`] 请不要使用错误代码 `1`。
         goto :eof
 
-    REM `:pre\` 和多个 `:sub\` 组成一个方法组，方法组之间的代码不可以交叉。
-    REM 不同的方法组，可以重复使用大于 `1` 的错误代码，方法组内的错误代码不可重复。
+    @REM `:pre\` 和多个 `:sub\` 组成一个方法组，方法组之间的代码不可以交叉。
+    @REM 不同的方法组，可以重复使用大于 `1` 的错误代码，方法组内的错误代码不可重复。
     ::: "do multi things" "" "usage: %~n0 multifunc [option]" ""
     :pre\multifunc
         if "%~1"=="" call :this\annotation %0 & goto :eof
@@ -269,14 +269,14 @@ A:
 
     ::: "    --arg      run something"
     :sub\multifunc\--arg
-        exit /b 11 REM error message
+        exit /b 11 @REM error message
         exit /b 0
 
        :: :: :: :: :: :: :: :: :: :: :: :: :: ::
     ::             Custom Functions              ::
     :::::::::::::::::::::::::::::::::::::::::::::::
 
-    REM Show function list, func info or error message, complete function name
+    @REM Show function list, func info or error message, complete function name
     :this\annotation
         setlocal enabledelayedexpansion & set /a _err_code=%errorlevel%
         set _annotation_more=
@@ -294,33 +294,33 @@ A:
                 if %_err_code% gtr 1 (
                     set _err_msg=%%~a
                     set _un_space=!_err_msg: =!
-                    REM match error message
+                    @REM match error message
                     if "!_un_space:exit/b%_err_code%=!" neq "!_un_space!" >&2 ^
-                        echo [ERROR] !_err_msg:* REM =! ^(%~f0!_func_eof!^)&& exit /b 1
+                        echo [ERROR] !_err_msg:* @REM =! ^(%~f0!_func_eof!^)&& exit /b 1
 
                 ) else if %_err_code%==1 >&2 echo [ERROR] invalid option '%~2' ^(%~f0!_func_eof!^)&& exit /b 1
             )
 
-            REM match arguments, sub function
+            @REM match arguments, sub function
             if /i "%%~b\%%~c"==":sub\%~nx1" (
                 set _func_eof=%%~a
                 if defined _annotation if %_err_code%==0 call %0\more !_annotation!
                 set _annotation=
 
             ) else if /i "%%~b"==":pre" (
-                REM match new function, clear function name
+                @REM match new function, clear function name
                 if defined _annotation_more exit /b 0
                 if defined _err_msg >&2 echo unknown error.& exit /b 1
                 set _func_eof=
 
-                REM match target function
+                @REM match target function
                 if /i "%%~b\%%~c"=="%~1" (
                     set _func_eof=%%~a
                     if defined _annotation if %_err_code%==0 call %0\more !_annotation!
                     set _annotation=
 
                 )
-                REM init func var, for display all func, or show sort func name
+                @REM init func var, for display all func, or show sort func name
                 set _prefix_4_auto_complete\%%~c=!_annotation! ""
 
             )
@@ -330,13 +330,13 @@ A:
         if defined _annotation_more exit /b 0
         if defined _err_msg >&2 echo unknown error.& exit /b 1
 
-        REM Foreach func list
+        @REM Foreach func list
         call :pre\cols _col
         set /a _i=0, _col/=16
         for /f usebackq^ tokens^=1^,2^ delims^=^=^" %%a in (`
             2^>nul set _prefix_4_auto_complete\%~n1
         `) do if "%~1" neq "" (
-            REM " Sort func name expansion
+            @REM " Sort func name expansion
             set /a _i+=1
             if !_i!==1 (
                 set _cache_arg=%%~nxa
@@ -353,10 +353,10 @@ A:
 
         ) else call :sub\str\--2col-left %%~nxa "%%~b"
 
-        REM Close lals
+        @REM Close lals
         if !_i! gtr 0 call :sub\txt\--all-col-left 0 0
 
-        REM Display func or call func
+        @REM Display func or call func
         endlocal & if %_i% gtr 1 (
             echo.
             >&2 echo [WARN] function sort name conflict
