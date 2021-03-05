@@ -466,23 +466,33 @@ _3rd_cam () {
     esac
 }
 
-### Get some urls ##Usage: urls [options] [args...] ##    --chrome,    -c  [mac|win64|win32]  Get chrome url which last stable version #    --jetbrains, -j                     Get jetbrains urls which last stable version #    --eclipse,   -e                     Get last version eclipse and sha1 ##
+### Get some urls ##Usage: urls [options] [args...] ##    --chrome,    -c  [mac-arm|mac-intel|win64|win32]  Get chrome url which last stable version #    --jetbrains, -j                     Get jetbrains urls which last stable version #    --eclipse,   -e                     Get last version eclipse and sha1 ##
 _3rd_urls () {
+    # https://github.com/google/omaha/blob/master/doc/ServerProtocol.md
+    # https://github.com/google/omaha/blob/master/doc/ServerProtocolV3.md
+    # https://chromium.googlesource.com/chromium/src.git/+/master/docs/updater/protocol_3_1.md
     case $1 in
         --chrome|-c)
             local i platform version arch appid ap;
             shift;
             for i in "$@"; do
                 case $i in
-                    mac)
-                        # https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg
+                    mac-arm)
                         platform='mac';
-                        version='10.13';
-                        arch='x64'; # arm64
+                        version='10.16';
+                        arch='arm64';
                         appid='com.google.Chrome';
                         ap=''
                     ;;
-                    win64|win)
+                    mac-intel)
+                        # https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg
+                        platform='mac';
+                        version='10.15';
+                        arch='x64';
+                        appid='com.google.Chrome';
+                        ap=''
+                    ;;
+                    win64)
                         # https://www.google.cn/chrome/thank-you.html?standalone=1&platform=win64&installdataindex=empty
                         platform='win';
                         version='10.0';
@@ -493,12 +503,12 @@ _3rd_urls () {
                     win32)
                         platform='win';
                         version='10.0';
-                        arch=''; # arch='x86'
+                        arch='x86';
                         appid='{8A69D345-D564-463C-AFF1-A69D9E530F96}';
-                        ap='' # ap='-multi-chrome'
+                        ap='-multi-chrome'
                     ;;
                     *)
-                        exit 1; # Args not support, input 'mac|win64|win32'
+                        exit 1; # Args not support, input 'mac-intel|mac-arm|win64|win32'
                     ;;
                 esac
 
@@ -506,9 +516,9 @@ _3rd_urls () {
                 eval "$(
                     curl --connect-timeout 30 --silent --request POST --data \
                         '<?xml version="1.0" encoding="UTF-8"?>
-                        <request protocol="3.0" ismachine="0">
+                        <request protocol="3.1" ismachine="0" updaterchannel="stable">
                             <os platform="'$platform'" version="'$version'" arch="'$arch'"/>
-                            <app appid="'$appid'" ap="'$ap'" >
+                            <app appid="'$appid'" release_channel="stable" ap="'$ap'">
                                 <updatecheck/>
                             </app>
                         </request>' \
