@@ -25,26 +25,26 @@
 ::         ::: "[brief_introduction]" "" "[description]" ...
 ::         :[script_name_without_suffix]\[function_name]
 ::             ...
-::             REM call sub function
-::             call :arg\[function_name]\%*
+::             @REM call sub function
+::             call :sub\[function_name]\%*
 ::             ...
-::             REM return false status
+::             @REM return false status
 ::             exit /b -1
 ::
 ::         ::: "[description_sub_function]" ...
-::         :arg\[function_name]\[--arg]
+::         :sub\[function_name]\[--arg]
 ::             ...
-::             REM exit and display [error_description_1]
-::             exit /b 2 REM [error_description_1]
+::             @REM exit and display [error_description_1]
+::             exit /b 2 @REM [error_description_1]
 
 ::::::::::::::::::::::::::
 :: Third-Party Programs ::
 ::::::::::::::::::::::::::
 
-REM init errorlevel
+@REM init errorlevel
 set errorlevel=
 
-REM Init PATH
+@REM Init PATH
 for %%a in (%~nx0) do if "%%~$path:a"=="" set path=%path%;%~dp0
 
 if "%~2"=="-h" call :this\annotation :%~n0\%~1 & goto :eof
@@ -54,7 +54,7 @@ if "%~2"=="--help" call :this\annotation :%~n0\%~1 & goto :eof
 
 if not errorlevel 0 exit /b 1
 
-REM Test type function
+@REM Test type function
 if errorlevel 1 call :this\annotation :%~n0\%* & goto :eof
 exit /b 0
 
@@ -71,22 +71,22 @@ exit /b 0
 
 ::: "Backup git repositories"
 :3rd\gitb
-    call :this\path\--contain git.exe || exit /b 2 REM git command not found
+    call :sub\path\--contain git.exe || exit /b 2 @REM git command not found
     setlocal enabledelayedexpansion
 
     for /r /d %%a in (
         hook?
     ) do if exist "%%~dpaobjects" (
-        REM git repository
+        @REM git repository
         set "_src=%%~dpa"
         set "_src=!_src:~0,-1!"
 
-        REM project name
+        @REM project name
         set _name=!_src:\.git=!
         set _name=!_name:.git=!
         for %%b in ("!_name!") do set "_name=%%~nxb"
 
-        REM get latest update version
+        @REM get latest update version
         for /f "usebackq delims=" %%b in (
             `git.exe --git-dir^="!_src!" log -1 --all --pretty^=format:%%cd --date^=format:%%y%%m%%d%%H%%M`
         ) do set _tamp=%%b
@@ -96,7 +96,7 @@ exit /b 0
 
             if not exist "!_out!" (
                 echo create bundle: !_name!
-                REM git.exe --git-dir="!_src!" bundle create "!_out!" HEAD master
+                @REM git.exe --git-dir="!_src!" bundle create "!_out!" HEAD master
                 git.exe --git-dir="!_src!" bundle create "!_out!" --all && git.exe bundle verify "!_out!"
                 git.exe --git-dir="!_src!" gc
                 echo.
@@ -109,12 +109,12 @@ exit /b 0
 ::: "Maven repository tools" "" "usage: %~n0 m2 [option]" ""
 :3rd\m2
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\m2\%* 2>nul
+    call :sub\m2\%* 2>nul
     goto :eof
 
 ::: "    --trim, -c   [[repo_path]]      Print broken file from local maven repository"
-:arg\m2\--trim
-:arg\m2\-c
+:sub\m2\--trim
+:sub\m2\-c
     setlocal
     set _lu=0
     set _m2_repo=%~1
@@ -122,7 +122,7 @@ exit /b 0
     for /r "%_m2_repo%" %%a in (
         *.md5 *.sha1 *.lastUpdated
     ) do call :m2\show-trim-info "%%~a"
-    echo REM lastUpdated: %_lu%
+    echo @REM lastUpdated: %_lu%
     endlocal
     goto :eof
 
@@ -152,7 +152,7 @@ exit /b 0
 
 ::: "Oracle service start\stop"
 :3rd\orcld
-    if "%~1"=="" exit /b 2 REM Sid is empty, default is orcl
+    if "%~1"=="" exit /b 2 @REM Sid is empty, default is orcl
     setlocal
     set _sid=OracleService%~1
     for /f "usebackq tokens=1,3" %%a in (
@@ -169,7 +169,7 @@ exit /b 0
     endlocal
     exit /b 0
 
-REM For :3rd\orcl
+@REM For :3rd\orcl
 :orcld
     echo Oracle Service allready %~2, Press {Enter} to %~1
     set /p _input=or type any characters to EXIT.
@@ -179,7 +179,7 @@ REM For :3rd\orcl
     net.exe %1 %_sid%
     exit /b 0
 
-REM For :3rd\orcl
+@REM For :3rd\orcl
 :orcld\setService
     for /f "usebackq tokens=1,3" %%a in (
         `sc.exe qc %_srv%`
@@ -197,29 +197,21 @@ REM For :3rd\orcl
     )
     exit /b 0
 
-REM ::: "Get docker tags" "" "    %~n0 tags [image_name]"
-REM :3rd\tags
-REM     for %%a in (bash.exe) do if "%%~$path:a"=="" exit /b 2 REM no bash.exe found, need install git for windows, and add it in environment variabl
-REM     for /f "usebackq tokens=2,4 " %%a in (
-REM         `bash.exe -c 'curl https://index.docker.io/v1/repositories/%1/tags 2^>nul ^^^| sed -e "s/\}, /\n/g;s/,//g;s/\}\]//g"`
-REM     ) do echo %%~a %1:%%~b
-REM     exit /b 0
-
 ::: "VirtualBox Manage" "" "usage: %~n0 vbox [args] [[vm_name]]" ""
 :3rd\vbox
     setlocal enabledelayedexpansion
-    REM Add vbox path
+    @REM Add vbox path
     set path=%path%;%VBOX_MSI_INSTALL_PATH%
-    REM Test VBoxManage command
-    call :this\path\--contain VBoxManage.exe || exit /b 2 REM need install vbox
+    @REM Test VBoxManage command
+    call :sub\path\--contain VBoxManage.exe || exit /b 2 @REM need install vbox
 
-    2>nul call :arg\vbox\%*
-    if %errorlevel%==1 if "%~2"=="" call :arg\vbox\start %*
+    2>nul call :sub\vbox\%*
+    if %errorlevel%==1 if "%~2"=="" call :sub\vbox\start %*
     endlocal & exit /b %errorlevel%
 
-REM List all VM name, tag running VM
-REM todo MAC VBoxManage.exe showvminfo %_vms% --machinereadable | find "macaddress"
-:arg\vbox\
+@REM List all VM name, tag running VM
+@REM todo MAC VBoxManage.exe showvminfo %_vms% --machinereadable | find "macaddress"
+:sub\vbox\
     call :vbox\setVar vms _vms
     call :vbox\setVar runningvms _run
     for /f "usebackq delims==" %%a in (
@@ -229,31 +221,31 @@ REM todo MAC VBoxManage.exe showvminfo %_vms% --machinereadable | find "macaddre
         call :this\txt\--all-col-left (running^)
         echo.
     ) else echo %%~nxa
-    REM call :this\txt\--all-col-left 0 0
+    @REM call :this\txt\--all-col-left 0 0
     exit /b 0
 
-REM Start VM
+@REM Start VM
 ::: "    start       Start VM by name"
-:arg\vbox\start
+:sub\vbox\start
     call :vbox\init %1 || exit /b 0
     if defined _run\%vm% (
         echo %vm% is running...
     ) else VBoxManage.exe startvm %vm% -type headless
     exit /b 0
 
-REM Stop VM
+@REM Stop VM
 ::: "    stop/save   Stop VM by name"
-:arg\vbox\stop
-REM :arg\vbox\save
+:sub\vbox\stop
+@REM :sub\vbox\save
     call :vbox\init %1 || exit /b 0
     if defined _run\%vm% (
         VBoxManage.exe controlvm %vm% poweroff
     ) else echo %vm% not running...
     exit /b 0
 
-REM Stop All VM
+@REM Stop All VM
 ::: "    stopAll     Stop all vm"
-:arg\vbox\stopAll
+:sub\vbox\stopAll
     for /f "usebackq" %%a in (
         `VBoxManage.exe list runningvms`
     ) do VBoxManage.exe controlvm %%~a poweroff
@@ -261,21 +253,21 @@ REM Stop All VM
     exit /b 0
 
 ::: "" "    ova     [vm_name] [eula_file_path] " "                Package vm to ova format"
-:arg\vbox\ova
-    if "%~1"=="" exit /b 51 REM vm name is empty
-    if not exist "%~2" exit /b 52 REM eula file not found
+:sub\vbox\ova
+    if "%~1"=="" exit /b 51 @REM vm name is empty
+    if not exist "%~2" exit /b 52 @REM eula file not found
     setlocal enabledelayedexpansion
     call :vbox\init %1 && VBoxManage.exe export %vm% -o ".\%vm%.ova" --legacy09 --manifest --options nomacs --vsys 0 --eulafile %2
     endlocal
     exit /b 0
 
-REM Set vm variable
+@REM Set vm variable
 :vbox\init
     if "%1"=="" exit /b 1
-    REM Init variable
+    @REM Init variable
     call :vbox\setVar vms _vms
     call :vbox\setVar runningvms _run
-    REM sort name auto complete
+    @REM sort name auto complete
     set vm=
     set i=0
     for /f "usebackq delims==" %%a in (
@@ -286,7 +278,7 @@ REM Set vm variable
         set vm=%%~nxa
         if !i! gtr 1 call :this\txt\--all-col-left %%~nxa
     )
-    REM make all column left-aligned over
+    @REM make all column left-aligned over
     call :this\txt\--all-col-left 0 0
     if %i%==1 (
         exit /b 0
@@ -295,7 +287,7 @@ REM Set vm variable
     ) else >&2 echo Error: no name found
     exit /b 1
 
-REM Reg VM names
+@REM Reg VM names
 :vbox\setvar
     for /f "usebackq tokens=1,2" %%a in (
         `VBoxManage.exe list %1`
@@ -309,12 +301,12 @@ REM Reg VM names
 ::: "Convert to" "" "usage: %~n0 c2 [option] ..." ""
 :3rd\c2
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :this\path\--contain ffmpeg.exe || exit /b 2 REM ffmpeg command not found
-    call :arg\c2\%*
+    call :sub\path\--contain ffmpeg.exe || exit /b 2 @REM ffmpeg command not found
+    call :sub\c2\%*
     goto :eof
 
 ::: "    2flac        Convert alac,ape,m4a,tta,tak,wav to flac format" "" "    need changes the current directory at target"
-:arg\c2\2flac
+:sub\c2\2flac
     pushd "%cd%"
     for /r . %%a in (
         *.alac *.ape *.m4a *.tta *.tak *.wav
@@ -326,10 +318,10 @@ REM Reg VM names
     exit /b 0
 
 ::: "vob2   [drive:] [output_file_path]    Convert dvd" "  e.g. %~n0 vob2 D: E:\out.mkv"
-:arg\c2\vob2
-    if not exist "%~dp2" exit /b 22 REM output path not found
-    if "%~x2"=="" exit /b 23 REM no output suffix
-    REM if /i "%~d1"=="%~d2" exit /b 4
+:sub\c2\vob2
+    if not exist "%~dp2" exit /b 22 @REM output path not found
+    if "%~x2"=="" exit /b 23 @REM no output suffix
+    @REM if /i "%~d1"=="%~d2" exit /b 4
     setlocal enabledelayedexpansion
     set _src=
     for /f "usebackq delims=" %%a in (
@@ -343,7 +335,7 @@ REM Reg VM names
 ::: "Play all multi-media in directory" "" "usage: %~n0 play [options] ... [directory...]" "" "    --random, -r" "    --ast,    -a " "    --skip,   -j [count]"
 :::: "ffplay command not found" "args is empty"
 :3rd\play
-    call :this\path\--contain ffplay.exe || exit /b 1
+    call :sub\path\--contain ffplay.exe || exit /b 1
     if "%~1"=="" exit /b 2
     setlocal enabledelayedexpansion
     set _media=
@@ -353,12 +345,12 @@ REM Reg VM names
 :play\args
     if /i "%~1"=="--random" set _random=RANDOM
     if /i "%~1"=="-r" set _random=RANDOM
-    REM -ast stream_specifier  select desired audio stream
-    if /i "%~1"=="--ast" call :this\is\--integer %~2 && set "_stream_specifier=-ast %~2"& shift /1
-    if /i "%~1"=="-a" call :this\is\--integer %~2 && set "_stream_specifier=-ast %~2"& shift /1
-    if /i "%~1"=="--skip" call :this\is\--integer %~2 && set "_skip=%~2"& shift /1
-    if /i "%~1"=="-j" call :this\is\--integer %~2 && set "_skip=%~2"& shift /1
-    call :this\dir\--isdir %1 && set _media=%_media% "%~1"
+    @REM -ast stream_specifier  select desired audio stream
+    if /i "%~1"=="--ast" call :sub\is\--integer %~2 && set "_stream_specifier=-ast %~2"& shift /1
+    if /i "%~1"=="-a" call :sub\is\--integer %~2 && set "_stream_specifier=-ast %~2"& shift /1
+    if /i "%~1"=="--skip" call :sub\is\--integer %~2 && set "_skip=%~2"& shift /1
+    if /i "%~1"=="-j" call :sub\is\--integer %~2 && set "_skip=%~2"& shift /1
+    call :sub\dir\--isdir %1 && set _media=%_media% "%~1"
     shift /1
     if "%~1" neq "" goto play\args
 
@@ -397,8 +389,8 @@ REM Reg VM names
 
 :this\ff
     echo Progress #%_i% / %_c%, %_random%
-    REM -sn ::disable subtitling
-    REM -ac 2 ::ED..A... set number of audio channels (from 0 to INT_MAX) (default 0) ::Convert the 5.1 track to stereo
+    @REM -sn ::disable subtitling
+    @REM -ac 2 ::ED..A... set number of audio channels (from 0 to INT_MAX) (default 0) ::Convert the 5.1 track to stereo
     for %%a in (
         avi divx flv mkv mp4 mpg rm rmvb vob webm wmv
     ) do if /i "%~x1"==".%%a" ffplay.exe -hide_banner %_stream_specifier% -ac 2 -sn -autoexit -af "volume=0.85" %1 2>&1
@@ -407,46 +399,54 @@ REM Reg VM names
     ) do if /i "%~x1"==".%%a" start /b /wait /min ffplay.exe -hide_banner -autoexit -af "volume=0.05" %1 2>&1
     exit /b 0
 
-REM :3rd\cam
-REM     if "%~1"=="" call :this\annotation %0 & goto :eof
-REM     call :this\path\--contain ffmpeg.exe || exit /b 2 REM ffmpeg command not found
-REM     call :arg\cam\%*
-REM     goto :eof
-REM
-REM :arg\cam\--list
-REM :arg\cam\-l
-REM     ffmpeg.exe -hide_banner -f dshow -list_devices true -i "" 2>&1 | find.exe "]"
-REM     exit /b 0
-REM
-REM :arg\cam\--show
-REM :arg\cam\-s
-REM     ffplay.exe -hide_banner -f dshow -video_size $size -framerate 25 -pixel_format 0rgb -probesize 10M -i "0":"0" 2>&1
-REM     exit /b 0
+@REM :3rd\cam
+@REM     if "%~1"=="" call :this\annotation %0 & goto :eof
+@REM     call :sub\path\--contain ffmpeg.exe || exit /b 2 @REM ffmpeg command not found
+@REM     call :sub\cam\%*
+@REM     goto :eof
+@REM
+@REM :sub\cam\--list
+@REM :sub\cam\-l
+@REM     ffmpeg.exe -hide_banner -f dshow -list_devices true -i "" 2>&1 | find.exe "]"
+@REM     exit /b 0
+@REM
+@REM :sub\cam\--show
+@REM :sub\cam\-s
+@REM     ffplay.exe -hide_banner -f dshow -video_size $size -framerate 25 -pixel_format 0rgb -probesize 10M -i "0":"0" 2>&1
+@REM     exit /b 0
 
 ::: "Docker batch command" "Usage: %~n0 dockers [start/stop]"
 :3rd\moby
-    call :this\path\--contain docker.exe || exit /b 2 REM docker client command not found
-    2>nul call :arg\moby\%*
+    call :sub\path\--contain docker.exe || exit /b 2 @REM docker client command not found
+    2>nul call :sub\moby\%*
     goto :eof
 
-:arg\moby\start
+:sub\moby\start
     for /f "usebackq skip=1" %%a in (
         `docker.exe ps -f status=exited`
     ) do docker.exe start %%a
     exit /b 0
 
-:arg\moby\stop
+:sub\moby\stop
     for /f "usebackq skip=1" %%a in (
         `docker.exe ps`
     ) do docker.exe stop %%a
     exit /b 0
 
+@REM ::: "Get docker tags" "" "    %~n0 tags [image_name]"
+@REM :sub\moby\tags
+@REM     for %%a in (bash.exe) do if "%%~$path:a"=="" exit /b 2 @REM no bash.exe found, need install git for windows, and add it in environment variabl
+@REM     for /f "usebackq tokens=2,4 " %%a in (
+@REM         `bash.exe -c 'curl https://index.docker.io/v1/repositories/%1/tags 2^>nul ^^^| sed -e "s/\}, /\n/g;s/,//g;s/\}\]//g"`
+@REM     ) do echo %%~a %1:%%~b
+@REM     exit /b 0
+
 ::: "Compress PNG images" "Usage: %~n0 png [src_dir] [out_dir]"
 :3rd\png
-    call :this\path\--contain pngquant.exe || exit /b 2 REM pngquant command not found
-    if not exist "%~f1" exit /b 3 REM source path not exist
-    if "%~2"=="" exit /b 4 REM output path not set
-    if /i "%~f1"=="%~f2" exit /b 5 REM out put dir is same
+    call :sub\path\--contain pngquant.exe || exit /b 2 @REM pngquant command not found
+    if not exist "%~f1" exit /b 3 @REM source path not exist
+    if "%~2"=="" exit /b 4 @REM output path not set
+    if /i "%~f1"=="%~f2" exit /b 5 @REM out put dir is same
 
     setlocal enabledelayedexpansion
     set "_src=%~f1"
@@ -468,9 +468,9 @@ REM     exit /b 0
 :3rd\tar.gz
 ::: "tar.bz2 compresses by 7za" "" "Usage: %~n0 tar.bz2 [path]"
 :3rd\tar.bz2
-    call :this\path\--contain 7za.exe || exit /b 10 REM 7za not fount
+    call :sub\path\--contain 7za.exe || exit /b 10 @REM 7za not fount
     setlocal enabledelayedexpansion
-    if not exist "%~1" exit /b 2 REM target not found
+    if not exist "%~1" exit /b 2 @REM target not found
 	if "%~2"=="" call :this\equalsDeputySuffix %1 .tar && (
 		call :this\tarDecompresses %1
 		goto :eof
@@ -481,7 +481,7 @@ REM     exit /b 0
     endlocal
     exit /b 0
 
-REM for :3rd\tar.*
+@REM for :3rd\tar.*
 :this\tarCompresses
 	if not defined _tarName set _tarName=%~n1
 	if "%~2"=="" call :this\dir\--isdir %1 || for %%a in (
@@ -499,33 +499,33 @@ REM for :3rd\tar.*
 	set _tarName=
 	goto :eof
 
-REM for :3rd\tar.*
+@REM for :3rd\tar.*
 :this\tarDecompresses
 	for %%a in ("%~n1") do (
 		7za.exe x %1 -so | 7za.exe x -si -ttar -o. -aoa
-		REM call :this\molting ".\%%~na" %2
+		@REM call :this\molting ".\%%~na" %2
 	)
 	goto :eof
 
-REM REM for :this\tarDecompresses
-REM :this\molting
-REM 	if "%~1"=="" goto :eof
-REM 	REM if "%~2"=="" goto :eof
-REM 	for /f "usebackq delims=" %%a in (
-REM 		`dir /a /b "%~1"`
-REM 	) do if not defined _molting (
-REM 		call :this\dir\--isdir "%~1\%%a" || goto :eof
-REM 		set "_molting=%%a"
-REM 	) else set _molting= & goto :eof
-REM 	call :this\str\--now _nowM && rename "%~1" !_nowM!
-REM 	>nul move /y "%~dp1!_nowM!\!_molting!" "%~dp1" && rmdir /s /q "%~dp1!_nowM!"
-REM 	set _nowM=
-REM 	REM set "%~2=%~dp1!_molting!"
-REM 	set _molting=
-REM 	REM call %0 "!%~2!" %~2
-REM 	goto :eof
+@REM @REM for :this\tarDecompresses
+@REM :this\molting
+@REM 	if "%~1"=="" goto :eof
+@REM 	@REM if "%~2"=="" goto :eof
+@REM 	for /f "usebackq delims=" %%a in (
+@REM 		`dir /a /b "%~1"`
+@REM 	) do if not defined _molting (
+@REM 		call :this\dir\--isdir "%~1\%%a" || goto :eof
+@REM 		set "_molting=%%a"
+@REM 	) else set _molting= & goto :eof
+@REM 	call :this\str\--now _nowM && rename "%~1" !_nowM!
+@REM 	>nul move /y "%~dp1!_nowM!\!_molting!" "%~dp1" && rmdir /s /q "%~dp1!_nowM!"
+@REM 	set _nowM=
+@REM 	@REM set "%~2=%~dp1!_molting!"
+@REM 	set _molting=
+@REM 	@REM call %0 "!%~2!" %~2
+@REM 	goto :eof
 
-REM for :3rd\tar.*
+@REM for :3rd\tar.*
 :this\equalsDeputySuffix
 	for %%a in (
 		"%~n1"
@@ -533,72 +533,72 @@ REM for :3rd\tar.*
 	exit /b 1
 
 
-REM :3rd\ftp
-REM 	>%temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d (
-REM 		call :this\ftp\init [ip] [name] [password] [dir]
-REM 		if "%~1"=="" (
-REM 			call :this\ftp\dir
-REM 		) else call :this\ftp\upload %*
-REM 	)
-REM  	ftp.exe -s:%temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d
-REM  	erase %temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d
-REM     exit /b 0
-REM
-REM :this\ftp\init
-REM 	echo open %~1
-REM 	echo %~2
-REM 	echo %3
-REM 	echo cd %4
-REM 	goto :eof
-REM
-REM :this\ftp\upload
-REM 	echo binary
-REM 	for %%a in (
-REM 		%*
-REM 	) do if exist "%%~a" echo put "%%~a"
-REM 	echo close
-REM 	echo quit
-REM 	goto :eof
-REM
-REM :this\ftp\dir
-REM 	echo dir
-REM 	echo quit
-REM 	goto :eof
+@REM :3rd\ftp
+@REM 	>%temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d (
+@REM 		call :this\ftp\init [ip] [name] [password] [dir]
+@REM 		if "%~1"=="" (
+@REM 			call :this\ftp\dir
+@REM 		) else call :this\ftp\upload %*
+@REM 	)
+@REM  	ftp.exe -s:%temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d
+@REM  	erase %temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d
+@REM     exit /b 0
+@REM
+@REM :this\ftp\init
+@REM 	echo open %~1
+@REM 	echo %~2
+@REM 	echo %3
+@REM 	echo cd %4
+@REM 	goto :eof
+@REM
+@REM :this\ftp\upload
+@REM 	echo binary
+@REM 	for %%a in (
+@REM 		%*
+@REM 	) do if exist "%%~a" echo put "%%~a"
+@REM 	echo close
+@REM 	echo quit
+@REM 	goto :eof
+@REM
+@REM :this\ftp\dir
+@REM 	echo dir
+@REM 	echo quit
+@REM 	goto :eof
 
 ::::::::::::::::::
 ::     Base     ::
   :: :: :: :: ::
 
-REM Test target in $path
-:arg\path\--contain
+@REM Test target in $path
+:sub\path\--contain
     if "%~1" neq "" if "%~$path:1" neq "" exit /b 0
     exit /b 1
 
-REM Test string if Num \* @see lib.cmd *\
-:arg\is\--integer
+@REM Test string if Num \* @see lib.cmd *\
+:sub\is\--integer
     if "%~1"=="" exit /b 10
     setlocal
     set _tmp=
-    REM quick return
+    @REM quick return
     2>nul set /a _code=10, _tmp=%~1
     if "%~1"=="%_tmp%" set _code=0
     endlocal & exit /b %_code%
 
-REM Test path is directory \* @see dis.cmd *\
-:arg\dir\--isdir
+@REM Test path is directory \* @see dis.cmd *\
+:sub\dir\--isdir
     setlocal
     set _path=%~a1-
-    REM quick return
+    @REM quick return
     set _code=10
     if %_path:~0,1%==d set _code=0
     endlocal & exit /b %_code%
 
-REM Display Time at [YYYYMMDDhhmmss] \* @see lib.cmd *\
-:arg\str\--now
+@REM Display Time at [YYYYMMDDhhmmss] \* @see lib.cmd *\
+:sub\str\--now
     if "%~1"=="" exit /b 2
     set date=
     set time=
-    REM en zh
+    @REM en zh
     for /f "tokens=1-8 delims=-/:." %%a in (
       "%time: =%.%date: =.%"
     ) do if %%e gtr 1970 (
@@ -614,7 +614,7 @@ REM Display Time at [YYYYMMDDhhmmss] \* @see lib.cmd *\
 ::                 Framework                 ::
    :: :: :: :: :: :: :: :: :: :: :: :: :: ::
 
-REM Show function list, func info or error message, complete function name
+@REM Show function list, func info or error message, complete function name
 :this\annotation
     setlocal enabledelayedexpansion & set /a _err_code=%errorlevel%
     set _annotation_more=
@@ -632,33 +632,33 @@ REM Show function list, func info or error message, complete function name
             if %_err_code% gtr 1 (
                 set _err_msg=%%~a
                 set _un_space=!_err_msg: =!
-                REM match error message
+                @REM match error message
                 if "!_un_space:exit/b%_err_code%=!" neq "!_un_space!" >&2 ^
-                    echo [ERROR] !_err_msg:* REM =! ^(%~f0!_func_eof!^)&& exit /b 1
+                    echo [ERROR] !_err_msg:* @REM =! ^(%~f0!_func_eof!^)&& exit /b 1
 
             ) else if %_err_code%==1 >&2 echo [ERROR] invalid option '%~2' ^(%~f0!_func_eof!^)&& exit /b 1
         )
 
-        REM match arguments, sub function
-        if /i "%%~b\%%~c"==":arg\%~nx1" (
+        @REM match arguments, sub function
+        if /i "%%~b\%%~c"==":sub\%~nx1" (
             set _func_eof=%%~a
             if defined _annotation if %_err_code%==0 call %0\more !_annotation!
             set _annotation=
 
         ) else if /i "%%~b"==":%~n0" (
-            REM match new function, clear function name
+            @REM match new function, clear function name
             if defined _annotation_more exit /b 0
             if defined _err_msg >&2 echo unknown error.& exit /b 1
             set _func_eof=
 
-            REM match target function
+            @REM match target function
             if /i "%%~b\%%~c"=="%~1" (
                 set _func_eof=%%~a
                 if defined _annotation if %_err_code%==0 call %0\more !_annotation!
                 set _annotation=
 
             )
-            REM init func var, for display all func, or show sort func name
+            @REM init func var, for display all func, or show sort func name
             set _prefix_4_auto_complete\%%~c=!_annotation! ""
 
         )
@@ -668,13 +668,13 @@ REM Show function list, func info or error message, complete function name
     if defined _annotation_more exit /b 0
     if defined _err_msg >&2 echo unknown error.& exit /b 1
 
-    REM Foreach func list
+    @REM Foreach func list
     call :lib\cols _col
     set /a _i=0, _col/=16
     for /f usebackq^ tokens^=1^,2^ delims^=^=^" %%a in (`
         2^>nul set _prefix_4_auto_complete\%~n1
     `) do if "%~1" neq "" (
-        REM " Sort func name expansion
+        @REM " Sort func name expansion
         set /a _i+=1
         if !_i!==1 (
             set _cache_arg=%%~nxa
@@ -684,17 +684,17 @@ REM Show function list, func info or error message, complete function name
             ) else set _args=%%~nxa
 
         ) else if !_i!==2 (
-            call :arg\txt\--all-col-left !_cache_arg! %_col%
-            call :arg\txt\--all-col-left %%~nxa %_col%
+            call :sub\txt\--all-col-left !_cache_arg! %_col%
+            call :sub\txt\--all-col-left %%~nxa %_col%
 
-        ) else if !_i! geq 2 call :arg\txt\--all-col-left %%~nxa %_col%
+        ) else if !_i! geq 2 call :sub\txt\--all-col-left %%~nxa %_col%
 
-    ) else call :arg\str\--2col-left %%~nxa "%%~b"
+    ) else call :sub\str\--2col-left %%~nxa "%%~b"
 
-    REM Close lals
-    if !_i! gtr 0 call :arg\txt\--all-col-left 0 0
+    @REM Close lals
+    if !_i! gtr 0 call :sub\txt\--all-col-left 0 0
 
-    REM Display func or call func
+    @REM Display func or call func
     endlocal & if %_i% gtr 1 (
         echo.
         >&2 echo [WARN] function sort name conflict
@@ -714,8 +714,8 @@ REM Show function list, func info or error message, complete function name
     set _annotation_more=true
     exit /b 0
 
-REM Make the second column left-aligned
-:arg\str\--2col-left
+@REM Make the second column left-aligned
+:sub\str\--2col-left
     if "%~2"=="" exit /b 1
     setlocal enabledelayedexpansion
     set _str=%~10123456789abcdef
@@ -726,8 +726,8 @@ REM Make the second column left-aligned
     endlocal
     exit /b 0
 
-REM Use right pads spaces, make all column left-aligned
-:arg\txt\--all-col-left
+@REM Use right pads spaces, make all column left-aligned
+:sub\txt\--all-col-left
     if "%~1"=="" exit /b 1
     if "%~2" neq "" if 1%~2 lss 12 (if defined _acl echo. & set _acl=) & exit /b 0
     setlocal enabledelayedexpansion
@@ -742,14 +742,14 @@ REM Use right pads spaces, make all column left-aligned
     endlocal & set _acl=%_acl%
     exit /b 0
 
-REM for :this\txt\--all-col-left
+@REM for :this\txt\--all-col-left
 :strModulo
     set /a _acl+=1
     set _str=%_str:~15%
     if "%_str:~31,1%"=="" exit /b 0
     goto %0
 
-REM Get cmd cols
+@REM Get cmd cols
 :lib\cols
     for /f "usebackq skip=4 tokens=2" %%a in (`mode.com con`) do (
         if "%~1"=="" (

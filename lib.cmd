@@ -25,17 +25,17 @@
 ::         ::: "[brief_introduction]" "" "[description]" ...
 ::         :[script_name_without_suffix]\[function_name]
 ::             ...
-::             REM call sub function
-::             call :arg\[function_name]\%*
+::             @REM call sub function
+::             call :sub\[function_name]\%*
 ::             ...
-::             REM return false status
+::             @REM return false status
 ::             exit /b -1
 ::
 ::         ::: "[description_sub_function]" ...
-::         :arg\[function_name]\[--arg]
+::         :sub\[function_name]\[--arg]
 ::             ...
-::             REM exit and display [error_description_1]
-::             exit /b 2 REM [error_description_1]
+::             @REM exit and display [error_description_1]
+::             exit /b 2 @REM [error_description_1]
 ::
 ::
 :: Thread:
@@ -50,13 +50,13 @@
 :: basic functions ::
   :::::::::::::::::
 
-REM init errorlevel
+@REM init errorlevel
 set errorlevel=
 
-REM For thread
+@REM For thread
 if "%~d1"=="\\" call :thread "%*" & exit
 
-REM Init PATH
+@REM Init PATH
 for %%a in (%~nx0) do if "%%~$path:a"=="" set path=%path%;%~dp0
 
 if "%~2"=="-h" call :this\annotation :%~n0\%~1 & exit /b 0
@@ -66,7 +66,7 @@ if "%~2"=="--help" call :this\annotation :%~n0\%~1 & exit /b 0
 
 if not errorlevel 0 exit /b 1
 
-REM Test type function
+@REM Test type function
 if errorlevel 1 call :this\annotation :%~n0\%* & goto :eof
 exit /b 0
 
@@ -88,62 +88,62 @@ exit /b 0
 ::: "Variable tool" "" "usage: %~n0 var [option] [...]" ""
 :lib\var
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\var\%*
+    call :sub\var\%*
     goto :eof
 
-REM override:
-REM "":         [variable_prefix_name*]
+@REM override:
+@REM "":         [variable_prefix_name*]
 ::: "    --unset, -u   [[var_name]]             Unset variable, where variable name left contains"
-:arg\var\--unset   [variable_prefix_name]
-:arg\var\-u
-    if "%~1"=="" exit /b 10 REM The parameter is empty
+:sub\var\--unset   [variable_prefix_name]
+:sub\var\-u
+    if "%~1"=="" exit /b 10 @REM The parameter is empty
     for /f "usebackq delims==" %%a in (
         `2^>nul set %1`
     ) do set %%a=
     exit /b 0
 
 ::: "    --env,   -e   [key] [value]            Set environment variable"
-:arg\var\--env
-:arg\var\-e
-    if "%~1"=="" exit /b 22 REM key is empty
-    if "%~2"=="" exit /b 23 REM value is empty
-    REM for %%a in (setx.exe) do if "%%~$path:a" neq "" >nul setx.exe %~1 %2 /m & exit /b 0
+:sub\var\--env
+:sub\var\-e
+    if "%~1"=="" exit /b 22 @REM key is empty
+    if "%~2"=="" exit /b 23 @REM value is empty
+    @REM for %%a in (setx.exe) do if "%%~$path:a" neq "" >nul setx.exe %~1 %2 /m & exit /b 0
     if defined %~1 wmic.exe environment where 'name="%~1" and username="<system>"' set VariableValue="%~2"
     if not defined %~1 wmic.exe environment create name="%~1",username="<system>",VariableValue="%~2"
     exit /b 0
 
 ::: "    --set-errorlevel, -sel  [num]          Set errorlevel variable"
-:arg\var\--set-errorlevel
-:arg\var\-sel
+:sub\var\--set-errorlevel
+:sub\var\-sel
     if "%~1"=="" goto :eof
     exit /b %1
 
 ::: "    --in-path,    -p   [file_name]         Test target in $env:path"
-:arg\var\--in-path
-:arg\var\-p
+:sub\var\--in-path
+:sub\var\-p
     if "%~1" neq "" if "%~$path:1" neq "" exit /b 0
     exit /b -1
 
 ::: "    --trim-path,  -sp  [var_name]          Path Standardize"
-:arg\var\--trim-path
-:arg\var\-sp
-    if "%~1"=="" exit /b 56 REM variable name is empty
-    if not defined %~1 exit /b 57 REM variable name not defined
+:sub\var\--trim-path
+:sub\var\-sp
+    if "%~1"=="" exit /b 56 @REM variable name is empty
+    if not defined %~1 exit /b 57 @REM variable name not defined
     setlocal enabledelayedexpansion
-    REM TODO get var value in path
-    REM Trim quotes
+    @REM TODO get var value in path
+    @REM Trim quotes
     set _var=!%~1:"=!
-    REM " Trim head/tail semicolons
+    @REM " Trim head/tail semicolons
     if "%_var:~0,1%"==";" set _var=%_var:~1%
     if "%_var:~-1%"==";" set _var=%_var:~0,-1%
-    REM Replace slash end of path
+    @REM Replace slash end of path
     set _var=%_var:\;=;%;
-    REM Delete path if not exist
+    @REM Delete path if not exist
     call :this\path\trim "%_var:;=" "%"
     endlocal & set %~1=%_var:~0,-1%
     exit  /b 0
 
-REM for :arg\var\--trim-path, delete path if not exist
+@REM for :sub\var\--trim-path, delete path if not exist
 :this\path\trim
     if "%~1"=="" exit /b 0
     if not exist %1 set _var=!_var:%~1;=!
@@ -151,26 +151,26 @@ REM for :arg\var\--trim-path, delete path if not exist
     goto %0
 
 ::: "    --reset-path, -rp                      Reset default path environment variable"
-:arg\var\--reset-path
-:arg\var\-rp
+:sub\var\--reset-path
+:sub\var\-rp
     for /f "usebackq tokens=2 delims==" %%a in (
         `wmic.exe ENVIRONMENT where "Caption='<SYSTEM>\\Path'" get VariableValue /format:list`
     ) do call set path=%%a
     exit /b 0
 
 ::: "    --backspace,        -bs   [var_name]   Get some backspace (erases previous character)"
-:arg\var\--backspace
-:arg\var\-s
-    if "%~1"=="" exit /b 80 REM variable name is empty
+:sub\var\--backspace
+:sub\var\-s
+    if "%~1"=="" exit /b 80 @REM variable name is empty
     for /f %%a in ('"prompt $h & for %%a in (.) do REM"') do set %~1=%%a
     exit /b 0
 
 ::: "    --install-config,   -ic                Support load %USERPROFILE%\.batchrc before cmd.exe run"
-:arg\var\--install-config
-:arg\var\-ic
+:sub\var\--install-config
+:sub\var\-ic
     setlocal
 
-    call :arg\var\--backspace _bs
+    call :sub\var\--backspace _bs
     call :regedit\on
     reg.exe ^
         add "HKCU\SOFTWARE\Microsoft\Command Processor" ^
@@ -191,11 +191,11 @@ REM for :arg\var\--trim-path, delete path if not exist
     exit /b 0
 
 ::: "    --uninstall-config, -uc                Remove config loader"
-:arg\var\--uninstall-config
-:arg\var\-uc
+:sub\var\--uninstall-config
+:sub\var\-uc
     setlocal
     call :regedit\on
-    REM erase "%USERPROFILE%\.batchrc"
+    @REM erase "%USERPROFILE%\.batchrc"
     reg.exe delete "HKCU\SOFTWARE\Microsoft\Command Processor" /v AutoRun /f
     call :regedit\off
     endlocal
@@ -205,61 +205,61 @@ REM for :arg\var\--trim-path, delete path if not exist
 ::: "Run by ..." "" "usage: %~n0 run [option]" ""
 :lib\run
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\run\%*
+    call :sub\run\%*
     goto :eof
 
 ::: "    --admin,  -a  [...]    Run As Administrator"
-:arg\run\--admin
-:arg\run\-a
-    REM net.exe user administrator /active:yes
-    REM net.exe user administrator ???
+:sub\run\--admin
+:sub\run\-a
+    @REM net.exe user administrator /active:yes
+    @REM net.exe user administrator ???
     runas.exe /savecred /user:administrator "%*"
     exit /b 0
 
 ::: "    --vbhide, -q  [...]    Run some command at background"
-:arg\run\--vbhide
-:arg\run\-q
-    if "%~1"=="" exit /b 22 REM The first parameter is empty
-    REM mshta.exe VBScript:CreateObject("WScript.Shell").Run("""%~1"" %~2", 0)(Window.close)
-    REM see https://docs.microsoft.com/zh-tw/windows/desktop/shell/shell-shellexecute#code-snippet-1
-    REM mshta.exe VBScript:CreateObject("Shell.Application").ShellExecute("%~1","%2 %3 %4 %5 %6 %7 %8 %9","","open",0)(window.close)
+:sub\run\--vbhide
+:sub\run\-q
+    if "%~1"=="" exit /b 22 @REM The first parameter is empty
+    @REM mshta.exe VBScript:CreateObject("WScript.Shell").Run("""%~1"" %~2", 0)(Window.close)
+    @REM see https://docs.microsoft.com/zh-tw/windows/desktop/shell/shell-shellexecute#code-snippet-1
+    @REM mshta.exe VBScript:CreateObject("Shell.Application").ShellExecute("%~1","%2 %3 %4 %5 %6 %7 %8 %9","","open",0)(window.close)
     call :lib\vbs vbhide "%~1"
     exit /b 0
 
 ::: "Test string status" "" "usage: %~n0 is [option] [[string]]" ""
 :lib\is
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\is\%*
+    call :sub\is\%*
     goto :eof
 
 ::: "    --integer, -i  [string]   Test string if integer"
-:arg\is\--integer
-:arg\is\-i
+:sub\is\--integer
+:sub\is\-i
     if "%~1"=="" exit /b -1
     setlocal
     set _tmp=
-    REM quick return
+    @REM quick return
     2>nul set /a _code=-1, _tmp=%~1
     if "%~1"=="%_tmp%" set _code=0
     endlocal & exit /b %_code%
 
 ::: "    --pipe                    Test script run after pipe"
-:arg\is\--pipe
+:sub\is\--pipe
 ::: "    --gui                     Test script start at GUI"
-:arg\is\--gui
+:sub\is\--gui
     setlocal
     set cmdcmdline=
     set _cmdcmdline=%cmdcmdline:"='%
     rem "
     set _code=0
-    if /i "%0"==":arg\is\--pipe" if "%_cmdcmdline%"=="%_cmdcmdline:  /S /D /c' =%" set _code=-1
-    if /i "%0"==":arg\is\--gui" if "%_cmdcmdline%"=="%_cmdcmdline: /c ''=%" set _code=-1
-    REM if /i "%0"==":arg\is\--gui" for %%a in (%cmdcmdline%) do if /i %%~a==/c set _code=0
+    if /i "%0"==":sub\is\--pipe" if "%_cmdcmdline%"=="%_cmdcmdline:  /S /D /c' =%" set _code=-1
+    if /i "%0"==":sub\is\--gui" if "%_cmdcmdline%"=="%_cmdcmdline: /c ''=%" set _code=-1
+    @REM if /i "%0"==":sub\is\--gui" for %%a in (%cmdcmdline%) do if /i %%~a==/c set _code=0
     endlocal & exit /b %_code%
 
-REM REM Test mac addr
-:arg\is\--MACaddr
-:arg\is\-mac
+@REM Test mac addr
+:sub\is\--MACaddr
+:sub\is\-mac
     setlocal enabledelayedexpansion
     set "_mac_addr=%~1"
     for %%z in (
@@ -280,43 +280,43 @@ REM REM Test mac addr
 
 ::: "Process tools" "" "usage: %~n0 ps [[option] [...]]" ""
 :lib\ps
-    call :arg\ps\%*
+    call :sub\ps\%*
     goto :eof
 
-:arg\ps\
+:sub\ps\
     for /f "usebackq tokens=1* delims==" %%a in (`
         wmic.exe process get CommandLine^,Description^,ProcessId /value
     `) do echo.%%b
     goto :eof
 
 ::: "    --test, -t [exec_name]        Test exe if live"
-:arg\ps\--test
-:arg\ps\-t
-    REM tasklist.exe /v /FI "imagename eq %~n1.exe"
-    if "%~1"=="" exit /b 32 REM first parameter is empty
-    for /f usebackq^ tokens^=2^ delims^=^=^" %%a in (
-        `2^>nul wmic.exe process where caption^="%~n1.exe" get commandline /value`
-    ) do for %%b in (
+:sub\ps\--test
+:sub\ps\-t
+    @REM tasklist.exe /v /FI "imagename eq %~n1.exe"
+    if "%~1"=="" exit /b 32 @REM first parameter is empty
+    for /f usebackq^ tokens^=2^ delims^=^=^" %%a in (`
+        2^>nul wmic.exe process where caption^="%~n1.exe" get commandline /value
+    `) do for %%b in (
         %%a
-    ) do if "%%~nb"=="%~n1" exit /b 0
-    REM "
+    ) do if /i "%%~nb"=="%~n1" exit /b 0
+    @REM "
     exit /b -1
 
 ::: "    --kill, -k [process_name...]  kill process"
-:arg\ps\--kill
-:arg\ps\-k
-    if "%~1"=="" exit /b 42 REM first parameter is empty
+:sub\ps\--kill
+:sub\ps\-k
+    if "%~1"=="" exit /b 42 @REM first parameter is empty
     for %%a in (
         %*
-    ) do wmic.exe process where name="%%a.exe" delete
+    ) do wmic.exe process where name="%%~na.exe" delete
 
-    REM for /f "usebackq skip=1" %%a in (
-    REM     `2^>nul wmic.exe process where "commandline like '%*'" get processid`
-    REM ) do for %%b in (%%a) do >nul wmic.exe process where processid="%%b" delete
+    @REM for /f "usebackq skip=1" %%a in (
+    @REM     `2^>nul wmic.exe process where "commandline like '%*'" get processid`
+    @REM ) do for %%b in (%%a) do >nul wmic.exe process where processid="%%b" delete
 
-    REM start "" /b "%~f0" %*
+    @REM start "" /b "%~f0" %*
 
-    REM taskkill.exe /f /im %~1.exe
+    @REM taskkill.exe /f /im %~1.exe
     exit /b 0
 
 ::: "Calculating time intervals, print use time" "" "must be run it before and after function"
@@ -338,29 +338,29 @@ REM REM Test mac addr
 ::: "Update hosts by ini"
 :lib\hosts
     setlocal enabledelayedexpansion
-    REM load ini config
-    call :this\load_ini hosts 1 || exit /b 2 REM no ini file found
-    REM get key array
+    @REM load ini config
+    call :this\load_ini hosts 1 || exit /b 2 @REM no ini file found
+    @REM get key array
     call :map --keys _keys 1
-    REM override mac to ipv4
+    @REM override mac to ipv4
     for /f "usebackq tokens=1*" %%a in (
         `call %~nx0 ip --find %_keys%`
     ) do if not defined _set\%%b (
-        call :map --put %%b %%a 1 && call :arg\str\--2col-left %%~a %%b
+        call :map --put %%b %%a 1 && call :sub\str\--2col-left %%~a %%b
         set _set\%%b=-
     )
 
-    REM replace hosts in cache
-    REM use tokens=2,3 will replace %%a
+    @REM replace hosts in cache
+    @REM use tokens=2,3 will replace %%a
     for /f "usebackq tokens=1* delims=]" %%a in (
         `type %windir%\System32\drivers\etc\hosts ^| find.exe /n /v ""`
     ) do for /f "usebackq tokens=1-3" %%c in (
         '. %%b'
-    ) do call :arg\ip\--test %%d && (
+    ) do call :sub\ip\--test %%d && (
         call :map --get %%e _value 1 && (
             for %%f in (
                 !_value!
-            ) do call :arg\ip\--test "%%~f" && (
+            ) do call :sub\ip\--test "%%~f" && (
                 set _line=%%b
                 call :page --put !_line:%%d=%%f!
             ) || call :page --put %%b
@@ -373,7 +373,7 @@ REM REM Test mac addr
     for %%a in (
         %_arr%
     ) do (
-        call :arg\ip\--test %%a && (
+        call :sub\ip\--test %%a && (
             call :page --put %%~a   !_key!
         )
         set _key=%%~a
@@ -387,14 +387,14 @@ REM REM Test mac addr
 ::: "Ipv4 tools" "" "usage: %~n0 ip [option]" ""
 :lib\ip
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    2>nul call :arg\ip\%*
+    2>nul call :sub\ip\%*
     goto :eof
 
 ::: "    --test, -t [str]      Test string if ipv4"
-:arg\ip\--test
-:arg\ip\-t
-    if "%~1"=="" exit /b 12 REM host name is empty
-    REM [WARN] use usebackq will set all variable global, by :lib\hosts
+:sub\ip\--test
+:sub\ip\-t
+    if "%~1"=="" exit /b 12 @REM host name is empty
+    @REM [WARN] use usebackq will set all variable global, by :lib\hosts
     for /f "tokens=1-4 delims=." %%a in (
         "%~1"
     ) do (
@@ -402,7 +402,7 @@ REM REM Test mac addr
         for %%e in (
             "%%a" "%%b" "%%c" "%%d"
         ) do (
-            call :arg\is\--integer %%~e || exit /b -1
+            call :sub\is\--integer %%~e || exit /b -1
             if %%~e lss 0 exit /b -1
             if %%~e gtr 255 exit /b -1
         )
@@ -410,12 +410,12 @@ REM REM Test mac addr
     exit /b 0
 
 ::: "    --list, -l            Show this ipv4"
-:arg\ip\--list
-:arg\ip\-l
+:sub\ip\--list
+:sub\ip\-l
     setlocal
-    REM Get router ip
+    @REM Get router ip
     call :this\get_route_ip _route
-    REM "
+    @REM "
     for %%a in (
         %_route%
     ) do for /f usebackq^ skip^=1^ tokens^=2^ delims^=^" %%b in (
@@ -425,12 +425,12 @@ REM REM Test mac addr
     exit /b 0
 
 ::: "    --find, -f [MAC] ...  Search IPv4 by MAC or Host name"
-:arg\ip\--find
-:arg\ip\-f
-    if "%~1"=="" exit /b 32 REM host name is empty
+:sub\ip\--find
+:sub\ip\-f
+    if "%~1"=="" exit /b 32 @REM host name is empty
     setlocal enabledelayedexpansion
 
-    REM get config
+    @REM get config
     call :this\load_ini sip_setting -f
     call :map --get route _routes -f
     call :map --get range _range -f
@@ -444,11 +444,11 @@ REM REM Test mac addr
     for %%a in (
         %*
     ) do (
-        REM Get value
+        @REM Get value
         call :map --get %%a _arg -f && (
             set "_mac_addr=!_arg: =!"
         ) || set _mac_addr=%%a
-        REM Format
+        @REM Format
         set "_mac_addr=!_mac_addr::=-!"
         call :map --put %%a "!_mac_addr!" -t
     )
@@ -456,7 +456,7 @@ REM REM Test mac addr
     if not defined _mac_addr exit /b 0
     call :map --clear -f
 
-    REM Get router ip
+    @REM Get router ip
     call :this\get_route_ip _get_route_ip
     for %%a in (
         %_routes% %_get_route_ip%
@@ -467,10 +467,10 @@ REM REM Test mac addr
 
     call :map --keys _keys -t
 
-    REM Clear arp cache
+    @REM Clear arp cache
     arp.exe -d
 
-    REM Search MAC
+    @REM Search MAC
     for %%a in (
         %_route%
     ) do for /l %%b in (
@@ -480,20 +480,20 @@ REM REM Test mac addr
         start /b %~nx0 \\:ip\--find %%~na.%%b %_keys%
     )
 
-    REM print ipv4 for mac addr not catch
+    @REM print ipv4 for mac addr not catch
     for %%a in (
         %_keys%
     ) do call :map --get %%~a _value -t && for %%b in (
         !_value:^|^= !
-    ) do call :arg\ip\--test %%b && call :arg\str\--2col-left %%b %%~a
+    ) do call :sub\ip\--test %%b && call :sub\str\--2col-left %%b %%~a
 
     endlocal
     exit /b 0
 
-REM nbtstat
-REM For thread sip
+@REM nbtstat
+@REM For thread sip
 :ip\--find
-    REM some ping will fail, but arp success
+    @REM some ping will fail, but arp success
     >nul 2>nul ping.exe -n 1 -w 1 %1
     setlocal enabledelayedexpansion
     for /f "usebackq skip=3 tokens=1,2" %%a in (
@@ -501,15 +501,15 @@ REM For thread sip
     ) do for %%c in (
         %*
     ) do call :map --get %%~c _value -t ^
-        && if "!_value:%%b=!" neq "!_value!" call :arg\str\--2col-left %%a %%~c
+        && if "!_value:%%b=!" neq "!_value!" call :sub\str\--2col-left %%a %%~c
 
     endlocal
     exit /b 0
 
-REM Get router ip
+@REM Get router ip
 :this\get_route_ip
     if "%~1"=="" exit /b 1
-    REM "
+    @REM "
     for /f usebackq^ skip^=1^ tokens^=2^ delims^=^" %%a in (
         `wmic.exe NicConfig get DefaultIPGateway`
     ) do set %1=%%a
@@ -518,48 +518,48 @@ REM Get router ip
 ::: "Directory tools" "" "usage: %~n0 dir [option] [...]" ""
 :lib\dir
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\dir\%*
+    call :sub\dir\%*
     goto :eof
 
 ::: "    --isdir,  -id  [path]       Test path is directory"
-:arg\dir\--isdir
-:arg\dir\-id
+:sub\dir\--isdir
+:sub\dir\-id
     setlocal
     set _attribute=%~a1-
-    REM quick return
+    @REM quick return
     set _code=-1
     if %_attribute:~0,1%==d set _code=0
     endlocal & exit /b %_code%
 
 ::: "    --islink, -il  [file_path]  Test path is Symbolic Link"
-:arg\dir\--islink
-:arg\dir\-il
+:sub\dir\--islink
+:sub\dir\-il
     for /f "usebackq delims=" %%a in (
         `2^>nul dir /al /b "%~dp1"`
     ) do if "%%a"=="%~n1" exit /b 0
-    REM quick return
+    @REM quick return
     exit /b -1
 
 ::: "    --isfree, -if  [dir_path]   Test directory is empty"
-:arg\dir\--isfree
-:arg\dir\-if
-    call :arg\dir\--isdir %1 || exit /b 32 REM Not directory
+:sub\dir\--isfree
+:sub\dir\-if
+    call :sub\dir\--isdir %1 || exit /b 32 @REM Not directory
     for /f usebackq"" %%a in (
         `dir /a /b "%~1"`
     ) do exit /b -1
     exit /b 0
 
 ::: "    --clean,  -c   [dir_path]   Delete empty directory"
-:arg\dir\--clean
-:arg\dir\-c
-    if not exist "%~1" exit /b 43 REM target not found
-    call :arg\dir\--isdir %1 || exit /b 44 REM target not a directory
+:sub\dir\--clean
+:sub\dir\-c
+    if not exist "%~1" exit /b 43 @REM target not found
+    call :sub\dir\--isdir %1 || exit /b 44 @REM target not a directory
     if exist %windir%\system32\sort.exe (
         call :dir\rdEmptyDirWithSort %1
     ) else call :dir\rdEmptyDir %1
     goto :eof
 
-REM for :arg\dir\--clean
+@REM for :sub\dir\--clean
 :dir\rdEmptyDir
     if "%~1"=="" exit /b 0
     if "%~2"=="" (
@@ -573,7 +573,7 @@ REM for :arg\dir\--clean
     )
     exit /b 0
 
-REM for :arg\dir\--clean
+@REM for :sub\dir\--clean
 :dir\rdEmptyDirWithSort
     if "%~1"=="" exit /b 2
     for /f "usebackq delims=" %%a in (
@@ -582,11 +582,11 @@ REM for :arg\dir\--clean
     exit /b 0
 
 ::: "    --unique, -u   [[dir_path]] Move duplicate files to '.#Trash'"
-:arg\dir\--unique
-:arg\dir\-u
+:sub\dir\--unique
+:sub\dir\-u
     setlocal enabledelayedexpansion
 
-    if exist "%~1" pushd "%cd%"& chdir /d "%~1" || exit /b 54 REM target not a directory
+    if exist "%~1" pushd "%cd%"& chdir /d "%~1" || exit /b 54 @REM target not a directory
 
     for /d %%a in (
         "%cd%\*"
@@ -646,13 +646,13 @@ REM for :arg\dir\--clean
 ::: "Operating system setting" "" "usage: %~n0 oset [option] [...]" ""
 :lib\oset
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\oset\%*
+    call :sub\oset\%*
     goto :eof
 
 ::: "    --vergeq,   -vg    [version]                  Test current version is greater than the given value"
-:arg\oset\--vergeq
-:arg\oset\-vg
-    if "%~x1"=="" exit /b 12 REM Parameter is empty or Not a float
+:sub\oset\--vergeq
+:sub\oset\-vg
+    if "%~x1"=="" exit /b 12 @REM Parameter is empty or Not a float
     setlocal
     call :oset\this_version_multiply_10 _this_ver
     for /f "usebackq tokens=1,2 delims=." %%a in (
@@ -671,30 +671,30 @@ REM for :arg\dir\--clean
     exit /b 0
 
 ::: "    --cleanup,  -c     [[path]]                   Component Cleanup"
-:arg\oset\--cleanup
-:arg\oset\-c
+:sub\oset\--cleanup
+:sub\oset\-c
     if "%~1"=="" dism.exe /Online /Cleanup-Image /StartComponentCleanup /ResetBase & exit /b 0
-    call :arg\dir\--isdir "%~1" || exit /b 23 REM not a directory
-    call :arg\dir\--isdir "%~2" || exit /b 20 REM scratch directory not exist
+    call :sub\dir\--isdir "%~1" || exit /b 23 @REM not a directory
+    call :sub\dir\--isdir "%~2" || exit /b 20 @REM scratch directory not exist
     dism.exe /Image:%1 /Cleanup-Image /StartComponentCleanup /ResetBase /ScratchDir:"%~2"
     exit /b 0
 
-REM OS version
+@REM OS version
 ::: "    --version,  -v     [os_path] [[var_name]]     Get OS version"
-:arg\oset\--version
-:arg\oset\-v
+:sub\oset\--version
+:sub\oset\-v
     if "%~1"=="" (
-        REM for /f "usebackq delims==" %%a in (`
-        REM     ver
-        REM `) do for %%b in (
-        REM     %%a
-        REM ) do if "%%~xb" neq "" echo %%~nb
+        @REM for /f "usebackq delims==" %%a in (`
+        @REM     ver
+        @REM `) do for %%b in (
+        @REM     %%a
+        @REM ) do if "%%~xb" neq "" echo %%~nb
         for /f "usebackq tokens=1* delims==" %%a in (
             `wmic.exe os get Version /value`
         ) do if "%%b" neq "" echo %%b
         goto :eof
     )
-    if "%~1" neq "" if not exist "%~1" exit /b 33 REM not a directory
+    if "%~1" neq "" if not exist "%~1" exit /b 33 @REM not a directory
     if "%~1"=="%~d1" (
         call :oset\version %~1\ %2
     ) else if "%~dp1"=="%~f1" (
@@ -708,11 +708,11 @@ REM OS version
     ) do if exist %~1Windows\servicing\Version\%%a\*_installed if "%~2"=="" (
         echo %%a& exit /b 0
     ) else set %~2=%%a& exit /b 0
-    exit /b 34 REM Not OS path or Low OS version
+    exit /b 34 @REM Not OS path or Low OS version
 
 ::: "    --sid,      -s     [[user_name]] [[var_name]] Get sid by username. if not set path, will get online info" ""
-:arg\oset\--sid
-:arg\oset\-s
+:sub\oset\--sid
+:sub\oset\-s
     if "%~1"=="" (
         for /f "usebackq skip=1" %%a in (
             `wmic.exe useraccount where name^='%username%' get sid`
@@ -725,9 +725,9 @@ REM OS version
     exit /b 0
 
 ::: "    --bit,      -b     [os_path] [[var_name]]     Get OS bit"
-:arg\oset\--bit
-:arg\oset\-b
-    if not exist "%~1" exit /b 53 REM not a directory
+:sub\oset\--bit
+:sub\oset\-b
+    if not exist "%~1" exit /b 53 @REM not a directory
     if "%~1"=="%~d1" (
         call :oset\bit %~1\ %2
     ) else if "%~dp1"=="%~f1" (
@@ -736,7 +736,7 @@ REM OS version
     goto :eof
 
 :oset\bit
-    if not exist %~1Windows\servicing\Version exit /b 64 REM Not OS path or Low OS version
+    if not exist %~1Windows\servicing\Version exit /b 64 @REM Not OS path or Low OS version
     for /d %%a in (
         %~1Windows\servicing\Version\*.*
     ) do if exist %%a\amd64_installed (
@@ -750,38 +750,38 @@ REM OS version
         ) else set "%~2=x86"
         exit /b 0
     )
-    exit /b 66 REM System version is too old
+    exit /b 66 @REM System version is too old
 
-REM https://docs.microsoft.com/en-us/previous-versions/tn-archive/cc287874(v=office.12)
-REM https://docs.microsoft.com/en-us/previous-versions/commerce-server/ee825488(v=cs.20)
+@REM https://docs.microsoft.com/en-us/previous-versions/tn-archive/cc287874(v=office.12)
+@REM https://docs.microsoft.com/en-us/previous-versions/commerce-server/ee825488(v=cs.20)
 ::: "    --language, -lang  [var_name] [[os_path]]     Get OS current language"
-:arg\oset\--language
-:arg\oset\-lang
+:sub\oset\--language
+:sub\oset\-lang
     setlocal
     call :regedit\on
     set _load_point=HKLM\load-point%random%
     if "%~2" neq "" (
         reg.exe load %_load_point% %~2\Windows\System32\config\DRIVERS || (
             call :regedit\off
-            exit /b 77 REM not operating system directory
+            exit /b 77 @REM not operating system directory
         )
         for /f "usebackq tokens=1,4 delims=x " %%a in (
             `reg.exe query %_load_point%\select`
         ) do if "%%b"=="Default" call :lang\current %_load_point%\ControlSet00%%b _lang || (
             call :regedit\off
-            exit /b 78 REM not support
+            exit /b 78 @REM not support
         )
         reg.exe unload %_load_point%
     ) else call :lang\current HKLM\SYSTEM\CurrentControlSet _lang || (
         call :regedit\off
-        exit /b 79 REM not support
+        exit /b 79 @REM not support
     )
     call :regedit\off
     if "%~1"=="" echo.%_lang%
     endlocal & if "%~1" neq "" set %~1=%_lang%
     goto :eof
 
-REM for :arg\oset\--language
+@REM for :sub\oset\--language
 :lang\current
     for /f "usebackq tokens=1,3" %%a in (
         `reg.exe query %~1\Control\Nls\Language /v Default`
@@ -812,32 +812,32 @@ REM for :arg\oset\--language
     exit /b 1
 
 ::: "    --feature-info,   -fi                         Get Feature list"
-:arg\oset\--feature-info
-:arg\oset\-fi
+:sub\oset\--feature-info
+:sub\oset\-fi
     for /f "usebackq tokens=1-4" %%a in (
         `dism.exe /English /Online /Get-Features`
     ) do (
-        if "%%a%%b"=="FeatureName" call :arg\txt\--all-col-left %%d
-        if "%%a"=="State" call :arg\txt\--all-col-left %%c & echo.
+        if "%%a%%b"=="FeatureName" call :sub\txt\--all-col-left %%d
+        if "%%a"=="State" call :sub\txt\--all-col-left %%c & echo.
     )
-    call :arg\txt\--all-col-left 0 0
+    call :sub\txt\--all-col-left 0 0
     exit /b 0
 
 ::: "    --feature-enable, -fe  [name ...]             Enable Features"
-:arg\oset\--feature-enable
-:arg\oset\-fe
-    if "%~1"=="" exit /b 95 REM parameter is empty
+:sub\oset\--feature-enable
+:sub\oset\-fe
+    if "%~1"=="" exit /b 95 @REM parameter is empty
     for %%a in (
         %*
     ) do dism.exe /Online /Enable-Feature /FeatureName:%%a /NoRestart
     exit /b 0
 
 ::: "    --set-power,      -sp                         Set power config as server type"
-:arg\oset\--set-power
-:arg\oset\-sp
-    call :arg\oset\--vergeq 6.0 || exit /b 106 REM System version is too old
+:sub\oset\--set-power
+:sub\oset\-sp
+    call :sub\oset\--vergeq 6.0 || exit /b 106 @REM System version is too old
 
-    REM powercfg
+    @REM powercfg
     powercfg.exe /h off
 
     for /f "usebackq skip=2 tokens=4" %%a in (
@@ -863,17 +863,17 @@ REM for :arg\oset\--language
     ) do powercfg.exe /set%%bvalueindex %%a %%d %%e %%f
     exit /b 0
 
-REM TODO
-REM https://technet.microsoft.com/en-us/security/cc184924.aspx
-:arg\oset\--current-hotfix
-:arg\oset\-ch
+@REM TODO
+@REM https://technet.microsoft.com/en-us/security/cc184924.aspx
+:sub\oset\--current-hotfix
+:sub\oset\-ch
     setlocal enabledelayedexpansion
     set _oset_uuid=8e16a4c7-dd28-4368-a83a-282c82fc212a
 
     call :oset\hot\setup %_oset_uuid%
 
-    REM http://go.microsoft.com/fwlink/?LinkId=76054
-    call :arg\str\--now _odt_now
+    @REM http://go.microsoft.com/fwlink/?LinkId=76054
+    call :sub\str\--now _odt_now
 
     if exist %temp%\%_oset_uuid%\wsusscn2.cab (
         for %%a in (
@@ -890,9 +890,9 @@ REM https://technet.microsoft.com/en-us/security/cc184924.aspx
 
     if not exist %temp%\%_oset_uuid%\wsusscn2.cab call :lib\download ^
         http://download.windowsupdate.com/microsoftupdate/v6/wsusscan/wsusscn2.cab ^
-            %temp%\%_oset_uuid%\wsusscn2.cab || exit /b 112 REM Parameter is empty or Not a float
+            %temp%\%_oset_uuid%\wsusscn2.cab || exit /b 112 @REM Parameter is empty or Not a float
 
-    REM create results
+    @REM create results
     2>nul >"%temp%\results_%_odt_now%.xml" mbsacli.exe ^
                 /xmlout ^
                 /catalog "%temp%\%_oset_uuid%\wsusscn2.cab" ^
@@ -918,15 +918,15 @@ REM https://technet.microsoft.com/en-us/security/cc184924.aspx
         set _chot_kb=976932
     ) else set _chot=
 
-    >%temp%\%_oset_uuid%\chot.xsl call :arg\txt\--subtxt "%~f0" chot.xml 3000
+    >%temp%\%_oset_uuid%\chot.xsl call :sub\txt\--subtxt "%~f0" chot.xml 3000
 
-    REM split xml -> log
+    @REM split xml -> log
     call :lib\vbs doxsl ^
             "%temp%\results_%_odt_now%.xml" ^
             %temp%\%_oset_uuid%\chot.xsl ^
-            %temp%\hotlist_%_odt_now%.log || exit /b 111 REM invalid option
+            %temp%\hotlist_%_odt_now%.log || exit /b 111 @REM invalid option
 
-    REM install lang, like. ':arg\oset\--language'
+    @REM install lang, like. ':sub\oset\--language'
     set _lang=
     if %_hot_ver% lss 60 for /f "usebackq skip=1 tokens=1" %%a in (
         `wmic.exe os get OSLanguage`
@@ -938,7 +938,7 @@ REM https://technet.microsoft.com/en-us/security/cc184924.aspx
         chs.2052
     ) do if ".%%a"=="%%~xb" set _lang=%%~nb
 
-    REM support exfat
+    @REM support exfat
     if defined _lang for %%a in (
         A/6/E/A6EFFC03-F035-4604-9FB0-3B8169ED6BB6/WindowsXP-KB955704-x86-ENU
         E/8/A/E8AE6D10-0187-4B9C-AC00-AAB60A404E12/WindowsXP-KB955704-x86-CHS
@@ -964,14 +964,14 @@ REM https://technet.microsoft.com/en-us/security/cc184924.aspx
     endlocal
     goto :eof
 
-REM download and set in path
+@REM download and set in path
 :oset\hot\setup
     for %%a in (mbsacli.exe) do if "%%~$path:a" neq "" exit /b 0
 
     set PATH=%temp%\%~1;%PATH%
     if not exist %temp%\%~1\mbsacli.exe (
         2>nul mkdir %temp%\%~1
-        REM call :lib\download http://download.microsoft.com/download/A/1/0/A1052D8B-DA8D-431B-8831-4E95C00D63ED/MBSASetup-x%processor_architecture:~-2%-EN.msi %temp%\%~1\MBSASetup.msi || exit /b 1
+        @REM call :lib\download http://download.microsoft.com/download/A/1/0/A1052D8B-DA8D-431B-8831-4E95C00D63ED/MBSASetup-x%processor_architecture:~-2%-EN.msi %temp%\%~1\MBSASetup.msi || exit /b 1
         call :lib\download ^
             http://download.microsoft.com/download/8/E/1/8E16A4C7-DD28-4368-A83A-282C82FC212A/MBSASetup-x%processor_architecture:~-2%-EN.msi ^
                 %temp%\%~1\MBSASetup.msi || exit /b 1
@@ -981,7 +981,7 @@ REM download and set in path
             call :this\un\.msi %temp%\%~1\MBSASetup.msi
         popd
 
-        REM mbsacli.exe wusscan.dll
+        @REM mbsacli.exe wusscan.dll
         move /y "%temp%\%~1\MBSASetup\ProgramF\Microsoft Baseline Security Analyzer 2\??s?c??.???" %temp%\%~1
         rmdir /s /q %temp%\%~1\MBSASetup
     )
@@ -989,16 +989,16 @@ REM download and set in path
     exit /b 0
 
 ::: "    --regedit,        -reg [--on/--off]"
-:arg\oset\--regedit
-:arg\oset\-reg
+:sub\oset\--regedit
+:sub\oset\-reg
     call :oset\regedit\%*
     goto :eof
 
 :oset\regedit\--on
-    REM https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-defaultinstall-section
+    @REM https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-defaultinstall-section
 
-    >%temp%\b1444fb0-c076-5356-7ad3-25aa25d4e37a.inf call :arg\txt\--subtxt "%~f0" regon.inf 3000
-    REM pnputil.exe -i -a %temp%\b1444fb0-c076-5356-7ad3-25aa25d4e37a.inf
+    >%temp%\b1444fb0-c076-5356-7ad3-25aa25d4e37a.inf call :sub\txt\--subtxt "%~f0" regon.inf 3000
+    @REM pnputil.exe -i -a %temp%\b1444fb0-c076-5356-7ad3-25aa25d4e37a.inf
     rundll32.exe ^
         syssetup,SetupInfObjectInstallAction ^
         DefaultInstall 128 %temp%\b1444fb0-c076-5356-7ad3-25aa25d4e37a.inf
@@ -1024,8 +1024,8 @@ REM download and set in path
     goto :eof
 
 ::: "    --gpedit,         -gp  [--on/--off]           Allow / Deny gpedit"
-:arg\oset\--gpedit
-:arg\oset\-gp
+:sub\oset\--gpedit
+:sub\oset\-gp
     setlocal
     call :regedit\on
     call :oset\gpedit\%*
@@ -1034,7 +1034,7 @@ REM download and set in path
     goto :eof
 
 :oset\gpedit\--on
-    reg.exe delete HKCU\Software\Policies\Microsoft\MMC /f || exit /b 139 REM reg error
+    reg.exe delete HKCU\Software\Policies\Microsoft\MMC /f || exit /b 139 @REM reg error
     >&3 echo complete.
     goto :eof
 
@@ -1043,13 +1043,13 @@ REM download and set in path
         add HKCU\Software\Policies\Microsoft\MMC\{8FC0B734-A0E1-11D1-A7D3-0000F87571E3} ^
             /v Restrict_Run ^
             /t REG_DWORD ^
-            /d 1 /f || exit /b 138 REM reg error
+            /d 1 /f || exit /b 138 @REM reg error
     >&3 echo complete.
     goto :eof
 
 ::: "    --unsecure-write, -usw [--allow/--deny]       Allow / Deny write access to 'fixed' and 'removable' drives"
-:arg\oset\--unsecure-write
-:arg\oset\-usw
+:sub\oset\--unsecure-write
+:sub\oset\-usw
     setlocal
     call :regedit\on
     call :oset\write_access\%~1
@@ -1057,13 +1057,13 @@ REM download and set in path
     endlocal
     goto :eof
 
-REM deny write access to fixed/removable drives not protected by BitLocker
+@REM deny write access to fixed/removable drives not protected by BitLocker
 :oset\write_access\--deny
     >nul reg.exe ^
         add HKLM\Software\Policies\Microsoft\FVE ^
             /v RDVDenyCrossOrg ^
             /t REG_DWORD ^
-            /d 0 /f || exit /b 147 REM not operating system directory
+            /d 0 /f || exit /b 147 @REM not operating system directory
 
     for %%a in (
         FDV RDV
@@ -1089,8 +1089,8 @@ REM deny write access to fixed/removable drives not protected by BitLocker
     exit /b 0
 
 ::: "    --drop-rdp                                    Remove remote desktop config by user name"
-:arg\oset\--drop-rdp
-    if "%~1"=="" exit /b 152 REM Parameter is empty or Not a float
+:sub\oset\--drop-rdp
+    if "%~1"=="" exit /b 152 @REM Parameter is empty or Not a float
     for /f "usebackq tokens=1-3" %%a in (`
         reg.exe query "HKCU\Software\Microsoft\Terminal Server Client\Default"
     `) do if "%%b"=="REG_SZ" if /i "%%c"=="%~1" reg.exe delete ^
@@ -1098,21 +1098,21 @@ REM deny write access to fixed/removable drives not protected by BitLocker
     exit /b 0
 
 ::: "    --rdp-port             [[port]]               Change remote desktop server port"
-:arg\oset\--rdp-port
+:sub\oset\--rdp-port
     setlocal
     if "%~1"=="" (
         set _port=3389
 
     ) else set _port=%~1
-    if "%~1" neq "" if "%_port%" neq "%~1" exit /b 161 REM port num not support
-    if %_port% lss 3000 exit /b 161 REM port num not support
-    if %_port% gtr 65535 exit /b 161 REM port num not support
+    if "%~1" neq "" if "%_port%" neq "%~1" exit /b 161 @REM port num not support
+    if %_port% lss 3000 exit /b 161 @REM port num not support
+    if %_port% gtr 65535 exit /b 161 @REM port num not support
 
     reg.exe add ^
         "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" ^
         /v PortNumber ^
         /t REG_DWORD ^
-        /d %_port% /f || exit /b 169 REM reg error
+        /d %_port% /f || exit /b 169 @REM reg error
 
     echo new RDP port: %_port%.
 
@@ -1124,31 +1124,31 @@ REM deny write access to fixed/removable drives not protected by BitLocker
 
 ::: "Thread lock" "" "usage: %~n0 lock [option] [...]" ""
 :lib\lock
-    REM TODO
+    @REM TODO
     goto :eof
 
 ::: "    --ratelimit, -rl   [dir_path] [sec]       rate limit"
 :lock\--ratelimit   [dir_path] [sec]
 :lock\-rl
-    call :arg\is\--integer %~2 || exit /b 12 REM args not int
+    call :sub\is\--integer %~2 || exit /b 12 @REM args not int
     setlocal
-    REM rate limit
+    @REM rate limit
 
-    call :arg\str\--now now_stamp
+    call :sub\str\--now now_stamp
 
-    REM get lock success
+    @REM get lock success
     2>nul mkdir "%~1\ratelimit.lock" && (
         >"%~1\ratelimit.lock\timestamp.log" echo %now_stamp%
         exit /b 0
     )
 
-    REM get lock failed, read log
+    @REM get lock failed, read log
     set timestamp=
     for /f "usebackq delims=" %%a in (
         "%~1\ratelimit.lock\timestamp.log"
     ) do if "%%~a" neq "" set timestamp=%%~a
 
-    call :arg\is\--integer %timestamp% && (
+    call :sub\is\--integer %timestamp% && (
         for /f "usebackq delims=" %%a in (`
             set /a 1%now_stamp:~6% - 1%timestamp:~6%
         `) do if %%a gtr %~2 (
@@ -1163,12 +1163,12 @@ REM deny write access to fixed/removable drives not protected by BitLocker
 ::: "Volume info or edit" "" "usage: %~n0 vol [option] [...]" ""
 :lib\vol
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\vol\%*
+    call :sub\vol\%*
     goto :eof
 
 ::: "    --free-letter,   -ul [[var_name]]           Get Unused Device Id"
-:arg\vol\--free-letter
-:arg\vol\-ul
+:sub\vol\--free-letter
+:sub\vol\-ul
     setlocal enabledelayedexpansion
     set _di=zyxwvutsrqponmlkjihgfedcba
     for /f "usebackq skip=1 delims=:" %%a in (
@@ -1180,13 +1180,13 @@ REM deny write access to fixed/removable drives not protected by BitLocker
     exit /b 0
 
 ::: "    --change-letter, -xl [letter1:] [letter2:]  [DANGER^^^!] Change or exchange letters, need reboot system"
-:arg\vol\--change-letter
-:arg\vol\-xl
-    if "%~2"=="" exit /b 26 REM target not a letter or not support
-    if /i "%~1" neq "%~d1" exit /b 26 REM target not a letter or not support
-    if /i "%~2" neq "%~d2" exit /b 26 REM target not a letter or not support
-    if /i "%~d1"=="%SystemDrive%" exit /b 26 REM target not a letter or not support
-    if /i "%~d2"=="%SystemDrive%" exit /b 26 REM target not a letter or not support
+:sub\vol\--change-letter
+:sub\vol\-xl
+    if "%~2"=="" exit /b 26 @REM target not a letter or not support
+    if /i "%~1" neq "%~d1" exit /b 26 @REM target not a letter or not support
+    if /i "%~2" neq "%~d2" exit /b 26 @REM target not a letter or not support
+    if /i "%~d1"=="%SystemDrive%" exit /b 26 @REM target not a letter or not support
+    if /i "%~d2"=="%SystemDrive%" exit /b 26 @REM target not a letter or not support
     setlocal enabledelayedexpansion
     set _%~d1=
     set _%~d2=
@@ -1197,23 +1197,23 @@ REM deny write access to fixed/removable drives not protected by BitLocker
         if /i "%%~a"=="\DosDevices\%~d1" set "_%~d1=%%~b"
         if /i "%%~a"=="\DosDevices\%~d2" set "_%~d2=%%~b"
     )
-    if not defined _%~d1 exit /b 26 REM target not a letter or not support
+    if not defined _%~d1 exit /b 26 @REM target not a letter or not support
     if defined _%~d2 (
         >&2 echo will exchange %~d1 with %~d2
         reg.exe add HKLM\SYSTEM\MountedDevices /v "\DosDevices\%~d1" /t REG_BINARY /d !_%~d2! /f || (
             call :regedit\off
-            exit /b 27 REM reg error
+            exit /b 27 @REM reg error
         )
     ) else (
         >&2 echo will change %~d1 to %~d2
         reg.exe delete HKLM\SYSTEM\MountedDevices /v "\DosDevices\%~d1" /f || (
             call :regedit\off
-            exit /b 27 REM reg error
+            exit /b 27 @REM reg error
         )
     )
     reg.exe add HKLM\SYSTEM\MountedDevices /v "\DosDevices\%~d2" /t REG_BINARY /d !_%~d1! /f || (
         call :regedit\off
-        exit /b 27 REM reg error
+        exit /b 27 @REM reg error
     )
     call :regedit\off
     >&2 echo.
@@ -1222,11 +1222,11 @@ REM deny write access to fixed/removable drives not protected by BitLocker
     exit /b 0
 
 ::: "    --remove-letter, -rl [letter:]              [DANGER^^^!] Remove letter, need reboot system"
-:arg\vol\--remove-letter
-:arg\vol\-rl
-    if /i "%~1"=="" exit /b 36 REM target not a letter or not support
-    if /i "%~1" neq "%~d1" exit /b 36 REM target not a letter or not support
-    if /i "%~d1"=="%SystemDrive%" exit /b 36 REM target not a letter or not support
+:sub\vol\--remove-letter
+:sub\vol\-rl
+    if /i "%~1"=="" exit /b 36 @REM target not a letter or not support
+    if /i "%~1" neq "%~d1" exit /b 36 @REM target not a letter or not support
+    if /i "%~d1"=="%SystemDrive%" exit /b 36 @REM target not a letter or not support
     setlocal enabledelayedexpansion
     call :regedit\on
     for /f "usebackq tokens=1,3" %%a in (
@@ -1234,12 +1234,12 @@ REM deny write access to fixed/removable drives not protected by BitLocker
     ) do if /i "%%~a"=="\DosDevices\%~d1" (
         reg.exe delete HKLM\SYSTEM\MountedDevices /v "%%~a" /f || (
             call :regedit\off
-            exit /b 37 REM reg error
+            exit /b 37 @REM reg error
         )
         call :this\uuid _uuid
         reg.exe add HKLM\SYSTEM\MountedDevices /v #{!_uuid!} /t REG_BINARY /d %%b /f || (
             call :regedit\off
-            exit /b 37 REM reg error
+            exit /b 37 @REM reg error
         )
         >&2 echo.
         >&2 echo Need reboot system.
@@ -1248,9 +1248,9 @@ REM deny write access to fixed/removable drives not protected by BitLocker
     )
     call :regedit\off
     endlocal
-    exit /b 38 REM letter not found
+    exit /b 38 @REM letter not found
 
-REM mini uuid creater
+@REM mini uuid creater
 :this\uuid
     if "%~1"=="" exit /b 1
     setlocal enabledelayedexpansion
@@ -1266,30 +1266,30 @@ REM mini uuid creater
     goto :eof
 
 ::: "    --letters,       -li [var_name] [[l/r/n]]   Get Device IDs"
-:arg\vol\--letters
-:arg\vol\-li
+:sub\vol\--letters
+:sub\vol\-li
 ::: "    --desc-letters,  -dl [var_name] [[l/r/n]]   Get Device IDs DESC" "                  ([l/r/n]: []no param view all / [l]ocal Fixed Disk, CD-[R]OM Disc / [N]etwork Connection)" ""
-:arg\vol\--desc-letters
-:arg\vol\-dl
+:sub\vol\--desc-letters
+:sub\vol\-dl
     :::::::::::::::::::::::::::::::::::::::
     :: [WARNING] Not support nano server ::
     :::::::::::::::::::::::::::::::::::::::
-    if "%~1"=="" exit /b 42 REM variable name is empty
+    if "%~1"=="" exit /b 42 @REM variable name is empty
     set _var=
     setlocal enabledelayedexpansion
     set _desc=
-    REM Test sort
+    @REM Test sort
     for %%a in (%0) do if "%%~na" neq "--letters" if "%%~na" neq "-li" set _desc=1
-    REM add where conditions
+    @REM add where conditions
     if "%~2" neq "" (
         set _DriveType=
         if /i "%~2"=="l" set _DriveType=3
         if /i "%~2"=="r" set _DriveType=5
         if /i "%~2"=="n" set _DriveType=4
-        if not defined _DriveType exit /b 43 REM type command not support
+        if not defined _DriveType exit /b 43 @REM type command not support
         set "_DriveType=where DriveType^^=!_DriveType!"
     )
-    REM main
+    @REM main
     for /f "usebackq skip=1 delims=:" %%a in (
         `wmic.exe logicaldisk %_DriveType% get DeviceID`
     ) do if defined _desc (
@@ -1300,11 +1300,11 @@ REM mini uuid creater
     exit /b 0
 
 ::: "    --hide-bitlocker, -hb                       Hide bitlocker feature, [DANGER^^^!] This is an irreversible operation"
-:arg\vol\--hide-bitlocker
-:arg\vol\-hb
+:sub\vol\--hide-bitlocker
+:sub\vol\-hb
     setlocal enabledelayedexpansion
     call :regedit\on
-    REM right-mouse menu
+    @REM right-mouse menu
     for %%a in (
         encrypt-bde encrypt-bde-elev
         manage-bde
@@ -1312,7 +1312,7 @@ REM mini uuid creater
         unlock-bde
     ) do >nul 2>nul reg.exe delete HKCR\Drive\shell\%%a /f
 
-    REM control panel
+    @REM control panel
     >nul 2>nul reg.exe ^
             add HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer ^
                 /v DisallowCpl ^
@@ -1330,7 +1330,7 @@ REM mini uuid creater
                 /t REG_SZ ^
                 /d Microsoft.%%a /f
 
-    REM drive ico
+    @REM drive ico
     for /f "usebackq tokens=1-3" %%a in (
         `wmic.exe logicaldisk get DeviceID^,DriveType`
     ) do if "%%b"=="3" (
@@ -1352,11 +1352,11 @@ REM mini uuid creater
     goto :eof
 
 ::: "    --encrypts-all,   -eca  [--safe] [letter:]  Encrypts all volumes by bitlocker, need removable drive" "                  ([--safe]: Deny write access to fixed and removable drives not protected by BitLocker)" "                                                not protected by BitLocker" ""
-:arg\vol\--encrypts-all
-:arg\vol\-eca
-    for %%a in (manage-bde.exe) do if "%%~$path:a"=="" exit /b 64 REM manage-bde feature not enable
-    if /i "%username%"=="System" exit /b 60 REM not support winpe
-    call :arg\oset\--vergeq 10.0 || exit /b 62 REM operating system version not support
+:sub\vol\--encrypts-all
+:sub\vol\-eca
+    for %%a in (manage-bde.exe) do if "%%~$path:a"=="" exit /b 64 @REM manage-bde feature not enable
+    if /i "%username%"=="System" exit /b 60 @REM not support winpe
+    call :sub\oset\--vergeq 10.0 || exit /b 62 @REM operating system version not support
 
     setlocal
     set _tmp_letter=
@@ -1374,23 +1374,23 @@ REM mini uuid creater
         `wmic.exe logicaldisk get Access^,DeviceID^,DriveType`
     ) do if "%%a%%c"=="02" set _removable_letter=%%b
 
-    if not defined _removable_letter exit /b 61 REM removable drive not found or read-only
+    if not defined _removable_letter exit /b 61 @REM removable drive not found or read-only
 
     >&3 echo find removable drives '%_removable_letter%'
 
     2>nul mkdir %_removable_letter%\keys
     set /a _suf=%random% %% 900 + 100
-    call :arg\str\--now _log %_removable_letter%\keys\key- %_suf%.log
+    call :sub\str\--now _log %_removable_letter%\keys\key- %_suf%.log
     >>%_log% (
         echo.
         echo =====================================================================================================
         echo %date% %time%
         echo.
-        call :arg\drv\--info
+        call :sub\drv\--info
     )
 
     call :regedit\on
-    REM get allow - gpedit.msc: Local Computer Policy - Computer Configuration - Administrative Templates - Windows Components - BitLocker Drive Encryption - Operating System Drives
+    @REM get allow - gpedit.msc: Local Computer Policy - Computer Configuration - Administrative Templates - Windows Components - BitLocker Drive Encryption - Operating System Drives
     for %%a in (
         "UseAdvancedStartup /t REG_DWORD /d 1"
         "EnableBDEWithNoTPM /t REG_DWORD /d 1"
@@ -1400,19 +1400,19 @@ REM mini uuid creater
         "UseTPMKeyPIN /t REG_DWORD /d 0"
     ) do >nul reg.exe add HKLM\Software\Policies\Microsoft\FVE /v %%~a /f
 
-    REM allow removable drives write access
+    @REM allow removable drives write access
     >nul 2>nul reg.exe delete HKLM\System\CurrentControlSet\Policies\Microsoft\FVE ^
         /v RDVDenyWriteAccess /f && >&3 echo [WARN] Try to re insert removable drives
 
-    REM start lock
+    @REM start lock
     for /f "usebackq tokens=1-3" %%a in (
         `wmic.exe logicaldisk get DeviceID^,DriveType`
     ) do if "%%b"=="3" >>%_log% (
         if not exist %_removable_letter% (
             call :regedit\off
-            exit /b 60 REM Partition not found
+            exit /b 60 @REM Partition not found
         )
-        call :arg\vol\--crypts-status %%a && (
+        call :sub\vol\--crypts-status %%a && (
             >&3 echo Skip encrypt '%%a'
         ) || call :bitLocker\on\key %%a %_removable_letter% || (
             call :regedit\off
@@ -1436,14 +1436,14 @@ REM mini uuid creater
     exit /b 0
 
 ::: "    --encrypts,       -ec   [letter:] [pw/vol]  Encrypts the volume by bitlocker"
-:arg\vol\--encrypts
-:arg\vol\-ec
-    for %%a in (manage-bde.exe) do if "%%~$path:a"=="" exit /b 74 REM manage-bde feature not enable
-    if /i "%username%"=="System" exit /b 70 REM not support winpe
-    if /i "%~1" neq "%~d1" exit /b 76 REM target not a letter or not support
-    if "%~2"=="" exit /b 75 REM args error
-    if not exist "%~1" exit /b 78 REM letter not found
-    call :arg\vol\--crypts-status %~d1 && (
+:sub\vol\--encrypts
+:sub\vol\-ec
+    for %%a in (manage-bde.exe) do if "%%~$path:a"=="" exit /b 74 @REM manage-bde feature not enable
+    if /i "%username%"=="System" exit /b 70 @REM not support winpe
+    if /i "%~1" neq "%~d1" exit /b 76 @REM target not a letter or not support
+    if "%~2"=="" exit /b 75 @REM args error
+    if not exist "%~1" exit /b 78 @REM letter not found
+    call :sub\vol\--crypts-status %~d1 && (
         echo [%~d1] already encrypts.
         exit /b 0
     )
@@ -1453,26 +1453,26 @@ REM mini uuid creater
     manage-bde.exe -on %~d1 ^
                 -UsedSpaceOnly ^
                 -Synchronous ^
-                -Password %~2 || exit /b 73 REM manage-bde error
+                -Password %~2 || exit /b 73 @REM manage-bde error
     goto :eof
 
 ::: "    --decrypts,       -dc   [letter:/passwd]    Decrypts the volume"
-:arg\vol\--decrypts
-:arg\vol\-dc
-    for %%a in (manage-bde.exe) do if "%%~$path:a"=="" exit /b 84 REM manage-bde feature not enable
-    if /i "%username%"=="System" exit /b 80 REM not support winpe
-    if not exist "%~1" exit /b 88 REM letter not found
+:sub\vol\--decrypts
+:sub\vol\-dc
+    for %%a in (manage-bde.exe) do if "%%~$path:a"=="" exit /b 84 @REM manage-bde feature not enable
+    if /i "%username%"=="System" exit /b 80 @REM not support winpe
+    if not exist "%~1" exit /b 88 @REM letter not found
 
-    REM not test crypts status at here
-    if /i "%~d1" neq "%SystemDrive%" call :arg\vol\--crypts-status %SystemDrive% && goto skip\allow_write_access
-    call :arg\oset\--unsecure-write --allow
+    @REM not test crypts status at here
+    if /i "%~d1" neq "%SystemDrive%" call :sub\vol\--crypts-status %SystemDrive% && goto skip\allow_write_access
+    call :sub\oset\--unsecure-write --allow
     :skip\allow_write_access
 
-    REM manage-bde.exe -autounlock -ClearAllKeys Volume
-    manage-bde.exe -off %~d1 || exit /b 83 REM manage-bde error
+    @REM manage-bde.exe -autounlock -ClearAllKeys Volume
+    manage-bde.exe -off %~d1 || exit /b 83 @REM manage-bde error
     exit /b 0
 
-REM for ':arg\vol\--encrypts-all', ':arg\vol\--encrypts'
+@REM for ':sub\vol\--encrypts-all', ':sub\vol\--encrypts'
 :bitLocker\on\key
     echo.
     echo.
@@ -1482,7 +1482,7 @@ REM for ':arg\vol\--encrypts-all', ':arg\vol\--encrypts'
     setlocal
     set _vol=%~d1
     set _vol=%_vol::=%
-    REM call :test\tpm
+    @REM call :test\tpm
     set _arg=-StartupKey %~d2\
     if /i "%~d1" neq "%SystemDrive%" (
         2>nul mkdir %~d2\keys\%_vol%
@@ -1493,19 +1493,19 @@ REM for ':arg\vol\--encrypts-all', ':arg\vol\--encrypts'
         -on %_vol%: ^
         -UsedSpaceOnly ^
         -EncryptionMethod xts_aes128 %_arg% ^
-        -SkipHardwareTest || exit /b 83 REM manage-bde error
+        -SkipHardwareTest || exit /b 83 @REM manage-bde error
 
-    if /i "%~d1" neq "%SystemDrive%" manage-bde.exe -autounlock -enable %_vol%: || exit /b 83 REM manage-bde error
+    if /i "%~d1" neq "%SystemDrive%" manage-bde.exe -autounlock -enable %_vol%: || exit /b 83 @REM manage-bde error
 
     endlocal
     exit /b 0
 
 ::: "    --crypts-status,  -cs   [letter:]           Provides information about BitLocker-capable volumes" "                            [[--more/-m]]       display more crypts info" "" "    --wipes,     -w   [letter:]                 Wipes the free space on the volume"
-:arg\vol\--crypts-status
-:arg\vol\-cs
-    for %%a in (manage-bde.exe) do if "%%~$path:a"=="" exit /b 94 REM manage-bde feature not enable
-    if "%~1"=="" exit /b 96 REM target not a letter or not support
-    if /i "%~1" neq "%~d1" exit /b 96 REM target not a letter or not support
+:sub\vol\--crypts-status
+:sub\vol\-cs
+    for %%a in (manage-bde.exe) do if "%%~$path:a"=="" exit /b 94 @REM manage-bde feature not enable
+    if "%~1"=="" exit /b 96 @REM target not a letter or not support
+    if /i "%~1" neq "%~d1" exit /b 96 @REM target not a letter or not support
 
     if "%~2" neq "--more" if "%~2" neq "-m" goto skip\show_crypts_status
     manage-bde.exe -status %~d1
@@ -1515,7 +1515,7 @@ REM for ':arg\vol\--encrypts-all', ':arg\vol\--encrypts'
     >nul manage-bde.exe -status %~d1 -ProtectionAsErrorLevel && exit /b 0
     exit /b -1
 
-REM Trusted Platform Module (TPM)
+@REM Trusted Platform Module (TPM)
 :test\tpm
     2>nul PowerShell.exe ^
             -NoLogo ^
@@ -1524,21 +1524,21 @@ REM Trusted Platform Module (TPM)
             -Command Get-TpmSupportedFeature && exit /b 0
     exit /b 1
 
-:arg\vol\--wipes
-:arg\vol\-w
-    REM TODO mount directory
-    if "%~1"=="" exit /b 105 REM Target path not found
-    if /i "%~1" neq "%~d1" exit /b 105 REM Target path not found
-    if not exist %~d1 exit /b 105 REM Target path not found
-    call :arg\vol\--crypts-status %~d1 && (
+:sub\vol\--wipes
+:sub\vol\-w
+    @REM TODO mount directory
+    if "%~1"=="" exit /b 105 @REM Target path not found
+    if /i "%~1" neq "%~d1" exit /b 105 @REM Target path not found
+    if not exist %~d1 exit /b 105 @REM Target path not found
+    call :sub\vol\--crypts-status %~d1 && (
         manage-bde.exe -WipeFreeSpace %~d1
     ) || cipher.exe /w:%~d1
     goto :eof
 
 ::: "    --trim,      -t   [letter:]                 Trim SSD, HDD will return false"
-:arg\vol\--trim
-:arg\vol\-t
-    REM TODO mount directory
+:sub\vol\--trim
+:sub\vol\-t
+    @REM TODO mount directory
     if "%~1"=="" exit /b -1
     if /i "%~1" neq "%~d1" exit /b -1
     if not exist "%~1" exit /b -1
@@ -1554,7 +1554,7 @@ REM Trusted Platform Module (TPM)
     setlocal
     set _0f=0123456789abcdef
     set /a _int=%~1
-    if "%_int%" neq "%~1" exit /b 2 REM Not integer
+    if "%_int%" neq "%~1" exit /b 2 @REM Not integer
     :2hex_loop
     set /a _index=_int %% 16, _int /= 16
     call set _hex=%%_0f:~%_index%,1%%%_hex%
@@ -1567,20 +1567,20 @@ REM Trusted Platform Module (TPM)
 
 ::: "Uncompress package" "" "usage: %~n0 un [target_path]"
 :lib\un
-    call :arg\un\%~x1 %1
+    call :sub\un\%~x1 %1
     goto :eof
 
-:arg\un\.cab
+:sub\un\.cab
     mkdir ".\%~n1"
     expand.exe %1 -F:* ".\%~n1"
-    REM for %%a in (cabarc.exe) do if "%%~$path:a"=="" exit /b 18 REM cabarc.exe file not found
-    REM pushd %cd%
-    REM mkdir ".\%~n1" && chdir /d ".\%~n1" && cabarc.exe x %1 *
-    REM popd
+    @REM for %%a in (cabarc.exe) do if "%%~$path:a"=="" exit /b 18 @REM cabarc.exe file not found
+    @REM pushd %cd%
+    @REM mkdir ".\%~n1" && chdir /d ".\%~n1" && cabarc.exe x %1 *
+    @REM popd
     exit /b 0
 
-:arg\un\.zip
-    if not exist "%~1" exit /b 22 REM Target not found
+:sub\un\.zip
+    if not exist "%~1" exit /b 22 @REM Target not found
     setlocal
     set "_output=.\%~n1"
     if "%~2" neq "" set "_output=%~2"
@@ -1588,34 +1588,34 @@ REM Trusted Platform Module (TPM)
     endlocal
     exit /b 0
 
-:arg\un\.exe
-    if not exist "%~1" exit /b 32 REM Target not found
-    call :arg\oset\--vergeq 10.0 || exit /b 33 REM System version is too old
+:sub\un\.exe
+    if not exist "%~1" exit /b 32 @REM Target not found
+    call :sub\oset\--vergeq 10.0 || exit /b 33 @REM System version is too old
     compact.exe /u /exe /a /i /q /s:"%~f1"
     exit /b 0
 
-REM "Uncompress chm file"
-:arg\un\.chm
-    if not exist "%~1" exit /b 44 REM chm file not found
-    if /i "%~x1" neq ".chm" exit /b 45 REM not chm file
-    if exist ".\%~sn1" exit /b 46 REM out put file allready exist
+@REM "Uncompress chm file"
+:sub\un\.chm
+    if not exist "%~1" exit /b 44 @REM chm file not found
+    if /i "%~x1" neq ".chm" exit /b 45 @REM not chm file
+    if exist ".\%~sn1" exit /b 46 @REM out put file allready exist
     start /wait hh.exe -decompile .\%~sn1 %~s1
     exit /b 0
 
-REM "Uncompress msi file"
-:arg\un\.msi
-    if not exist "%~1" exit /b 52 REM Target not found
-    if /i "%~x1" neq ".msi" exit /b 57 REM file format not msi
-    2>nul mkdir ".\%~n1" || exit /b 56 REM out put file allready exist
+@REM "Uncompress msi file"
+:sub\un\.msi
+    if not exist "%~1" exit /b 52 @REM Target not found
+    if /i "%~x1" neq ".msi" exit /b 57 @REM file format not msi
+    2>nul mkdir ".\%~n1" || exit /b 56 @REM out put file allready exist
     setlocal
-    REM Init
-    call :arg\vol\--free-letter _letter
+    @REM Init
+    call :sub\vol\--free-letter _letter
     subst.exe %_letter% ".\%~n1"
 
-    REM Uncompress msi file
+    @REM Uncompress msi file
     start /wait msiexec.exe /a %1 /qn targetdir=%_letter%
     erase "%_letter%\%~nx1"
-    REM for %%a in (".\%~n1") do echo output: %%~fa
+    @REM for %%a in (".\%~n1") do echo output: %%~fa
 
     subst.exe %_letter% /d
     endlocal
@@ -1625,63 +1625,63 @@ REM "Uncompress msi file"
 ::: "Compresses the specified files." "" "usage: %~n0 pkg [option]" ""
 :lib\pkg
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\pkg\%*
+    call :sub\pkg\%*
     goto :eof
 
 ::: "    --zip, -z  [source_path] [[target_path]]  make zip"
-:arg\pkg\--zip
-:arg\pkg\-z
+:sub\pkg\--zip
+:sub\pkg\-z
     setlocal
     set "_output=.\%~n1"
     if "%~2" neq "" set "_output=%~2"
     if /i "%~x1" neq ".zip" call :lib\vbs zip "%~f1" "%_output%.zip"
     endlocal
-    REM >.\zip.ZFSendToTarget (
-    REM     echo [Shell]
-    REM     echo Command=2
-    REM     echo IconFile=explorer.exe,3
-    REM     echo [Taskbar]
-    REM     echo Command=ToggleDesktop
-    REM )
+    @REM >.\zip.ZFSendToTarget (
+    @REM     echo [Shell]
+    @REM     echo Command=2
+    @REM     echo IconFile=explorer.exe,3
+    @REM     echo [Taskbar]
+    @REM     echo Command=ToggleDesktop
+    @REM )
     goto :eof
 
 ::: "    --cab, -c  [targe_path]                   make cab"
-:arg\pkg\--cab
-:arg\pkg\-c
-    for %%a in (cabarc.exe) do if "%%~$path:a"=="" exit /b 28 REM cabarc.exe file not found
-    REM By directory
-    if "%~2"=="" call :arg\dir\--isdir %1 ^
+:sub\pkg\--cab
+:sub\pkg\-c
+    for %%a in (cabarc.exe) do if "%%~$path:a"=="" exit /b 28 @REM cabarc.exe file not found
+    @REM By directory
+    if "%~2"=="" call :sub\dir\--isdir %1 ^
         && cabarc.exe -m LZX:21 n ".\%~n1.tmp" "%~1\*"
 
-    REM By file
-    call :arg\dir\--isdir %1 ^
+    @REM By file
+    call :sub\dir\--isdir %1 ^
         || cabarc.exe -m LZX:21 n ".\%~n1.tmp" %*
 
     if exist ".\%~n1.tmp" rename ".\%~n1.tmp" "%~n1.cab"
     goto :eof
 
 ::: "    --udf, -u  [dir_path]                     Create iso file from directory"
-:arg\pkg\--udf
-:arg\pkg\-u
+:sub\pkg\--udf
+:sub\pkg\-u
     for %%a in (oscdimg.exe) do if "%%~$path:a"=="" >nul call :init\oscdimg
-    call :arg\dir\--isdir %1 ||  exit /b 32 REM target not directory
-    if /i "%~d1\"=="%~1" exit /b 33 REM not support driver
+    call :sub\dir\--isdir %1 ||  exit /b 32 @REM target not directory
+    if /i "%~d1\"=="%~1" exit /b 33 @REM not support driver
 
-    REM empty name
+    @REM empty name
     if "%~n1"=="" (
         setlocal enabledelayedexpansion
         set _args=%~1
         if "!_args:~-1!" neq "\" (
-            call :arg\var\--set-errorlevel 3
+            call :sub\var\--set-errorlevel 3
         ) else call %0 "!_args:~0,-1!"
         endlocal & goto :eof
     )
 
     if exist "%~1\sources\boot.wim" (
-        REM winpe iso
-        if not exist %windir%\Boot\DVD\PCAT\etfsboot.com exit /b 34 REM need etfsboot.com
-        if not exist %windir%\Boot\DVD\EFI\en-US\efisys.bin exit /b 35 REM need efisys.bin
-        REM echo El Torito udf %~nx1
+        @REM winpe iso
+        if not exist %windir%\Boot\DVD\PCAT\etfsboot.com exit /b 34 @REM need etfsboot.com
+        if not exist %windir%\Boot\DVD\EFI\en-US\efisys.bin exit /b 35 @REM need efisys.bin
+        @REM echo El Torito udf %~nx1
         >%temp%\bootorder.txt type nul
         for %%a in (
             bootmgr
@@ -1701,9 +1701,9 @@ REM "Uncompress msi file"
 
         erase %temp%\bootorder.txt
     ) else if exist "%~1\I386\NTLDR" (
-        REM winxp iso
-        REM echo El Torito %~nx1
-        if not exist %windir%\Boot\DVD\PCAT\etfsboot.com exit /b 34 REM need etfsboot.com
+        @REM winxp iso
+        @REM echo El Torito %~nx1
+        if not exist %windir%\Boot\DVD\PCAT\etfsboot.com exit /b 34 @REM need etfsboot.com
         oscdimg.exe ^
             -b%windir%\Boot\DVD\PCAT\etfsboot.com ^
                 -k ^
@@ -1713,34 +1713,34 @@ REM "Uncompress msi file"
                 -o ^
                 -w1 %1 ".\%~nx1.tmp"
     ) else (
-        REM normal iso
-        REM echo oscdimg udf
+        @REM normal iso
+        @REM echo oscdimg udf
         oscdimg.exe -l"%~nx1" -o -u2 -udfver102 %1 ".\%~nx1.tmp"
     )
     rename "./%~nx1.tmp" "*.iso"
     exit /b 0
 
 ::: "    --exe, -e  [source_path]                  Use compression optimized for executable files " "                                              which are read frequently and not modified."
-:arg\pkg\--exe
-:arg\pkg\-e
+:sub\pkg\--exe
+:sub\pkg\-e
     compact.exe /c /exe /a /i /q /s:"%~f1"
     goto :eof
 
 
-REM from Window 10 aik, will download oscdimg.exe at script path
+@REM from Window 10 aik, will download oscdimg.exe at script path
 :init\oscdimg
     for %%a in (_%0) do if %processor_architecture:~-2%==64 (
-        REM amd64
+        @REM amd64
         call :this\getCab %%~na 0/A/A/0AA382BA-48B4-40F6-8DD0-BEBB48B6AC18/adk ^
             bbf55224a0290f00676ddc410f004498 ^
             fild40c79d789d460e48dc1cbd485d6fc2e
-    REM x86
+    @REM x86
     ) else call :this\getCab %%~na 0/A/A/0AA382BA-48B4-40F6-8DD0-BEBB48B6AC18/adk ^
                     5d984200acbde182fd99cbfbe9bad133 ^
                     fil720cc132fbb53f3bed2e525eb77bdbc1
     exit /b 0
 
-REM for :init\?, printf cab | md5sum -> 16ecfd64-586e-c6c1-ab21-2762c2c38a90
+@REM for :init\?, printf cab | md5sum -> 16ecfd64-586e-c6c1-ab21-2762c2c38a90
 :this\getCab [file_name] [uri_sub] [cab] [file]
     2>nul mkdir %temp%\16ecfd64-586e-c6c1-ab21-2762c2c38a90
     call :lib\download ^
@@ -1759,12 +1759,12 @@ REM for :init\?, printf cab | md5sum -> 16ecfd64-586e-c6c1-ab21-2762c2c38a90
 
 ::: "Change file/directory owner !username!" "" "usage: %~n0 own [path]"
 :lib\own
-    if not exist "%~1" exit /b 2 REM path not found
-    call :arg\dir\--isdir %1 ^
+    if not exist "%~1" exit /b 2 @REM path not found
+    call :sub\dir\--isdir %1 ^
         && takeown.exe /f %1 /r /d y ^
             && icacls.exe %1 /grant:r %username%:f /t /q
 
-    call :arg\dir\--isdir %1 ^
+    call :sub\dir\--isdir %1 ^
         || takeown.exe /f %1 ^
             && icacls.exe %1 /grant:r %username%:f /q
 
@@ -1776,9 +1776,9 @@ REM for :init\?, printf cab | md5sum -> 16ecfd64-586e-c6c1-ab21-2762c2c38a90
 
 ::: "Download something" "" "usage: %~n0 download [url] [output]"
 :lib\download
-    if "%~2"=="" exit /b 2 REM output path is empty
-    REM certutil.exe -urlcache -split -f %1 %2
-    REM windows 10 1803+
+    if "%~2"=="" exit /b 2 @REM output path is empty
+    @REM certutil.exe -urlcache -split -f %1 %2
+    @REM windows 10 1803+
     for %%a in (curl.exe) do if "%%~$path:a" neq "" curl.exe -L --retry 10 -o %2 %1 && exit /b 0
     call :this\psv
     if errorlevel 3 PowerShell.exe ^
@@ -1787,33 +1787,33 @@ REM for :init\?, printf cab | md5sum -> 16ecfd64-586e-c6c1-ab21-2762c2c38a90
                         -ExecutionPolicy Unrestricted ^
                         -Command "Invoke-WebRequest -uri %1 -OutFile %2 -UseBasicParsing" && exit /b 0
 
-    call :lib\vbs get %1 %2 || exit /b 4 REM download error
+    call :lib\vbs get %1 %2 || exit /b 4 @REM download error
     exit /b 0
 
 ::: "Boot tools" "" "usage: %~n0 boot [option] [args...]" ""
 :lib\boot
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\boot\%*
+    call :sub\boot\%*
     goto :eof
 
 ::: "    --legacy,  -g  [[letter:]]   Set the old boot menu style"
-:arg\boot\--legacy
-:arg\boot\-g
+:sub\boot\--legacy
+:sub\boot\-g
     if "%~1"=="" (
         bcdedit.exe /set {default} bootmenupolicy legacy
     ) else (
         if exist "%~1" (
             bcdedit.exe /store "%~f1" /set {default} bootmenupolicy legacy
-        ) else exit /b 14 REM target not found
+        ) else exit /b 14 @REM target not found
     )
     goto :eof
 
 ::: "    --file,    -f  [letter:]     Copy Window PE boot file from CDROM"
-:arg\boot\--file
-:arg\boot\-f
-    if not exist "%~d1" exit /b 22 REM target_letter not exist
+:sub\boot\--file
+:sub\boot\-f
+    if not exist "%~d1" exit /b 22 @REM target_letter not exist
     for /l %%a in (0,1,9) do if exist \\?\CDROM%%a\boot\boot.sdi (
-        REM for macOS
+        @REM for macOS
         >%~d1\.metadata_never_index type nul
         attrib.exe +s +h %~d1\.metadata_never_index
         for %%b in (
@@ -1832,49 +1832,49 @@ REM for :init\?, printf cab | md5sum -> 16ecfd64-586e-c6c1-ab21-2762c2c38a90
             if exist \\?\CDROM%%a%%b copy /y \\?\CDROM%%a%%b %~d1%%b
         )
 
-        REM copy /y \\?\CDROM%%a\sources\sxs\* %~d1\sources\sxs
+        @REM copy /y \\?\CDROM%%a\sources\sxs\* %~d1\sources\sxs
         exit /b 0
     )
-    exit /b 23 REM Window PE CDROM not found
+    exit /b 23 @REM Window PE CDROM not found
 
-REM error
+@REM error
 ::: "    --winre,   -r  [file_path]   Setting Up recovery startup mirrors"
-:arg\boot\--winre
-:arg\boot\-r
-    if not exist "%~1" exit /b 34 REM target not found
-    if /i "%~x1" neq ".wim" exit /b 35 REM not wim file
-    if "%~p1"=="\" exit /b 36 REM wim file must put in some directory
+:sub\boot\--winre
+:sub\boot\-r
+    if not exist "%~1" exit /b 34 @REM target not found
+    if /i "%~x1" neq ".wim" exit /b 35 @REM not wim file
+    if "%~p1"=="\" exit /b 36 @REM wim file must put in some directory
     reagentc.exe /disable
     reagentc.exe /setreimage /path "%~1"
     reagentc.exe /enable
     reagentc.exe /info
-    REM attrib.exe +s +h +r "%~dp1" /d /s
+    @REM attrib.exe +s +h +r "%~dp1" /d /s
     bcdedit.exe /set {default} bootmenupolicy legacy
     goto :eof
 
 ::: "    --winpe,   -p  [file_path]   Create WinPE boot Menu"
-:arg\boot\--winpe [wim]
-:arg\boot\-p
-    if not exist "%~2" exit /b 44 REM target not found
+:sub\boot\--winpe [wim]
+:sub\boot\-p
+    if not exist "%~2" exit /b 44 @REM target not found
     copy /y %windir%\Boot\DVD\PCAT\boot.sdi "%~dp1"
     2>nul mkdir %~d1\boot
 
-    REM REM winpe boot from disk
-    REM bcdedit.exe /createstore %~d1\boot\bcd
-    REM bcdedit.exe /store %~d1\boot\bcd /create {bootmgr} /d "Boot Manager"
-    REM bcdedit.exe /store %~d1\boot\bcd /set {bootmgr} device boot
-    REM for /f "tokens=2 delims={}" %%a in (
-    REM     'bcdedit.exe /store %~d1\boot\BCD /create /d "WINPE" /application osloader'
-    REM ) do set GUID=%%a
-    REM set GUID=%GUID:~0,-7%
-    REM for %%c in (
-    REM     "/set {%GUID%} osdevice boot"
-    REM     "/set {%GUID%} device boot"
-    REM     "/set {%GUID%} path \windows\system32\boot\winload.exe"
-    REM     "/set {%GUID%} systemroot \windows"
-    REM     "/set {%GUID%} winpe yes"
-    REM     "/displayorder {%GUID%} /addlast"
-    REM ) do bcdedit.exe /store %~d1\boot\bcd %%~c
+    @REM @REM winpe boot from disk
+    @REM bcdedit.exe /createstore %~d1\boot\bcd
+    @REM bcdedit.exe /store %~d1\boot\bcd /create {bootmgr} /d "Boot Manager"
+    @REM bcdedit.exe /store %~d1\boot\bcd /set {bootmgr} device boot
+    @REM for /f "tokens=2 delims={}" %%a in (
+    @REM     'bcdedit.exe /store %~d1\boot\BCD /create /d "WINPE" /application osloader'
+    @REM ) do set GUID=%%a
+    @REM set GUID=%GUID:~0,-7%
+    @REM for %%c in (
+    @REM     "/set {%GUID%} osdevice boot"
+    @REM     "/set {%GUID%} device boot"
+    @REM     "/set {%GUID%} path \windows\system32\boot\winload.exe"
+    @REM     "/set {%GUID%} systemroot \windows"
+    @REM     "/set {%GUID%} winpe yes"
+    @REM     "/displayorder {%GUID%} /addlast"
+    @REM ) do bcdedit.exe /store %~d1\boot\bcd %%~c
 
     for /f "tokens=2 delims={}" %%a in (
         `bcdedit.exe /store "%~d1\boot\bcd" /create /d "winpe" /device`
@@ -1894,8 +1894,8 @@ REM error
 
     goto :eof
 
-REM new boot
-:arg\boot\--is-vhd-os
+@REM new boot
+:sub\boot\--is-vhd-os
     >nul chcp 437
     for /f "usebackq tokens=1*" %%a in (
         `bcdedit.exe /v /enum {current}`
@@ -1908,20 +1908,20 @@ REM new boot
     exit /b -1
 
 :::TODO "    --rebuild, -rb [[letter:]]   Rebuilding the System boot Menu"
-:arg\boot\--rebuild
-:arg\boot\-rb
+:sub\boot\--rebuild
+:sub\boot\-rb
     goto :eof
 
 ::: "Add or Remove Web Credential" "" "usage: %~n0 crede [option] [args...]" ""
 :lib\crede
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\crede\%*
+    call :sub\crede\%*
     goto :eof
 
 ::: "    --add,    -a [user]@[ip or host] [[password]]"
-:arg\crede\--add
-:arg\crede\-a
-    if "%~1"=="" exit /b 12 REM parameter not enough
+:sub\crede\--add
+:sub\crede\-a
+    if "%~1"=="" exit /b 12 @REM parameter not enough
     setlocal
     set _prefix=
     set _suffix=
@@ -1929,23 +1929,23 @@ REM new boot
         '%~1'
     ) do set _prefix=%%a& set _suffix=%%b
 
-    if not defined _suffix exit /b 14 REM no ip or host
+    if not defined _suffix exit /b 14 @REM no ip or host
 
-    REM Clear Credential
-    >nul call :arg\crede\-r %_suffix%
+    @REM Clear Credential
+    >nul call :sub\crede\-r %_suffix%
 
     set _arg=
     if "%~2" neq "" set _arg=/pass:%~2
-    REM Add credential
+    @REM Add credential
     echo cmdkey.exe /add:%_suffix% /user:%_prefix% %_arg%
-    >nul cmdkey.exe /add:%_suffix% /user:%_prefix% %_arg% || exit /b 13 REM Command error
+    >nul cmdkey.exe /add:%_suffix% /user:%_prefix% %_arg% || exit /b 13 @REM Command error
     endlocal
     exit /b 0
 
 ::: "    --remove, -r [ip or host]"
-:arg\crede\--remove
-:arg\crede\-r
-    if "%~1"=="" exit /b 22 REM parameter not enough
+:sub\crede\--remove
+:sub\crede\-r
+    if "%~1"=="" exit /b 22 @REM parameter not enough
     cmdkey.exe /delete:%~1
     exit /b 0
 
@@ -1953,41 +1953,41 @@ REM new boot
 ::: "Mount / Umount SMB" "" "usage: %~n0 smb [option] [args...]" ""
 :lib\smb
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\smb\%*
+    call :sub\smb\%*
     goto :eof
 
 ::: "    --mount,     -m  [ip or hosts] [path...]   Mount SMB"
-:arg\smb\--mount
-:arg\smb\-m
-    if "%~2"=="" exit /b 12 REM parameter not enough
-    for %%a in (%2 %3 %4 %5 %6 %7 %8 %9) do net.exe use * "\\%~1\%%~a" /savecred /persistent:yes || exit /b 13 REM Command error
+:sub\smb\--mount
+:sub\smb\-m
+    if "%~2"=="" exit /b 12 @REM parameter not enough
+    for %%a in (%2 %3 %4 %5 %6 %7 %8 %9) do net.exe use * "\\%~1\%%~a" /savecred /persistent:yes || exit /b 13 @REM Command error
     exit /b 0
 
 ::: "    --umount,    -u  [ip or --all]             Umount SMB"
-:arg\smb\--umount
-:arg\smb\-u
-    if "%~1"=="" exit /b 22 REM parameter not enough
+:sub\smb\--umount
+:sub\smb\-u
+    if "%~1"=="" exit /b 22 @REM parameter not enough
     for /f "usebackq tokens=2,3" %%a in (`net.exe use`) do if "%%~pb"=="%~1\" net.exe use %%a /delete
     exit /b 0
 
 ::: "    --umountall, -ua                           Umount all SMB"
-:arg\smb\--umountall
-:arg\smb\-ua
+:sub\smb\--umountall
+:sub\smb\-ua
     net.exe use * /delete /y
     exit /b 0
 
 ::: "Mount / Umount NFS" "" "usage: %~n0 nfs [option] [args...]" ""
 :lib\nfs
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\nfs\%*
+    call :sub\nfs\%*
     exit /b 0
 
 ::: "    --mount,  -m [ipv4]  Mount NFS source by"
-:arg\nfs\--mount
-:arg\nfs\-m
-    if "%~1"=="" exit /b 12 REM parameter is empty
-    call :arg\ip\--test %~1 || exit /b 14 REM parameter not a ip
-    >nul 2>nul ping.exe -n 1 -l 16 -w 100 %~1 || exit /b 15 REM can not connect remote host
+:sub\nfs\--mount
+:sub\nfs\-m
+    if "%~1"=="" exit /b 12 @REM parameter is empty
+    call :sub\ip\--test %~1 || exit /b 14 @REM parameter not a ip
+    >nul 2>nul ping.exe -n 1 -l 16 -w 100 %~1 || exit /b 15 @REM can not connect remote host
     if not exist %windir%\system32\mount.exe call :nfs\initNfs
     for /f "usebackq skip=1" %%a in (
         `showmount.exe -e %~1`
@@ -1995,15 +1995,15 @@ REM new boot
     exit /b 0
 
 ::: "    --umount, -u         Umount all NFS path"
-:arg\nfs\--umount
-:arg\nfs\-u
+:sub\nfs\--umount
+:sub\nfs\-u
     if not exist %windir%\system32\umount.exe call :nfs\initNfs
     for /f "usebackq tokens=1,3 delims=:\" %%a in (
         `mount.exe`
     ) do umount.exe -f %%a:
     exit /b 0
 
-REM Enable ServicesForNFS
+@REM Enable ServicesForNFS
 :nfs\initNfs
     for %%a in (
         AnonymousUid AnonymousGid
@@ -2012,12 +2012,12 @@ REM Enable ServicesForNFS
                 /v %%a ^
                 /t REG_DWORD /d 0 /f
 
-    call :arg\oset\--feature-enable ^
+    call :sub\oset\--feature-enable ^
             ServicesForNFS-ClientOnly; ^
             ClientForNFS-Infrastructure; ^
             NFS-Administration
 
-    REM start /w Ocsetup.exe ServicesForNFS-ClientOnly;ClientForNFS-Infrastructure;NFS-Administration /norestart
+    @REM start /w Ocsetup.exe ServicesForNFS-ClientOnly;ClientForNFS-Infrastructure;NFS-Administration /norestart
     exit /b 0
 
 :::::::::
@@ -2027,28 +2027,28 @@ REM Enable ServicesForNFS
 ::: "Virtual Hard Disk manager" "" "usage: %~n0 vhd [option] [args...]" ""
 :lib\vhd
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\vhd\%*
+    call :sub\vhd\%*
     goto :eof
 
 ::: "    --new,    -n  [new_vhd_path] [size[GB]] [[mount letter or path][-]]" "                                                       Creates a virtual disk file." "                                            [-]        Not attach and format" ""
-:arg\vhd\--new
-:arg\vhd\-n
-    if "%~1"=="" exit /b 13 REM path is empty
-    if not exist "%~dp1" exit /b 14 REM no volume find
-    if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 12 REM file suffix not vhd/vhdx
-    if "%~2"=="" exit /b 15 REM vhd size is empty
+:sub\vhd\--new
+:sub\vhd\-n
+    if "%~1"=="" exit /b 13 @REM path is empty
+    if not exist "%~dp1" exit /b 14 @REM no volume find
+    if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 12 @REM file suffix not vhd/vhdx
+    if "%~2"=="" exit /b 15 @REM vhd size is empty
 
     call set /a _size=%2 * 1024 + 8
 
     if "%~3"=="-" (
-        echo create vdisk file="%~f1" maximum=%_size% type=expandable | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 17 REM diskpart error:
+        echo create vdisk file="%~f1" maximum=%_size% type=expandable | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 17 @REM diskpart error:
         exit /b 0
     )
 
-    REM make vhd
+    @REM make vhd
     if "%~3" neq "" (
-        if /i "%~d3"=="%~3" if exist "%~d3" exit /b 16 REM letter already use
-        if /i "%~d3" neq "%~3" if not exist "%~3" exit /b 18 REM not a letter or path
+        if /i "%~d3"=="%~3" if exist "%~d3" exit /b 16 @REM letter already use
+        if /i "%~d3" neq "%~3" if not exist "%~3" exit /b 18 @REM not a letter or path
     )
 
 
@@ -2064,93 +2064,93 @@ REM Enable ServicesForNFS
                 echo assign letter=%~d3
             ) else echo assign mount="%~f3"
         )
-    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 17 REM diskpart error:
+    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 17 @REM diskpart error:
     >&3 echo complete.
     exit /b 0
 
 ::: "    --mount,  -m  [vhd_path] [[letter:]]               Mount vhd file"
-:arg\vhd\--mount
-:arg\vhd\-m
-    if not exist "%~1" exit /b 23 REM file not found
-    if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 22 REM file suffix not vhd/vhdx
+:sub\vhd\--mount
+:sub\vhd\-m
+    if not exist "%~1" exit /b 23 @REM file not found
+    if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 22 @REM file suffix not vhd/vhdx
     if "%~2" neq "" (
-        if /i "%~d2"=="%~2" if exist "%~2" exit /b 26 REM letter already use
-        if /i "%~d2" neq "%~2" if not exist "%~2" exit /b 28 REM not a letter or path
+        if /i "%~d2"=="%~2" if exist "%~2" exit /b 26 @REM letter already use
+        if /i "%~d2" neq "%~2" if not exist "%~2" exit /b 28 @REM not a letter or path
     )
     (
         echo select vdisk file="%~f1"
         echo attach vdisk
         if "%~2" neq "" (
             echo select partition 1
-            REM skip error
+            @REM skip error
             echo remove all noerr
             if /i "%~d2"=="%~2" (
                 echo assign letter=%~2
             ) else echo assign mount="%~f2"
         )
-    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 27 REM diskpart error:
+    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 27 @REM diskpart error:
     >&3 echo complete.
     exit /b 0
 
 ::: "    --umount, -u  [vhd_path]                           Unmount vhd file"
-:arg\vhd\--umount
-:arg\vhd\-u
-    if not exist "%~1" exit /b 33 REM file not found
-    if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 32 REM file suffix not vhd/vhdx
-    REM unmount vhd
+:sub\vhd\--umount
+:sub\vhd\-u
+    if not exist "%~1" exit /b 33 @REM file not found
+    if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 32 @REM file suffix not vhd/vhdx
+    @REM unmount vhd
     (
         echo select vdisk file="%~f1"
         echo detach vdisk
-    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 37 REM diskpart error:
+    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 37 @REM diskpart error:
     >&3 echo complete.
     exit /b 0
 
 ::: "    --expand, -e  [vhd_path] [GB_size]                 Expands the maximum size available on a virtual disk."
-:arg\vhd\--expand
-:arg\vhd\-e
-    if not exist "%~1" exit /b 43 REM file not found
-    if /i ".vhd" neq "%~x1" if /i ".vhdx" neq "%~x1" exit /b 42 REM file suffix not vhd/vhdx
-    call :arg\is\--integer %~2 || exit /b -1
-    REM unmount vhd
+:sub\vhd\--expand
+:sub\vhd\-e
+    if not exist "%~1" exit /b 43 @REM file not found
+    if /i ".vhd" neq "%~x1" if /i ".vhdx" neq "%~x1" exit /b 42 @REM file suffix not vhd/vhdx
+    call :sub\is\--integer %~2 || exit /b -1
+    @REM unmount vhd
     call :lib\vumount %1 > nul
     setlocal
     set /a _size=%~2 * 1024 + 8
     (
         echo select vdisk file="%~f1"
         echo expand vdisk maximum=%_size%
-    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 47 REM diskpart error:
+    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 47 @REM diskpart error:
     endlocal
     exit /b 0
 
 ::: "    --differ, -d  [new_vhd_path] [source_vhd_path]     Create differencing vhd file by an existing virtual disk file"
-:arg\vhd\--differ
-:arg\vhd\-d
-    if not exist "%~2" exit /b 51 REM parent vhd not found
-    if exist "%~1" exit /b 52 REM new file allready exist
-    if /i ".vhd" neq "%~x1" if /i ".vhdx" neq "%~x1" exit /b 53 REM file suffix not vhd/vhdx
-    echo create vdisk file="%~f1" parent="%~f2" | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 57 REM diskpart error:
+:sub\vhd\--differ
+:sub\vhd\-d
+    if not exist "%~2" exit /b 51 @REM parent vhd not found
+    if exist "%~1" exit /b 52 @REM new file allready exist
+    if /i ".vhd" neq "%~x1" if /i ".vhdx" neq "%~x1" exit /b 53 @REM file suffix not vhd/vhdx
+    echo create vdisk file="%~f1" parent="%~f2" | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 57 @REM diskpart error:
     >&3 echo complete.
     exit /b 0
 
 ::: "    --merge,  -me [chile_vhd_path] [[merge_depth]]     Merges a child disk with its parents"
-:arg\vhd\--merge
-:arg\vhd\-me
-    if not exist "%~1" exit /b 63 REM file not found
-    if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 62 REM file suffix not vhd/vhdx
+:sub\vhd\--merge
+:sub\vhd\-me
+    if not exist "%~1" exit /b 63 @REM file not found
+    if /i "%~x1" neq ".vhd" if /i "%~x1" neq ".vhdx" exit /b 62 @REM file suffix not vhd/vhdx
     setlocal
     call set _depth=1
     if "%~2" neq "" set _depth=%~2
     (
         echo select vdisk file="%~f1"
         echo merge vdisk depth=%_depth%
-    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 67 REM diskpart error:
+    ) | diskpart.exe | find.exe /i /v "DISKPART" || exit /b 67 @REM diskpart error:
     >&3 echo complete.
     endlocal
     exit /b 0
 
 :::TODO  "    --rec, -r                                         Recovery child vhd if have parent" "" "e.g." "    %~n0 vhd -n E:\nano.vhdx 30 V:"
-:arg\vhd\--rec
-:arg\vhd\-r
+:sub\vhd\--rec
+:sub\vhd\-r
     exit /b -1
 
 ::::::::::
@@ -2160,25 +2160,25 @@ REM Enable ServicesForNFS
 ::: "Wim manager" "" "usage: %~n0 wim [option] [args ...]" ""
 :lib\wim
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    if /i "%username%"=="System" if not defined SCRATCH_DIR exit /b 2 REM SCRATCH_DIR variable not set
+    if /i "%username%"=="System" if not defined SCRATCH_DIR exit /b 2 @REM SCRATCH_DIR variable not set
     2>nul mkdir %temp% %tmp%
     setlocal
     if /i "%username%" neq "System" set scratch_dir=
     if defined scratch_dir set "scratch_dir=/ScratchDir:%scratch_dir:/ScratchDir:=%"
-    call :arg\wim\%*
+    call :sub\wim\%*
     endlocal
     goto :eof
 
 ::: "    --new,    -n [[compress level]] [target_dir_path] [[image_name]]" "                                                             Capture file/directory to wim" "                                                      [WARN] if target path tail without '\', root path is parent directory" ""
-:arg\wim\--new
-:arg\wim\-n
-    call :arg\oset\--vergeq 6.3 || exit /b 13 REM dism version is too old
+:sub\wim\--new
+:sub\wim\-n
+    call :sub\oset\--vergeq 6.3 || exit /b 13 @REM dism version is too old
 
     setlocal enabledelayedexpansion
-    call :arg\is\--integer %~1 && call :wim\setCompress %~1 && shift
+    call :sub\is\--integer %~1 && call :wim\setCompress %~1 && shift
 
-    if not exist "%~1" exit /b 14 REM target not found
-    if "%~d1\"=="%~f1" if "%~2"=="" exit /b 15 REM need input image name
+    if not exist "%~1" exit /b 14 @REM target not found
+    if "%~d1\"=="%~f1" if "%~2"=="" exit /b 15 @REM need input image name
 
     set _enable_export=
     if /i "%_compress_args%"=="/Compress:recovery" (
@@ -2188,31 +2188,31 @@ REM Enable ServicesForNFS
 
     set _is_root=
     set "_input=%~f1"
-    REM trim path
+    @REM trim path
     if "%_input:~-1%"=="\" set _is_root=true& set "_input=%_input:~0,-1%"
 
-    REM wim name
+    @REM wim name
     if "%~2" neq "" (
         set _name=%~2
     ) else for %%a in ("%_input%") do set "_name=%%~nxa"
 
-    REM New or Append
+    @REM New or Append
     if exist ".\%_name%.wim" (set _create=Append) else set _create=Capture
 
-    call :arg\str\--now _conf "%tmp%\" .ini
+    call :sub\str\--now _conf "%tmp%\" .ini
     set _args=
     set _description=
     set _load_point=HKLM\load-point%random%
-    REM Create exclusion list
+    @REM Create exclusion list
 
-    REM TODO: bug: ()
+    @REM TODO: bug: ()
     if exist "%_input%\Windows\System32\config\SYSTEM" (
-        >%_conf% call :arg\txt\--subtxt "%~f0" wim.ini 3000
+        >%_conf% call :sub\txt\--subtxt "%~f0" wim.ini 3000
         set _args=/ConfigFile:"%_conf%"
 
         call :regedit\on
-        REM /Description:Description
-        REM [WARN] Windows 10 have ReleaseId
+        @REM /Description:Description
+        @REM [WARN] Windows 10 have ReleaseId
         >nul reg.exe load %_load_point% "%_input%\Windows\System32\config\SOFTWARE" && for /f "usebackq skip=1 tokens=2*" %%a in (
             `reg.exe query "%_load_point%\Microsoft\Windows NT\CurrentVersion" /v ProductName`
         ) do if "%%a"=="REG_SZ" for /f "usebackq skip=1 tokens=2*" %%c in (
@@ -2226,19 +2226,19 @@ REM Enable ServicesForNFS
         echo root path: '%_input%'
     ) else (
         >%_conf% call :wim\ConfigFile "%_input%" && set _args=/ConfigFile:"%_conf%"
-        REM input args
+        @REM input args
         for %%a in ("%_input%") do set "_input=%%~dpa"
         set "_input=!_input:~0,-1!"
         echo.
         echo root path: '!_input!'
     )
 
-    REM Do capture
+    @REM Do capture
     dism.exe /%_create%-Image ^
         /ImageFile:".\%_name%.wim" ^
         /CaptureDir:"%_input%" ^
         /Name:"%_name%" %_description% %_compress_args% ^
-        /Verify %_args% %scratch_dir% || exit /b 16 REM dism error
+        /Verify %_args% %scratch_dir% || exit /b 16 @REM dism error
 
     if exist "%_conf%" erase "%_conf%"
 
@@ -2251,17 +2251,17 @@ REM Enable ServicesForNFS
                                 /SourceIndex:%_index% ^
                                 /DestinationImageFile:".\%_name%.esd" ^
                                 /Compress:recovery ^
-                                /CheckIntegrity %scratch_dir% || exit /b 16 REM dism error
+                                /CheckIntegrity %scratch_dir% || exit /b 16 @REM dism error
 
     endlocal
     exit /b 0
 
-REM create exclusion list
+@REM create exclusion list
 :wim\ConfigFile
     if not exist "%~1" exit /b 1
     if "%~pnx1"=="\" exit /b 2
     echo [ExclusionList]
-    REM parent directory
+    @REM parent directory
     for /f "usebackq delims=" %%a in (
         `dir /a /b "%~dp1"`
     ) do if "%%a" neq "%~nx1" echo \%%a
@@ -2269,18 +2269,18 @@ REM create exclusion list
     exit /b 0
 
 ::: "    --apply,  -a [wim_path] [[output_path] [image_index]]    Apply WIM file"
-:arg\wim\--apply
-:arg\wim\-a
-    call :arg\oset\--vergeq 6.3 || exit /b 23 REM dism version is too old
-    if not exist "%~1" exit /b 27 REM wim file not found
-    if /i "%~x1" neq ".wim" if /i "%~x1" neq ".esd" exit /b 28 REM not wim file
+:sub\wim\--apply
+:sub\wim\-a
+    call :sub\oset\--vergeq 6.3 || exit /b 23 @REM dism version is too old
+    if not exist "%~1" exit /b 27 @REM wim file not found
+    if /i "%~x1" neq ".wim" if /i "%~x1" neq ".esd" exit /b 28 @REM not wim file
     setlocal
     set _out=.
     if "%~2" neq "" (
-        call :arg\dir\--isdir "%~2" || exit /b -1
+        call :sub\dir\--isdir "%~2" || exit /b -1
         set _out=%~f2
     )
-    REM Must trim path
+    @REM Must trim path
     if "%_out:~-1%"=="\" set _out=%_out:~0,-1%
     if "%~3"=="" (
         call :getWimLastIndex %1 _index
@@ -2289,12 +2289,12 @@ REM create exclusion list
                 /ImageFile:"%~f1" ^
                 /Index:%_index% ^
                 /ApplyDir:"%_out%" ^
-                /Verify || exit /b 26 REM dism error
+                /Verify || exit /b 26 @REM dism error
 
     endlocal
     exit /b 0
 
-REM for wim
+@REM for wim
 :getWimLastIndex
     if "%~2"=="" exit /b 1
     for /f "usebackq tokens=1,3" %%a in (
@@ -2303,11 +2303,11 @@ REM for wim
     exit /b 0
 
 ::: "    --mount,  -m [wim_path] [mount_path] [[image_index]]     Mount wim"
-:arg\wim\--mount
-:arg\wim\-m
-    if not exist "%~1" exit /b 37 REM wim file not found
-    if /i "%~x1" neq ".wim" exit /b 38 REM not wim file
-    call :arg\dir\--isdir %2 || exit /b 34 REM target not directory
+:sub\wim\--mount
+:sub\wim\-m
+    if not exist "%~1" exit /b 37 @REM wim file not found
+    if /i "%~x1" neq ".wim" exit /b 38 @REM not wim file
+    call :sub\dir\--isdir %2 || exit /b 34 @REM target not directory
     setlocal
     set _rw=%~a1
     set _arg=
@@ -2321,27 +2321,27 @@ REM for wim
     dism.exe /Mount-Wim ^
                 /WimFile:"%~f1" ^
                 /index:%_index% ^
-                /MountDir:"%~f2" %_arg% %scratch_dir% || exit /b 36 REM dism error
+                /MountDir:"%~f2" %_arg% %scratch_dir% || exit /b 36 @REM dism error
 
     endlocal
     exit /b 0
 
 ::: "    --umount, -u [mount_path]                                Unmount wim"
-:arg\wim\--umount
-:arg\wim\-u
-    call :arg\dir\--isdir %1 || exit /b 44 REM target not directory
+:sub\wim\--umount
+:sub\wim\-u
+    call :sub\dir\--isdir %1 || exit /b 44 @REM target not directory
     dism.exe /Unmount-Wim ^
                 /MountDir:"%~f1" ^
-                /discard %scratch_dir% || exit /b 46 REM dism error
+                /discard %scratch_dir% || exit /b 46 @REM dism error
     exit /b 0
 
 ::: "    --commit, -c [mount_path]                                Unmount wim with commit"
-:arg\wim\--commit
-:arg\wim\-c
-    call :arg\dir\--isdir %1 || exit /b 54 REM target not directory
+:sub\wim\--commit
+:sub\wim\-c
+    call :sub\dir\--isdir %1 || exit /b 54 @REM target not directory
     dism.exe /Unmount-Wim ^
                 /MountDir:"%~f1" ^
-                /commit %scratch_dir% || exit /b 46 REM dism error
+                /commit %scratch_dir% || exit /b 46 @REM dism error
     exit /b 0
 
 :: 0->4 none|WIMBoot|fast|max|recovery(esd),
@@ -2357,64 +2357,64 @@ REM for wim
     exit /b 1
 
 ::: "    --export, -e [source_wim_path] [target_wim_path] [image_index] [[compress_level]]    Export wim image" "                                   compress level: 0:none, 1:WIMBoot, 2:fast, 3:max, 4:recovery(esd)" ""
-:arg\wim\--export
-:arg\wim\-e
-    if not exist %1 exit /b 57 REM wim file not found
-    if /i "%~x1" neq ".wim" if /i "%~x1" neq ".esd" exit /b 58 REM first arg not wim file
-    if "%~f2" neq "%~2" exit /b 51 REM Not a path
-    if /i "%~x2" neq ".wim" if /i "%~x2" neq ".esd" exit /b 50 REM secend arg not wim file
-    if "%~3"=="" exit /b 52 REM Target wim index not select
+:sub\wim\--export
+:sub\wim\-e
+    if not exist %1 exit /b 57 @REM wim file not found
+    if /i "%~x1" neq ".wim" if /i "%~x1" neq ".esd" exit /b 58 @REM first arg not wim file
+    if "%~f2" neq "%~2" exit /b 51 @REM Not a path
+    if /i "%~x2" neq ".wim" if /i "%~x2" neq ".esd" exit /b 50 @REM secend arg not wim file
+    if "%~3"=="" exit /b 52 @REM Target wim index not select
     setlocal
 
     call :wim\setCompress %~4
 
-    REM test suffix
-    if /i "%~x2"==".esd" if defined _compress_args if "%_compress_args:~-8%" neq "recovery" exit /b 53 REM compress level error
+    @REM test suffix
+    if /i "%~x2"==".esd" if defined _compress_args if "%_compress_args:~-8%" neq "recovery" exit /b 53 @REM compress level error
 
-    REM auto esd
+    @REM auto esd
     if /i "%~x2"==".esd" if not defined _compress_args set _compress_args=/Compress:recovery
 
-    REM test size, TODO get image size by index
-    2>nul set "_size=%~z1" || exit /b 57 REM wim file not found
-    REM 0x1fffffff = 536870911
+    @REM test size, TODO get image size by index
+    2>nul set "_size=%~z1" || exit /b 57 @REM wim file not found
+    @REM 0x1fffffff = 536870911
     if "%_size:~9,1%"=="" if %_size% lss 536870911 if "%_compress_args%" neq "/WIMBoot" set "_compress_args=%_compress_args% /Bootable"
 
     dism.exe /Export-Image ^
                 /SourceImageFile:"%~f1" ^
                 /SourceIndex:%3 ^
                 /DestinationImageFile:"%~f2" %_compress_args% ^
-                /CheckIntegrity %scratch_dir% || exit /b 56 REM dism error
+                /CheckIntegrity %scratch_dir% || exit /b 56 @REM dism error
     endlocal
     exit /b 0
 
 ::: "    --umountall, -ua                                         Unmount all wim"
-:arg\wim\--umountall
-:arg\wim\-ua
+:sub\wim\--umountall
+:sub\wim\-ua
     for /f "usebackq tokens=1-3*" %%a in (
         `dism.exe /English /Get-MountedWimInfo`
-    ) do if "%%~a%%~b"=="MountDir" if exist "%%~d" call :arg\wim\--umount "%%~d"
+    ) do if "%%~a%%~b"=="MountDir" if exist "%%~d" call :sub\wim\--umount "%%~d"
     dism.exe /Cleanup-Wim
     exit /b 0
 
 ::: "    --rmountall, -ra                                         Recovers mount all orphaned wim"
-:arg\wim\--rmountall
-:arg\wim\-ra
+:sub\wim\--rmountall
+:sub\wim\-ra
     setlocal enabledelayedexpansion
     for /f "usebackq tokens=1-3*" %%a in (
         `dism.exe /English /Get-MountedWimInfo`
     ) do (
         if "%%~a"=="Mount" set _mount_dir=
         if "%%~a%%~b"=="MountDir" if exist "%%~d" set "_mount_dir=%%~d"
-        if "%%~a%%~d"=="StatusRemount" if defined _mount_dir dism.exe /Remount-Wim /MountDir:"!_mount_dir!" %scratch_dir% || exit /b 76 REM dism error
+        if "%%~a%%~d"=="StatusRemount" if defined _mount_dir dism.exe /Remount-Wim /MountDir:"!_mount_dir!" %scratch_dir% || exit /b 76 @REM dism error
     )
     endlocal
     echo.complete.
     exit /b 0
 
 ::: "    --info,   -i [image_path]                                Displays information about images in a WIM file."
-:arg\wim\--info
-:arg\wim\-i
-    if not exist "%~1" exit /b 84 REM file not exist
+:sub\wim\--info
+:sub\wim\-i
+    if not exist "%~1" exit /b 84 @REM file not exist
     for /f "usebackq tokens=1,2*" %%b in (
         `dism.exe /English /Get-WimInfo /WimFile:%1`
     ) do if "%%b"=="Index" (
@@ -2443,17 +2443,17 @@ REM for wim
 ::: "Drivers manager" "" "usage: %~n0 drv [option] [args...]" ""
 :lib\drv
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    if /i "%username%"=="System" if not defined SCRATCH_DIR exit /b 7 REM SCRATCH_DIR variable not set
+    if /i "%username%"=="System" if not defined SCRATCH_DIR exit /b 7 @REM SCRATCH_DIR variable not set
     setlocal
     if /i "%username%" neq "System" set scratch_dir=
     if defined scratch_dir set "scratch_dir=/ScratchDir:%scratch_dir:/ScratchDir:=%"
-    call :arg\drv\%*
+    call :sub\drv\%*
     endlocal
     goto :eof
 
 ::: "    --info,   -v                                Display device info"
-:arg\drv\--info
-:arg\drv\-v
+:sub\drv\--info
+:sub\drv\-v
     echo ;
     for /f "usebackq delims=" %%a in (`
         wmic.exe baseboard get Manufacturer^,Product^,Version ^&
@@ -2465,43 +2465,43 @@ REM for wim
     `) do echo ; %%~a
     exit /b 0
 
-REM Will install at \Windows\System32\DriverStore\FileRepository
+@REM Will install at \Windows\System32\DriverStore\FileRepository
 ::: "    --add,    -a  [os_path] [drv_path ...]      Add drivers offline"
-:arg\drv\--add
-:arg\drv\-a
-    for %%a in (%*) do call :arg\dir\--isdir %1 && (
+:sub\drv\--add
+:sub\drv\-a
+    for %%a in (%*) do call :sub\dir\--isdir %1 && (
         dism.exe /Image:"%~f1" /Add-Driver /Driver:%%a /Recurse %scratch_dir% || REM
-    ) || if /i "%%~xa"==".inf" dism.exe /Image:"%~f1" /Add-Driver /Driver:%%a %scratch_dir% || exit /b 24 REM dism error
+    ) || if /i "%%~xa"==".inf" dism.exe /Image:"%~f1" /Add-Driver /Driver:%%a %scratch_dir% || exit /b 24 @REM dism error
     exit /b 0
 
 ::: "    --list,   -l  [[os_path]]                   Display OS drivers list"
-:arg\drv\--list
-:arg\drv\-l
-    if "%~1" neq "" call :arg\dir\--isdir %1 || exit /b 32 REM OS path not found
+:sub\drv\--list
+:sub\drv\-l
+    if "%~1" neq "" call :sub\dir\--isdir %1 || exit /b 32 @REM OS path not found
     if "%~1"=="" (
-        dism.exe /Online /Get-Drivers /all || exit /b 34 REM dism error
+        dism.exe /Online /Get-Drivers /all || exit /b 34 @REM dism error
     ) else dism.exe /Image:"%~f1" /Get-Drivers /all || exit /b 34
     exit /b 0
 
 ::: "    --remove, -r  [os_path] [[name].inf]        Remove drivers, 3rd party drivers like oem1.inf"
-:arg\drv\--remove
-:arg\drv\-r
-    call :arg\dir\--isdir %1 || exit /b 42 REM OS path not found
-    if /i "%~x2" neq ".inf" exit /b 43 REM Not drivers name
-    dism.exe /Image:"%~f1" /Remove-Driver /Driver:%~2 %scratch_dir% || exit /b 44 REM dism error
+:sub\drv\--remove
+:sub\drv\-r
+    call :sub\dir\--isdir %1 || exit /b 42 @REM OS path not found
+    if /i "%~x2" neq ".inf" exit /b 43 @REM Not drivers name
+    dism.exe /Image:"%~f1" /Remove-Driver /Driver:%~2 %scratch_dir% || exit /b 44 @REM dism error
     exit /b 0
 
-REM "Hardware ids manager"
+@REM "Hardware ids manager"
 ::: "    --get,    -g                                Display hardware ids"
-:arg\drv\--get
-:arg\drv\-g
-    call :arg\var\--in-path devcon.exe || >nul call :init\devcon
+:sub\drv\--get
+:sub\drv\-g
+    call :sub\var\--in-path devcon.exe || >nul call :init\devcon
     setlocal
-    REM Trim Hardware and compatible ids
+    @REM Trim Hardware and compatible ids
     for /f "usebackq tokens=1,2" %%a in (
         `devcon.exe hwids *`
     ) do if "%%b"=="" set "_$%%a=$"
-    REM Print list
+    @REM Print list
     for /f "usebackq tokens=2 delims==$" %%a in (
         `2^>nul set _$`
     ) do echo %%a
@@ -2509,127 +2509,127 @@ REM "Hardware ids manager"
     exit /b 0
 
 ::: "    --filter, -f  [inf_path] [drivers_dir]      Search device *.inf"
-:arg\drv\--filter
-:arg\drv\-f
-    if not exist "%~1" exit /b 65 REM drivers info file not found
-    call :arg\dir\--isdir %2 || exit /b 66 REM drivers path error
-    REM Create inf trim vbs
+:sub\drv\--filter
+:sub\drv\-f
+    if not exist "%~1" exit /b 65 @REM drivers info file not found
+    call :sub\dir\--isdir %2 || exit /b 66 @REM drivers path error
+    @REM Create inf trim vbs
     setlocal enabledelayedexpansion
-    call :arg\str\--now _out %temp%\inf-
+    call :sub\str\--now _out %temp%\inf-
     mkdir %_out%
     set i=0
     for /r %2 %%a in (
         *.inf
     ) do (
         set /a i+=1
-        REM Cache inf file path
+        @REM Cache inf file path
         set _drv\inf\!i!=%%a
-        REM trim file in a new path
+        @REM trim file in a new path
         call :lib\vbs inftrim "%%~a" %_out%\!i!.tmp
         for %%b in (%_out%\!i!.tmp) do if "%%~zb"=="0" type "%%~a" > %_out%\!i!.tmp
     )
-    REM Print hit file
+    @REM Print hit file
     for /f "usebackq" %%a in (
         `findstr.exe /e /i /m /g:%1 %_out%\*.tmp`
     ) do echo !_drv\inf\%%~na!
-    REM Clear temp file
+    @REM Clear temp file
     rmdir /s /q %_out%
     endlocal
     exit /b 0
 
-:arg\drv\--extract--env
-:arg\drv\-ee
-    REM \Users\Default
-    REM \Users\Default\NTUSER.DAT
-    REM \Windows\servicing\Version\!_ver_drv!
-    REM \Windows\servicing\Version\!_ver_drv!\amd64_installed
-    REM \Windows\servicing\Version\!_ver_drv!\x86_installed
-    REM \Windows\System32
-    REM \Windows\System32\ntdll.dll
-    REM \Windows\System32\SSShim.dll
-    REM \Windows\System32\wdscore.dll
-    REM \Windows\System32\config
-    REM \Windows\System32\config\COMPONENTS 0kb
-    REM \Windows\System32\config\DEFAULT    0kb
-    REM \Windows\System32\config\DRIVERS
-    REM \Windows\System32\config\SAM        0kb
-    REM \Windows\System32\config\SECURITY   0kb
-    REM \Windows\System32\config\SOFTWARE
-    REM \Windows\System32\config\SYSTEM
-    REM \Windows\System32\Dism
-    REM \Windows\System32\Dism\CbsProvider.dll
-    REM \Windows\System32\Dism\CompatProvider.dll
-    REM \Windows\System32\Dism\DismCore.dll
-    REM \Windows\System32\Dism\DismCorePS.dll
-    REM \Windows\System32\Dism\DismHost.exe
-    REM \Windows\System32\Dism\DismProv.dll
-    REM \Windows\System32\Dism\DmiProvider.dll
-    REM \Windows\System32\Dism\FolderProvider.dll
-    REM \Windows\System32\Dism\GenericProvider.dll
-    REM \Windows\System32\Dism\IBSProvider.dll
-    REM \Windows\System32\Dism\ImagingProvider.dll
-    REM \Windows\System32\Dism\IntlProvider.dll
-    REM \Windows\System32\Dism\LogProvider.dll
-    REM \Windows\System32\Dism\OSProvider.dll
-    REM \Windows\System32\Dism\PEProvider.dll
-    REM \Windows\System32\Dism\SmiProvider.dll
-    REM \Windows\System32\Dism\UnattendProvider.dll
-    REM \Windows\System32\Dism\VhdProvider.dll
-    REM \Windows\System32\Dism\WimProvider.dll
-    REM \Windows\System32\Dism\Wow64Provider.dll
-    REM \Windows\System32\Dism\en-US
-    REM \Windows\System32\Dism\en-US\CbsProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\CompatProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\DismCore.dll.mui
-    REM \Windows\System32\Dism\en-US\DismProv.dll.mui
-    REM \Windows\System32\Dism\en-US\DmiProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\FolderProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\GenericProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\IBSProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\ImagingProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\IntlProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\LogProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\OSProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\PEProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\SmiProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\UnattendProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\VhdProvider.dll.mui
-    REM \Windows\System32\Dism\en-US\WimProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!
-    REM \Windows\System32\Dism\!_lang_drv!\CbsProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\CompatProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\DismCore.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\DismProv.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\DmiProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\FolderProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\GenericProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\ImagingProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\IntlProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\LogProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\OSProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\PEProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\SmiProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\UnattendProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\VhdProvider.dll.mui
-    REM \Windows\System32\Dism\!_lang_drv!\WimProvider.dll.mui
-    REM \Windows\System32\DriverStore\FileRepository
-    REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!
-    REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!\CbsCore.dll
-    REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!\DrUpdate.dll
-    REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!\drvstore.dll
-    REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!\wcp.dll
+:sub\drv\--extract--env
+:sub\drv\-ee
+    @REM \Users\Default
+    @REM \Users\Default\NTUSER.DAT
+    @REM \Windows\servicing\Version\!_ver_drv!
+    @REM \Windows\servicing\Version\!_ver_drv!\amd64_installed
+    @REM \Windows\servicing\Version\!_ver_drv!\x86_installed
+    @REM \Windows\System32
+    @REM \Windows\System32\ntdll.dll
+    @REM \Windows\System32\SSShim.dll
+    @REM \Windows\System32\wdscore.dll
+    @REM \Windows\System32\config
+    @REM \Windows\System32\config\COMPONENTS 0kb
+    @REM \Windows\System32\config\DEFAULT    0kb
+    @REM \Windows\System32\config\DRIVERS
+    @REM \Windows\System32\config\SAM        0kb
+    @REM \Windows\System32\config\SECURITY   0kb
+    @REM \Windows\System32\config\SOFTWARE
+    @REM \Windows\System32\config\SYSTEM
+    @REM \Windows\System32\Dism
+    @REM \Windows\System32\Dism\CbsProvider.dll
+    @REM \Windows\System32\Dism\CompatProvider.dll
+    @REM \Windows\System32\Dism\DismCore.dll
+    @REM \Windows\System32\Dism\DismCorePS.dll
+    @REM \Windows\System32\Dism\DismHost.exe
+    @REM \Windows\System32\Dism\DismProv.dll
+    @REM \Windows\System32\Dism\DmiProvider.dll
+    @REM \Windows\System32\Dism\FolderProvider.dll
+    @REM \Windows\System32\Dism\GenericProvider.dll
+    @REM \Windows\System32\Dism\IBSProvider.dll
+    @REM \Windows\System32\Dism\ImagingProvider.dll
+    @REM \Windows\System32\Dism\IntlProvider.dll
+    @REM \Windows\System32\Dism\LogProvider.dll
+    @REM \Windows\System32\Dism\OSProvider.dll
+    @REM \Windows\System32\Dism\PEProvider.dll
+    @REM \Windows\System32\Dism\SmiProvider.dll
+    @REM \Windows\System32\Dism\UnattendProvider.dll
+    @REM \Windows\System32\Dism\VhdProvider.dll
+    @REM \Windows\System32\Dism\WimProvider.dll
+    @REM \Windows\System32\Dism\Wow64Provider.dll
+    @REM \Windows\System32\Dism\en-US
+    @REM \Windows\System32\Dism\en-US\CbsProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\CompatProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\DismCore.dll.mui
+    @REM \Windows\System32\Dism\en-US\DismProv.dll.mui
+    @REM \Windows\System32\Dism\en-US\DmiProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\FolderProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\GenericProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\IBSProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\ImagingProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\IntlProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\LogProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\OSProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\PEProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\SmiProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\UnattendProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\VhdProvider.dll.mui
+    @REM \Windows\System32\Dism\en-US\WimProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!
+    @REM \Windows\System32\Dism\!_lang_drv!\CbsProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\CompatProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\DismCore.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\DismProv.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\DmiProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\FolderProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\GenericProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\ImagingProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\IntlProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\LogProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\OSProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\PEProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\SmiProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\UnattendProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\VhdProvider.dll.mui
+    @REM \Windows\System32\Dism\!_lang_drv!\WimProvider.dll.mui
+    @REM \Windows\System32\DriverStore\FileRepository
+    @REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!
+    @REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!\CbsCore.dll
+    @REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!\DrUpdate.dll
+    @REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!\drvstore.dll
+    @REM \Windows\WinSxS\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_!_ver_drv!_none_!_hash_drv!\wcp.dll
     goto :eof
 
-REM from Window 10 wdk, will download devcon.exe at script path
+@REM from Window 10 wdk, will download devcon.exe at script path
 :init\devcon
     for %%a in (_%0) do if %processor_architecture:~-2%==64 (
-        REM amd64
+        @REM amd64
         call :this\getCab %%~na ^
                     8/1/6/816FE939-15C7-4185-9767-42ED05524A95/wdk ^
                     787bee96dbd26371076b37b13c405890 ^
                     filbad6e2cce5ebc45a401e19c613d0a28f
 
-    REM x86
+    @REM x86
     ) else call :this\getCab %%~na ^
                     8/1/6/816FE939-15C7-4185-9767-42ED05524A95/wdk ^
                     82c1721cd310c73968861674ffc209c9 ^
@@ -2647,31 +2647,31 @@ REM from Window 10 wdk, will download devcon.exe at script path
     if "%~1"=="" call :this\annotation %0 & goto :eof
     setlocal
     if "%~2"=="" (
-        if "%~d0" neq "\\" exit /b 3 REM Need ip or host
+        if "%~d0" neq "\\" exit /b 3 @REM Need ip or host
         for /f "usebackq delims=\" %%a in (
             '%~f0'
         ) do set _host=%%a
     ) else set _host=%2
 
-    call :arg\kms\%*
+    call :sub\kms\%*
     endlocal
     goto :eof
 
-REM [WARN] must call from ':lib\kms'
+@REM [WARN] must call from ':lib\kms'
 ::: "    --all, -a [[host[:port]]]     Active operating system and office"
-:arg\kms\--all
-:arg\kms\-a
-    call :arg\kms\--os %*
-    call :arg\kms\--odt %*
+:sub\kms\--all
+:sub\kms\-a
+    call :sub\kms\--os %*
+    call :sub\kms\--odt %*
     exit /b 0
 
-REM for Operating System, [WARN] must call from ':lib\kms'
+@REM for Operating System, [WARN] must call from ':lib\kms'
 ::: "    --os,  -s [[host[:port]]]     Active operating system"
-:arg\kms\--os
-:arg\kms\-s
-    if not defined _host exit /b 23 REM Need ip or host
+:sub\kms\--os
+:sub\kms\-s
+    if not defined _host exit /b 23 @REM Need ip or host
 
-    REM Get this OS version
+    @REM Get this OS version
     set _verm10=
     call :oset\this_version_multiply_10 _verm10
     call :regedit\on
@@ -2681,15 +2681,15 @@ REM for Operating System, [WARN] must call from ':lib\kms'
         `reg.exe query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v CurrentBuild`
     ) do set _currentbuild=%%a
 
-    REM Get this OS Edition ID
+    @REM Get this OS Edition ID
     set _editionid=
     for /f "usebackq tokens=3" %%a in (
         `reg.exe query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID`
     ) do set _editionid=%%a
 
-    REM Search kms key
-    REM https://technet.microsoft.com/en-us/library/jj612867(v=ws.11).aspx
-    REM https://docs.microsoft.com/en-us/windows-server/get-started/kmsclientkeys
+    @REM Search kms key
+    @REM https://technet.microsoft.com/en-us/library/jj612867(v=ws.11).aspx
+    @REM https://docs.microsoft.com/en-us/windows-server/get-started/kmsclientkeys
 
     set _gvlk=
     for %%k in (
@@ -2766,32 +2766,32 @@ REM for Operating System, [WARN] must call from ':lib\kms'
         set _gvlk=%%b
     ) else if /i "%_editionid%_%_verm10%_%_currentbuild%"=="%%a" set _gvlk=%%b
 
-    REM If not find key
+    @REM If not find key
     if not defined _gvlk (
         call :regedit\off
-        exit /b 24 REM OS not support
+        exit /b 24 @REM OS not support
     )
 
-    REM Active
+    @REM Active
     for %%a in (
                                          ::?"active" ::?"display expires time" ::?"rm key"
         "/ipk %_gvlk%"  "/skms %_host%"      /ato        /xpr                      /ckms
-    ) do cscript.exe //nologo //e:vbscript %windir%\System32\slmgr.vbs %%~a || exit /b 27 REM slmgr.vbs error
+    ) do cscript.exe //nologo //e:vbscript %windir%\System32\slmgr.vbs %%~a || exit /b 27 @REM slmgr.vbs error
     call :regedit\off
 
     exit /b 0
 
-REM for Office Deployment Tool only, [WARN] must call from ':lib\kms'
+@REM for Office Deployment Tool only, [WARN] must call from ':lib\kms'
 ::: "    --odt, -o [[host[:port]]]     Active office, which install by Office Deployment Tool" "    e.g." "        %~n0 kms --os 192.168.1.1"
-:arg\kms\--odt
-:arg\kms\-o
-    if not defined _host exit /b 33 REM Need ip or host
+:sub\kms\--odt
+:sub\kms\-o
+    if not defined _host exit /b 33 @REM Need ip or host
 
     call :regedit\on
     call :odt\init_var
     if not exist "%_ospp%" (
         call :regedit\off
-        exit /b 32 REM ospp.vbs not found
+        exit /b 32 @REM ospp.vbs not found
     )
 
     set _odtver=
@@ -2806,7 +2806,7 @@ REM for Office Deployment Tool only, [WARN] must call from ':lib\kms'
         exit /b 32
     )
 
-    REM Office 2010: http://technet.microsoft.com/en-us/library/ee624355(office.14).aspx
+    @REM Office 2010: http://technet.microsoft.com/en-us/library/ee624355(office.14).aspx
     for /f "usebackq tokens=2*" %%a in (
         `reg.exe query HKLM\Software\Microsoft\Office\ClickToRun\Configuration /v ProductReleaseIds`
     ) do if "%%~b" neq "" for %%c in (
@@ -2833,10 +2833,10 @@ REM for Office Deployment Tool only, [WARN] must call from ':lib\kms'
 
     >nul set _gvlk\ || (
         call :regedit\off
-        exit /b 36 REM office not support
+        exit /b 36 @REM office not support
     )
 
-    REM Active
+    @REM Active
     for /f "usebackq tokens=1* delims==" %%a in (
         `2^>nul set _gvlk\`
     ) do call :kms\dividing_line %%b && for %%c in (
@@ -2864,13 +2864,13 @@ REM for Office Deployment Tool only, [WARN] must call from ':lib\kms'
     set "_odt_source_path=%cd%"
     if "%~d0"=="\\" set "_odt_source_path=%~dp0"
     if "%~2" neq "" if "%~n2" neq "%~2" (
-        if not exist "%~2" exit /b 2 REM target not found
+        if not exist "%~2" exit /b 2 @REM target not found
         set "_odt_source_path=%~2"
     )
     if "%_odt_source_path:~-1%"=="\" set _odt_source_path=%_odt_source_path:~0,-1%
 
     set _odt_update=
-    call :arg\oset\--language _odt_lang || exit /b 3 REM language not support
+    call :sub\oset\--language _odt_lang || exit /b 3 @REM language not support
 
     for %%a in (
         %*
@@ -2883,29 +2883,29 @@ REM for Office Deployment Tool only, [WARN] must call from ':lib\kms'
     set _odt_channel=PerpetualVL2019
     if %_odt_year% lss 2019 set _odt_channel=Broad
 
-    call :arg\odt\%*
+    call :sub\odt\%*
     endlocal
     goto :eof
 
 ::: "    --deploy,  -d  [[path]]              Deployment Office Deployment Tool data"
-:arg\odt\--deploy
-:arg\odt\-d
+:sub\odt\--deploy
+:sub\odt\-d
     3>nul call :odt\pro\full
-    >%temp%\odt_download.xml call :arg\txt\--subtxt "%~f0" odt.xml 3000
+    >%temp%\odt_download.xml call :sub\txt\--subtxt "%~f0" odt.xml 3000
 
     title Deployed to '%_odt_source_path%'
     >&3 echo Deployed to '%_odt_source_path%'
-    call :odt\ext\setup 27af1be6-dd20-4cb4-b154-ebab8a7d4a7e || exit /b 13 REM init fail
-    odt.exe /download %temp%\odt_download.xml || exit /b 16 REM setup error
+    call :odt\ext\setup 27af1be6-dd20-4cb4-b154-ebab8a7d4a7e || exit /b 13 @REM init fail
+    odt.exe /download %temp%\odt_download.xml || exit /b 16 @REM setup error
     erase %temp%\odt_download.xml
     goto :eof
 
 ::: "    --install, -i  [[path]] [[names]]    Install office by names, will remove previous installation" "                                         default: 'base'" "" "      names:" "          base full" "          word excel powerpoint" "          access onenote outlook" "          project visio publisher" "" "      base:" "          word excel visio" "" "      full:" "          word excel powerpoint project visio"
-:arg\odt\--install
-:arg\odt\-i
-    if not exist "%_odt_source_path%\Office\Data" exit /b 27 REM source not found
+:sub\odt\--install
+:sub\odt\-i
+    if not exist "%_odt_source_path%\Office\Data" exit /b 27 @REM source not found
 
-    REM shift can change %*
+    @REM shift can change %*
     if exist "%~1" shift /1
 
     if "%~1" neq "" (
@@ -2918,32 +2918,32 @@ REM for Office Deployment Tool only, [WARN] must call from ':lib\kms'
         ) else call :odt\install_args %*
     ) else call :odt\pro\base
 
-    if errorlevel 4 exit /b 24 REM must set office product ids
+    if errorlevel 4 exit /b 24 @REM must set office product ids
 
-    >%temp%\odt_install.xml call :arg\txt\--subtxt "%~f0" odt.xml 3000
+    >%temp%\odt_install.xml call :sub\txt\--subtxt "%~f0" odt.xml 3000
 
     title Installing from %_odt_source_path%\Office
     >&3 echo Installing...
-    call :odt\ext\setup 27af1be6-dd20-4cb4-b154-ebab8a7d4a7e || exit /b 23 REM init fail
-    odt.exe /configure %temp%\odt_install.xml || exit /b 26 REM setup error
+    call :odt\ext\setup 27af1be6-dd20-4cb4-b154-ebab8a7d4a7e || exit /b 23 @REM init fail
+    odt.exe /configure %temp%\odt_install.xml || exit /b 26 @REM setup error
     erase %temp%\odt_install.xml
 
     call :odt\init_var
 
     if %_odt_year% lss 2019 for /r "%_opath%" /d %%a in (
         License*
-    ) do call :odt\cvlic "%%a" || exit /b 25 REM install error
+    ) do call :odt\cvlic "%%a" || exit /b 25 @REM install error
     echo.
 
-    call :arg\oset\--vergeq 10.0 && >&3 echo compress '%_opath%'&& >nul call :arg\pkg\--exe "%_opath%"
+    call :sub\oset\--vergeq 10.0 && >&3 echo compress '%_opath%'&& >nul call :sub\pkg\--exe "%_opath%"
 
     >&3 echo install complete. will try to activate
 
-    REM can not call '\private\' function.
+    @REM can not call '\private\' function.
     call :lib\kms --odt
     exit /b 0
 
-REM convert to volume license, for 2016 or 2013
+@REM convert to volume license, for 2016 or 2013
 :odt\cvlic
     for /r %1 %%a in (
         ProPlusVL_KMS*.xrm-ms
@@ -2952,7 +2952,7 @@ REM convert to volume license, for 2016 or 2013
         client-issuance-*.xrm-ms
         pkeyconfig-office.xrm?ms
     ) do >&3 set /p=.<nul& >nul cscript.exe //nologo "%_ospp%" /inslic:"%%~a" || exit /b 1
-    REM >nul cscript.exe //nologo %windir%\System32\slmgr.vbs /ilc "%%~a"
+    @REM >nul cscript.exe //nologo %windir%\System32\slmgr.vbs /ilc "%%~a"
     exit /b 0
 
 :odt\pro\base
@@ -2964,18 +2964,18 @@ REM convert to volume license, for 2016 or 2013
     goto :eof
 
 :odt\install_args
-    REM clear variable
+    @REM clear variable
     for /f "usebackq delims==" %%a in (
         `2^>nul set _odt__`
     ) do set %%a=
-    REM Comment office professionalretail
+    @REM Comment office professionalretail
     set _odt_pro_2016=odt.xml
     set _odt_pro_2019=odt.xml
 
-    REM Groove: OneDriveforBusiness
-    REM Lync: SkypeforBusiness
+    @REM Groove: OneDriveforBusiness
+    @REM Lync: SkypeforBusiness
 
-    REM ExcludeApp
+    @REM ExcludeApp
     for %%a in (
         word excel powerpoint onenote onedrive skype access outlook publisher
     ) do set _odt__%%a_%_odt_year%=odt.xml
@@ -2985,7 +2985,7 @@ REM convert to volume license, for 2016 or 2013
         %*
     ) do if "%%~a"=="%%~b" set "_odt__%%a_%_odt_year%=" & set _odt_pro_%_odt_year%=
 
-    REM must install some thing
+    @REM must install some thing
     >nul 2>&1 set _odt__ || exit /b 25
 
     >&3 set /p=will install office %_odt_year%: <nul
@@ -2993,7 +2993,7 @@ REM convert to volume license, for 2016 or 2013
         word excel powerpoint onenote onedrive skype access outlook publisher
     ) do if not defined _odt__%%a_%_odt_year% >&3 set /p='%%a' <nul
 
-    REM Product
+    @REM Product
     for %%a in (%*) do for %%b in (
         project visio
     ) do if "%%~a"=="%%~b" set _odt__%%a_%_odt_year%=odt.xml
@@ -3023,47 +3023,53 @@ REM convert to volume license, for 2016 or 2013
     popd
     goto :eof
 
-REM download and set in path
+@REM download and set in path
 :odt\ext\setup
     for %%a in (odt.exe) do if "%%~$path:a" neq "" exit /b 0
     set PATH=%temp%\%~1;%PATH%
     if exist %temp%\%~1\odt.exe exit /b 0
     2>nul mkdir %temp%\%~1
 
-    REM https://www.microsoft.com/download/details.aspx?id=49117
-    REM https://www.microsoft.com/en-us/download/confirmation.aspx?id=49117
-    REM https://github.com/MicrosoftDocs/OfficeDocs-DeployOffice/blob/live/DeployOffice/office2019/deploy.md#deploy-languages-for-office-2019
+    @REM https://www.microsoft.com/download/details.aspx?id=49117
+    @REM https://www.microsoft.com/en-us/download/confirmation.aspx?id=49117
+    @REM https://github.com/MicrosoftDocs/OfficeDocs-DeployOffice/blob/live/DeployOffice/office2019/deploy.md#deploy-languages-for-office-2019
 
-    REM Version 16.0.6126.6351
-    REM Version 16.0.6227.6350
-    REM Version 16.0.6508.6350
-    REM Version 16.0.6508.6351
-    REM Version 16.0.6612.6353
-    REM Version 16.0.6831.5775
-    REM Version 16.0.7118.5775
-    REM Version 16.0.7213.5776
-    REM Version 16.0.7407.3600
-    REM Version 16.0.7614.3602
-    REM Version 16.0.8008.3601
-    REM Version 16.0.8311.3600
-    REM Version 16.0.8529.3600
-    REM Version 16.0.9119.3601
-    REM Version 16.0.9326.3600
-    REM Version 16.0.10306.33602
-    REM Version 16.0.10321.33602
-    REM Version 16.0.10810.33603
-    REM Version 16.0.11023.33600
-    REM Version 16.0.11107.33602
-    REM Version 16.0.11306.33602
-    REM Version 16.0.11509.33604
-    REM Version 16.0.11615.33602
-    REM Version 16.0.11617.33601
-    REM Version 16.0.11901.20022
-    REM Version 16.0.12130-20272
-    REM Version 16.0.12325-20288
+    @REM https://docs.microsoft.com/en-us/officeupdates/odt-release-history
+    @REM Version 16.0.6126.6351
+    @REM Version 16.0.6227.6350
+    @REM Version 16.0.6508.6350
+    @REM Version 16.0.6508.6351
+    @REM Version 16.0.6612.6353
+    @REM Version 16.0.6831.5775
+    @REM Version 16.0.7118.5775
+    @REM Version 16.0.7213.5776
+    @REM Version 16.0.7407.3600
+    @REM Version 16.0.7614.3602
+    @REM Version 16.0.8008.3601
+    @REM Version 16.0.8311.3600
+    @REM Version 16.0.8529.3600
+    @REM Version 16.0.9119.3601
+    @REM Version 16.0.9326.3600
+    @REM Version 16.0.10306.33602
+    @REM Version 16.0.10321.33602
+    @REM Version 16.0.10810.33603
+    @REM Version 16.0.11023.33600
+    @REM Version 16.0.11107.33602
+    @REM Version 16.0.11306.33602
+    @REM Version 16.0.11509.33604
+    @REM Version 16.0.11615.33602
+    @REM Version 16.0.11617.33601
+    @REM Version 16.0.11901.20022
+    @REM Version 16.0.12130.20272
+    @REM Version 16.0.12325.20288
+    @REM Version 16.0.12624.20320
+    @REM Version 16.0.12827.20268
+    @REM Version 16.0.13231.20368
+    @REM Version 16.0.13328.20292
+    @REM Version 16.0.13426.20308
 
     call :lib\download ^
-            https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A7D4A7E/officedeploymenttool_12325-20288.exe ^
+            https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A7D4A7E/officedeploymenttool_13426-20308.exe ^
             %temp%\%~1\officedeploymenttool16.exe || exit /b 1
 
     %temp%\%~1\officedeploymenttool16.exe /extract:%temp%\%~1 /quiet || exit /b 1
@@ -3086,10 +3092,10 @@ REM download and set in path
 
     if exist "%ProgramData%\Microsoft\VisualStudio\Packages" rmdir /s /q "%ProgramData%\Microsoft\VisualStudio\Packages"
 
-    REM remove other parttition 'ProgramData' directory
+    @REM remove other parttition 'ProgramData' directory
     if "%~2" neq "" if exist %~d2\ProgramData\Microsoft\VisualStudio\Packages rmdir /s /q %~d2\ProgramData\Microsoft\VisualStudio\Packages
-    call :arg\dir\--clean %~d2\ProgramData
-    call :arg\dir\--isfree %~d2\ProgramData && rmdir /s /q %~d2\ProgramData
+    call :sub\dir\--clean %~d2\ProgramData
+    call :sub\dir\--isfree %~d2\ProgramData && rmdir /s /q %~d2\ProgramData
     endlocal
     exit /b 0
 
@@ -3100,53 +3106,53 @@ REM download and set in path
     set _install_args=--includeRecommended
     set _branch=
     for %%a in (%0) do set _branch=%%~na
-    REM vs_buildtools: set _install_args=--add Microsoft.VisualStudio.Component.Static.Analysis.Tools --add Microsoft.VisualStudio.Component.VC.CoreBuildTools --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK --add Microsoft.VisualStudio.Component.TestTools.BuildTools --add Microsoft.VisualStudio.Component.Windows10SDK.17134 --add Microsoft.VisualStudio.Component.WinXP
+    @REM vs_buildtools: set _install_args=--add Microsoft.VisualStudio.Component.Static.Analysis.Tools --add Microsoft.VisualStudio.Component.VC.CoreBuildTools --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK --add Microsoft.VisualStudio.Component.TestTools.BuildTools --add Microsoft.VisualStudio.Component.Windows10SDK.17134 --add Microsoft.VisualStudio.Component.WinXP
     if "%_branch%"=="core" set "_branch=buildtools"& set _install_args=--add Microsoft.VisualStudio.Workload.VCTools;includeRecommended
-    call :arg\vsi\%*
+    call :sub\vsi\%*
     goto :eof
 
-REM https://docs.microsoft.com/zh-cn/visualstudio/install/workload-component-id-vs-build-tools#visual-c-build-tools
-REM https://docs.microsoft.com/zh-cn/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2019
+@REM https://docs.microsoft.com/zh-cn/visualstudio/install/workload-component-id-vs-build-tools#visual-c-build-tools
+@REM https://docs.microsoft.com/zh-cn/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2019
 ::: "        --deploy,  -d [directory_path]      Deployment visual studio build tools data"
-:arg\vsi\--deploy
-:arg\vsi\-d
-    if "%~1"=="" exit /b 12 REM args is empty
+:sub\vsi\--deploy
+:sub\vsi\-d
+    if "%~1"=="" exit /b 12 @REM args is empty
     2>nul mkdir "%~1"
-    call :arg\oset\--language _vsi_lang || exit /b 13 REM can not get current language
-    call :vsi\ext\setup e64d79b4-0219-aea6-18ce-2fe10ebd5f0d %_branch% || exit /b 14 REM vs_install download error
+    call :sub\oset\--language _vsi_lang || exit /b 13 @REM can not get current language
+    call :vsi\ext\setup e64d79b4-0219-aea6-18ce-2fe10ebd5f0d %_branch% || exit /b 14 @REM vs_install download error
 
-    REM error args: --allWorkloads
-    start /wait vs_%_branch%.exe --wait --lang %_vsi_lang% --layout "%~1" %_install_args% || exit /b 15 REM vs_buildtools error
+    @REM error args: --allWorkloads
+    start /wait vs_%_branch%.exe --wait --lang %_vsi_lang% --layout "%~1" %_install_args% || exit /b 15 @REM vs_buildtools error
     if not errorlevel 1 echo can use command '%~1\vs_setup.exe --passive --wait --norestart --nocache --noWeb'
     goto :eof
 
-REM REM Debuggable Package Manager
-REM powershell.exe -NoExit -Command "& { Import-Module Appx; Import-Module .\AppxDebug.dll; Show-AppxDebug}"
-REM %comspec% /k "%VSINSTALLDIR%\Common7\Tools\VsDevCmd.bat"                REM Developer Command Prompt for VS 2017
-REM %comspec% /k "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvars32.bat"           REM x86 Native Tools Command Prompt for VS 2017
-REM %comspec% /k "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvars64.bat"           REM x64 Native Tools Command Prompt for VS 2017
-REM %comspec% /k "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsx86_amd64.bat"    REM x86_x64 Cross Tools Command Prompt for VS 2017
-REM %comspec% /k "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsamd64_x86.bat"    REM x64_x86 Cross Tools Command Prompt for VS 2017
-REM https://docs.microsoft.com/zh-cn/visualstudio/install/build-tools-container
+@REM @REM Debuggable Package Manager
+@REM powershell.exe -NoExit -Command "& { Import-Module Appx; Import-Module .\AppxDebug.dll; Show-AppxDebug}"
+@REM %comspec% /k "%VSINSTALLDIR%\Common7\Tools\VsDevCmd.bat"                @REM Developer Command Prompt for VS 2017
+@REM %comspec% /k "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvars32.bat"           @REM x86 Native Tools Command Prompt for VS 2017
+@REM %comspec% /k "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvars64.bat"           @REM x64 Native Tools Command Prompt for VS 2017
+@REM %comspec% /k "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsx86_amd64.bat"    @REM x86_x64 Cross Tools Command Prompt for VS 2017
+@REM %comspec% /k "%VSINSTALLDIR%\VC\Auxiliary\Build\vcvarsamd64_x86.bat"    @REM x64_x86 Cross Tools Command Prompt for VS 2017
+@REM https://docs.microsoft.com/zh-cn/visualstudio/install/build-tools-container
 ::: "        --install, -i [[directory_path]]    Install visual studio build tools online" "                                            when script in deploy path, will install offline"
-:arg\vsi\--install
-:arg\vsi\-i
+:sub\vsi\--install
+:sub\vsi\-i
     if "%~1" neq "" (
-        if "%~d1\"=="%~dp1" exit /b 27 REM can not install at root path
-        call :arg\dir\--isfree "%~1" || exit /b 28 REM target path not found
+        if "%~d1\"=="%~dp1" exit /b 27 @REM can not install at root path
+        call :sub\dir\--isfree "%~1" || exit /b 28 @REM target path not found
         2>nul mkdir "%~dp1Kits" "%~1"
-        mklink /j "%ProgramFiles(x86)%\Windows Kits" "%~dp1Kits" || exit /b 26 REM create soft link error
+        mklink /j "%ProgramFiles(x86)%\Windows Kits" "%~dp1Kits" || exit /b 26 @REM create soft link error
         set _install_args=--installPath "%~1" %_install_args%
     )
 
-    call :vsi\ext\setup e64d79b4-0219-aea6-18ce-2fe10ebd5f0d %_branch% || exit /b 24 REM vs_install download error
-    start /wait vs_%_branch%.exe --passive --wait --norestart --nocache %_install_args% || exit /b 25 REM vs_buildtools error
+    call :vsi\ext\setup e64d79b4-0219-aea6-18ce-2fe10ebd5f0d %_branch% || exit /b 24 @REM vs_install download error
+    start /wait vs_%_branch%.exe --passive --wait --norestart --nocache %_install_args% || exit /b 25 @REM vs_buildtools error
     goto :eof
 
-REM https://aka.ms/vs/16/release/vs_buildtools.exe
-REM https://aka.ms/vs/16/release/vs_enterprise.exe
-REM https://aka.ms/vs/16/release/vs_professional.exe
-REM https://aka.ms/vs/16/release/vs_community.exe
+@REM https://aka.ms/vs/16/release/vs_buildtools.exe
+@REM https://aka.ms/vs/16/release/vs_enterprise.exe
+@REM https://aka.ms/vs/16/release/vs_professional.exe
+@REM https://aka.ms/vs/16/release/vs_community.exe
 :vsi\ext\setup
     for %%a in (vs_%~2.exe) do if "%%~$path:a" neq "" exit /b 0
     set PATH=%temp%\%~1;%PATH%
@@ -3166,20 +3172,20 @@ REM https://aka.ms/vs/16/release/vs_community.exe
 ::: "Edit the Registry" "" "usage: %~n0 reg [option]" ""
 :lib\reg
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\reg\%*
+    call :sub\reg\%*
     goto :eof
 
 ::: "    --intel-amd, -ia                   Run this before Chang CPU"
-:arg\reg\--intel-amd
-:arg\reg\-ia
-    call :arg\oset\--vergeq 6.0 || exit /b 12 REM OS version is too low
+:sub\reg\--intel-amd
+:sub\reg\-ia
+    call :sub\oset\--vergeq 6.0 || exit /b 12 @REM OS version is too low
 
     if "%~1"=="" (
         setlocal
         set /p _i=[Warning] Reg vhd will be change, Yes^|No:
         if /i "%_i%" neq "y" if /i "%_i%" neq "yes" exit /b 0
         call :regedit\on
-        call :arg\reg\delInteltag system
+        call :sub\reg\delInteltag system
         call :regedit\off
         endlocal
         exit /b 0
@@ -3188,30 +3194,30 @@ REM https://aka.ms/vs/16/release/vs_community.exe
     setlocal
     set _target=%~f1
     if "%_target:~-1%"=="\" set _target=%_target:~0,-1%
-    if not exist "%_target%\Windows\System32\config\SYSTEM" exit /b 23 REM Not windows directory
+    if not exist "%_target%\Windows\System32\config\SYSTEM" exit /b 23 @REM Not windows directory
     call :regedit\on
     set _load_point=HKLM\load-point%random%
-    reg.exe load %_load_point% "%_target%\Windows\System32\config\SYSTEM" && call :arg\reg\delInteltag tmp
+    reg.exe load %_load_point% "%_target%\Windows\System32\config\SYSTEM" && call :sub\reg\delInteltag tmp
     reg.exe unload %_load_point%
     call :regedit\off
     endlocal
     exit /b 0
 
-REM for :arg\reg\--intel-amd
-:arg\reg\delInteltag
+@REM for :sub\reg\--intel-amd
+:sub\reg\delInteltag
     for /f "tokens=1,4 delims=x	 " %%a in (
         'reg.exe query HKLM\%1\Select'
     ) do if /i "%%a"=="Default" 2>nul reg.exe delete HKLM\%1\ControlSet00%%b\Services\intelppm /f
     exit /b 0
 
-REM winpe \$windows.~bt -> ""
+@REM winpe \$windows.~bt -> ""
 ::: "    --replace,   -x   [file_path] [src_str] [tag_str]" "                                       Replace reg string"
-:arg\reg\--replace
-:arg\reg\-x
-    if "%~2"=="" exit /b 24 REM source string empty
+:sub\reg\--replace
+:sub\reg\-x
+    if "%~2"=="" exit /b 24 @REM source string empty
     setlocal
     call :regedit\on
-    REM valueName: (Default) -> /ve
+    @REM valueName: (Default) -> /ve
     for /f "usebackq" %%a in (
         `reg.exe query HKLM /ve`
     ) do set "_ve=%%a"
@@ -3234,16 +3240,16 @@ REM winpe \$windows.~bt -> ""
     if defined _tag set _tag=!_tag:"=\"!
 
     set _count=0
-    REM replace
+    @REM replace
     for /f "usebackq delims=" %%a in (
         `reg.exe query %1 /f %2 /s`
     ) do >nul (
         set _line=%%a
         if "!_line:\%~n1=!"=="!_line!" (
             set _line=!_line:    =`!
-            REM /d "X:\" /f -> /d "X:\\" /f
+            @REM /d "X:\" /f -> /d "X:\\" /f
             set _line=!_line:\`=\\`!
-            REM /v "X:\" /t -> /v "X:\\" /t
+            @REM /v "X:\" /t -> /v "X:\\" /t
             if "!_line:~-1!"=="\" set _line=!_line!\
             set _line=!_line:"=\"!
             for /f "tokens=1,2* delims=`" %%b in (
@@ -3251,9 +3257,9 @@ REM winpe \$windows.~bt -> ""
             ) do if "%%c" neq "" (
 
                 if "%%b" neq "%_ve%" (
-                    reg.exe add "!_key!" /v "%%b" /t %%c /d "%%d" /f || exit /b 25 REM reg error
+                    reg.exe add "!_key!" /v "%%b" /t %%c /d "%%d" /f || exit /b 25 @REM reg error
 
-                    REM delete
+                    @REM delete
                     for /f "delims=`" %%e in (
                         "!_line!"
                     ) do if "%%b" neq "%%e" reg.exe delete "!_key!" /v "%%e" /f || exit /b 25
@@ -3268,29 +3274,29 @@ REM winpe \$windows.~bt -> ""
     endlocal
     goto :eof
 
-REM REM from Window 10 aik, will download imagex.exe at script path
-REM :init\imagex
-REM     for %%a in (_%0) do if %processor_architecture:~-2%==64 (
-REM         REM amd64
-REM         call :this\getCab %%~na 0/A/A/0AA382BA-48B4-40F6-8DD0-BEBB48B6AC18/adk d2611745022d67cf9a7703eb131ca487 fil4927034346f01b02536bd958141846b2
+@REM @REM from Window 10 aik, will download imagex.exe at script path
+@REM :init\imagex
+@REM     for %%a in (_%0) do if %processor_architecture:~-2%==64 (
+@REM         @REM amd64
+@REM         call :this\getCab %%~na 0/A/A/0AA382BA-48B4-40F6-8DD0-BEBB48B6AC18/adk d2611745022d67cf9a7703eb131ca487 fil4927034346f01b02536bd958141846b2
 
-REM     REM x86
-REM     ) else call :this\getCab %%~na 0/A/A/0AA382BA-48B4-40F6-8DD0-BEBB48B6AC18/adk eacac0698d5fa03569c86b25f90113b5 fil6e1d5042624c9d5001511df2bfe4c40b
-REM     exit /b 0
+@REM     @REM x86
+@REM     ) else call :this\getCab %%~na 0/A/A/0AA382BA-48B4-40F6-8DD0-BEBB48B6AC18/adk eacac0698d5fa03569c86b25f90113b5 fil6e1d5042624c9d5001511df2bfe4c40b
+@REM     exit /b 0
 
 ::: "String manage" "" "usage: %~n0 str [option] ..." ""
 :lib\str
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\str\%*
+    call :sub\str\%*
     goto :eof
 
 ::: "    --now,    -n [var_name] [[head_str]] [[tail_str]]    Display Time at [YYYYMMDDhhmmss]"
-:arg\str\--now
-:arg\str\-n
-    if "%~1"=="" exit /b 12 REM variable name is empty
+:sub\str\--now
+:sub\str\-n
+    if "%~1"=="" exit /b 12 @REM variable name is empty
     set date=
     set time=
-    REM en zh
+    @REM en zh
     for /f "tokens=1-8 delims=-/:." %%a in (
       "%time: =%.%date: =.%"
     ) do if %%e gtr 1970 (
@@ -3299,8 +3305,8 @@ REM     exit /b 0
     exit /b 0
 
 ::: "    --uuid,   -u [[var_name]]                            Get UUID string"
-:arg\str\--uuid
-:arg\str\-u
+:sub\str\--uuid
+:sub\str\-u
     setlocal enabledelayedexpansion
         for /l %%a in (
             1,1,8
@@ -3321,8 +3327,8 @@ REM     exit /b 0
     exit /b 0
 
 ::: "    --random, -r [count]                                 Print random string"
-:arg\str\--random
-:arg\str\-r
+:sub\str\--random
+:sub\str\-r
     setlocal
     2>nul set /a _password_length=%~1
     if "%~1"=="" set /a _password_length=8
@@ -3337,10 +3343,10 @@ REM     exit /b 0
     goto :eof
 
 ::: "    --convert-pwd, -cp    [string] [[var_name]]          Encode password to base64 string for unattend.xml"
-:arg\str\--convert-pwd
-:arg\str\-cp
-    call :arg\oset\--vergeq 6.1 || exit /b 43 REM System version is too old
-    if "%~1"=="" exit /b 44 REM Args is empty
+:sub\str\--convert-pwd
+:sub\str\-cp
+    call :sub\oset\--vergeq 6.1 || exit /b 43 @REM System version is too old
+    if "%~1"=="" exit /b 44 @REM Args is empty
     for /f "usebackq" %%a in (
         `PowerShell.exe ^
             -NoLogo ^
@@ -3352,9 +3358,9 @@ REM     exit /b 0
     exit /b 0
 
 ::: "    --length,      -l     [string] [[var_name]]          Get string length"
-:arg\str\--length
-:arg\str\-l
-    if "%~1"=="" exit /b 55 REM string is empty
+:sub\str\--length
+:sub\str\-l
+    if "%~1"=="" exit /b 55 @REM string is empty
     setlocal enabledelayedexpansion
     set _len=
     set _str=%~1fedcba9876543210
@@ -3370,9 +3376,9 @@ REM     exit /b 0
     exit /b 0
 
 ::: "    --2col-left,   -2l    [str_1] [str_2]                Make the second column left-aligned, default size is 15"
-:arg\str\--2col-left
-:arg\str\-2l
-    if "%~2"=="" exit /b 65 REM string is empty
+:sub\str\--2col-left
+:sub\str\-2l
+    if "%~2"=="" exit /b 65 @REM string is empty
     setlocal enabledelayedexpansion
     set _str=%~10123456789abcdef
     if "%_str:~31,1%" neq "" call :strModulo
@@ -3382,7 +3388,7 @@ REM     exit /b 0
     endlocal
     exit /b 0
 
-REM for :arg\str\--2col-left and :arg\txt\--all-col-left and
+@REM for :sub\str\--2col-left and :sub\txt\--all-col-left and
 :strModulo
     set /a _acl+=1
     set _str=%_str:~15%
@@ -3390,9 +3396,9 @@ REM for :arg\str\--2col-left and :arg\txt\--all-col-left and
     goto %0
 
 ::: "    --upper,       -up    [str]                          Convert upper case"
-:arg\str\--upper
-:arg\str\-up
-    if "%~1"=="" exit /b 72 REM variable name is empty
+:sub\str\--upper
+:sub\str\-up
+    if "%~1"=="" exit /b 72 @REM variable name is empty
     setlocal
     set _0=%~1
     set _0=%_0:a=A%
@@ -3427,9 +3433,9 @@ REM for :arg\str\--2col-left and :arg\txt\--all-col-left and
     goto :eof
 
 ::: "    --lower,       -lo    [str]                          Convert lower case"
-:arg\str\--lower
-:arg\str\-lo
-    if "%~1"=="" exit /b 82 REM variable name is empty
+:sub\str\--lower
+:sub\str\-lo
+    if "%~1"=="" exit /b 82 @REM variable name is empty
     setlocal
     set _0=%~1
     set _0=%_0:A=a%
@@ -3463,15 +3469,15 @@ REM for :arg\str\--2col-left and :arg\txt\--all-col-left and
     ) else set %~2=%_0%
     goto :eof
 
-REM Longest common subsequence
+@REM Longest common subsequence
 ::: "    --lcs                 [str1] [str2] [[var_name]]     Longest common subsequence"
-:arg\str\--lcs
-    if "%~2"=="" exit /b 95 REM string is empty
+:sub\str\--lcs
+    if "%~2"=="" exit /b 95 @REM string is empty
     setlocal enabledelayedexpansion
     set "_1=%~1"
     set "_2=%~2"
-    call :arg\str\--length "%~1" #1
-    call :arg\str\--length "%~2" #2
+    call :sub\str\--length "%~1" #1
+    call :sub\str\--length "%~2" #2
     set _1m=
     set _2n=
     set _count=
@@ -3518,32 +3524,32 @@ REM Longest common subsequence
 ::: "Print text to standard output." "" "usage: %~n0 txt [option] [...]" ""
 :lib\txt
     if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :arg\txt\%*
+    call :sub\txt\%*
     goto :eof
 
 ::: "    --head,  -e  [-[count]]          Print the first some lines of FILE to standard output."
-:arg\txt\--head
-:arg\txt\-e
+:sub\txt\--head
+:sub\txt\-e
     call :this\psv
-    if not errorlevel 3 exit /b 17 REM powershell version is too old
-    call :txt\ps1 -first %*|| exit /b 18 REM args error
+    if not errorlevel 3 exit /b 17 @REM powershell version is too old
+    call :txt\ps1 -first %*|| exit /b 18 @REM args error
     goto :eof
 
 ::: "    --tail,  -t  [-[count]]          Print the last some lines of FILE to standard output."
-:arg\txt\--tail
-:arg\txt\-t
+:sub\txt\--tail
+:sub\txt\-t
     call :this\psv
-    if not errorlevel 3 exit /b 15 REM powershell version is too old
-    call :txt\ps1 -Last %*|| exit /b 16 REM args error
+    if not errorlevel 3 exit /b 15 @REM powershell version is too old
+    call :txt\ps1 -Last %*|| exit /b 16 @REM args error
     goto :eof
 
-REM for :arg\txt\--head, :arg\txt\--tail
+@REM for :sub\txt\--head, :sub\txt\--tail
 :txt\ps1
     setlocal
-    if "%~2"=="" exit /b 12 REM number is empty
+    if "%~2"=="" exit /b 12 @REM number is empty
     set _count=%~2
     set _count=%_count:-=%
-    call :arg\is\--integer %_count% || exit /b 13 REM not a number
+    call :sub\is\--integer %_count% || exit /b 13 @REM not a number
     if exist "%~3" (
         PowerShell.exe ^
                 -NoLogo ^
@@ -3559,23 +3565,23 @@ REM for :arg\txt\--head, :arg\txt\--tail
     goto :eof
 
 ::: "    --skip,  -j  [source_file_path] [skip_line_num] [target_flie_path]" "                                     Print text skip some line" ""
-:arg\txt\--skip
-:arg\txt\-j
-    if not exist "%~1" exit /b 22 REM source file not found
-    call :arg\is\--integer %~2 || exit /b 23 REM skip number error
-    if not exist "%~3" exit /b 24 REM target file not found
-    REM >%3 type nul
-    REM for /f "usebackq skip=%~2 delims=" %%a in (
-    REM     "%~f1"
-    REM ) do >> %3 echo %%a
+:sub\txt\--skip
+:sub\txt\-j
+    if not exist "%~1" exit /b 22 @REM source file not found
+    call :sub\is\--integer %~2 || exit /b 23 @REM skip number error
+    if not exist "%~3" exit /b 24 @REM target file not found
+    @REM >%3 type nul
+    @REM for /f "usebackq skip=%~2 delims=" %%a in (
+    @REM     "%~f1"
+    @REM ) do >> %3 echo %%a
     < "%~f1" more.com +%~2 >%3
     exit /b 0
 
-REM warring: must indent before code
+@REM warring: must indent before code
 ::: "    --subtxt, -o [source_path] [tag] [skip]" "                                     Show the subdocuments in the destination file by prefix" "                        subdocuments:" "                                     ::prefix: line 1" "                                     ::prefix: line 2" "                                     ::^^^!_var^^^!: line 3" "                                     ..." ""
-:arg\txt\--subtxt      [source_path] [tag] [skip]
-:arg\txt\-o
-    if not exist "%~1" exit /b 32 REM source file not found
+:sub\txt\--subtxt      [source_path] [tag] [skip]
+:sub\txt\-o
+    if not exist "%~1" exit /b 32 @REM source file not found
     if "%~2"=="" exit /b 9
     setlocal enabledelayedexpansion
     if "%~3" neq "" 2>nul set /a _skip=%~3
@@ -3590,9 +3596,9 @@ REM warring: must indent before code
     goto :eof
 
 ::: "    --all-col-left,   -al     [str] [[col_size]] " "                                     Use right pads spaces, make all column left-aligned" "                                     col_size is cols / 15. print nobr, but auto LF by col_size" "                       close command:    --all-col-left 0 0"
-:arg\txt\--all-col-left
-:arg\txt\-al
-    if "%~1"=="" exit /b 40 REM input string is empty
+:sub\txt\--all-col-left
+:sub\txt\-al
+    if "%~1"=="" exit /b 40 @REM input string is empty
     if "%~2" neq "" if 1%~2 lss 12 (if defined _acl echo. & set _acl=) & exit /b 0
     setlocal enabledelayedexpansion
     set _str=%~10123456789abcdef
@@ -3606,34 +3612,34 @@ REM warring: must indent before code
     endlocal & set _acl=%_acl%
     exit /b 0
 
-REM "    --line,  -l  [text_file_path] [skip_line] " "                                     Output text or read config"  "                                     need enabledelayedexpansion" "                                     skip must reset" "                                     text format: EOF [output_target] [command]"
-REM :arg\txt\--line
-REM :arg\txt\-l
-REM     if "%~1"=="" exit /b 55 REM skip line is empty
-REM     if not exist "%~2" exit /b 56 REM file not found
-REM     set _log=nul
-REM     set "_exec=REM "
-REM     for /f "usebackq skip=%~2 delims=" %%a in (
-REM         "%~f1"
-REM     ) do for /f "tokens=1,2*" %%b in (
-REM         "%%a"
-REM     ) do if "%%b"=="EOF" (
-REM         if "%%c"=="%%~fc" if not exist "%%~dpc" (
-REM             mkdir "%%~dpc"
-REM         ) else if exist "%%~c" erase "%%~c"
-REM         set "_log=%%~c"
-REM         set "_exec=%%~d"
-REM     ) else >>!_log! !_exec!%%~a
-REM     set _log=
-REM     set _exec=
-REM     exit /b 0
+@REM "    --line,  -l  [text_file_path] [skip_line] " "                                     Output text or read config"  "                                     need enabledelayedexpansion" "                                     skip must reset" "                                     text format: EOF [output_target] [command]"
+@REM :sub\txt\--line
+@REM :sub\txt\-l
+@REM     if "%~1"=="" exit /b 55 @REM skip line is empty
+@REM     if not exist "%~2" exit /b 56 @REM file not found
+@REM     set _log=nul
+@REM     set "_exec=@REM "
+@REM     for /f "usebackq skip=%~2 delims=" %%a in (
+@REM         "%~f1"
+@REM     ) do for /f "tokens=1,2*" %%b in (
+@REM         "%%a"
+@REM     ) do if "%%b"=="EOF" (
+@REM         if "%%c"=="%%~fc" if not exist "%%~dpc" (
+@REM             mkdir "%%~dpc"
+@REM         ) else if exist "%%~c" erase "%%~c"
+@REM         set "_log=%%~c"
+@REM         set "_exec=%%~d"
+@REM     ) else >>!_log! !_exec!%%~a
+@REM     set _log=
+@REM     set _exec=
+@REM     exit /b 0
 
-REM REM text format for :lib\execline
-REM EOF !temp!\!_now!.log "echo "
-REM some codes
-REM EOF nul set
-REM a=1
-REM EOF nul "rem "
+@REM @REM text format for :lib\execline
+@REM EOF !temp!\!_now!.log "echo "
+@REM some codes
+@REM EOF nul set
+@REM a=1
+@REM EOF nul "rem "
 
 
 ::: "Print or check MD5 (128-bit) checksums." "" "usage: %~n0 md5 [file]"
@@ -3646,7 +3652,7 @@ REM EOF nul "rem "
 :lib\SHA512
     for /f "usebackq delims=" %%a in (
         `2^>nul dir /a-d /b /s %*`
-    ) do for %%b in (%0) do call :this\hash %%~nb "%%~a" || exit /b 2 REM hash error
+    ) do for %%b in (%0) do call :this\hash %%~nb "%%~a" || exit /b 2 @REM hash error
     exit /b 0
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -3676,18 +3682,18 @@ REM EOF nul "rem "
     setlocal
     call :this\psv
     if not errorlevel 2 exit /b 1
-    REM set _arg=-
-    REM if exist "%~2" (
-    REM     set "_arg=%~2"
-    REM     for /f "usebackq" %%a in (
-    REM         `PowerShell.exe ^
-    REM            -NoLogo ^
-    REM            -NonInteractive ^
-    REM            -ExecutionPolicy Unrestricted ^
-    REM            -Command ^
-    REM            "[System.BitConverter]::ToString((New-Object -TypeName System.Security.Cryptography.%~1CryptoServiceProvider).ComputeHash([System.IO.File]::Open(\"%2\",[System.IO.Filemode]::Open,[System.IO.FileAccess]::Read))).ToString() -replace \"-\""`
-    REM     ) do set _hash=%%a
-    REM ) else
+    @REM set _arg=-
+    @REM if exist "%~2" (
+    @REM     set "_arg=%~2"
+    @REM     for /f "usebackq" %%a in (
+    @REM         `PowerShell.exe ^
+    @REM            -NoLogo ^
+    @REM            -NonInteractive ^
+    @REM            -ExecutionPolicy Unrestricted ^
+    @REM            -Command ^
+    @REM            "[System.BitConverter]::ToString((New-Object -TypeName System.Security.Cryptography.%~1CryptoServiceProvider).ComputeHash([System.IO.File]::Open(\"%2\",[System.IO.Filemode]::Open,[System.IO.FileAccess]::Read))).ToString() -replace \"-\""`
+    @REM     ) do set _hash=%%a
+    @REM ) else
     for /f "usebackq" %%a in (
         `PowerShell.exe ^
             -NoLogo ^
@@ -3697,23 +3703,23 @@ REM EOF nul "rem "
             "[System.BitConverter]::ToString((New-Object -TypeName System.Security.Cryptography.%~1CryptoServiceProvider).ComputeHash([Console]::OpenStandardInput())).ToString() -replace \"-\""`
     ) do set _hash=%%a
     if "%_hash%"=="" exit /b 2
-    call :arg\str\--lower %_hash% _hash
+    call :sub\str\--lower %_hash% _hash
     endlocal & echo %_hash%   -
     exit /b 0
 
 :hash\trim
     setlocal
-    call :arg\str\--lower %1 _str
+    call :sub\str\--lower %1 _str
     echo %_str: =%   %2
     endlocal
     goto :eof
 
-REM ::: "Delete Login Notes"
-REM :lib\delLoginNote
-REM     net.exe use * /delete
-REM     exit /b 0
+@REM ::: "Delete Login Notes"
+@REM :lib\delLoginNote
+@REM     net.exe use * /delete
+@REM     exit /b 0
 
-REM Test PowerShell version, Return errorlevel
+@REM Test PowerShell version, Return errorlevel
 :this\psv
     for %%a in (PowerShell.exe) do if "%%~$path:a"=="" exit /b 0
     for /f "usebackq" %%a in (
@@ -3728,8 +3734,8 @@ REM Test PowerShell version, Return errorlevel
 
 ::: "Run PowerShell script" "" "usage: %~n0 ps1 [ps1_script_path]"
 :lib\ps1
-    if not exist "%~1" exit /b 3 REM ps1 script not found
-    if /i "%~x1" neq ".ps1" exit /b 2 REM file suffix error
+    if not exist "%~1" exit /b 3 @REM ps1 script not found
+    if /i "%~x1" neq ".ps1" exit /b 2 @REM file suffix error
     PowerShell.exe -NoLogo -NonInteractive -ExecutionPolicy Unrestricted -File %*
     goto :eof
 
@@ -3737,13 +3743,13 @@ REM Test PowerShell version, Return errorlevel
 :: VBScript ::
 ::::::::::::::
 
-REM screnc.exe from http://download.microsoft.com/download/0/0/7/0073477f-bbf9-4510-86f9-ba51282531e3/sce10en.exe
-REM if /i "%~x1"==".vbs" screnc.exe %1 ./%~n1.vbe
+@REM screnc.exe from http://download.microsoft.com/download/0/0/7/0073477f-bbf9-4510-86f9-ba51282531e3/sce10en.exe
+@REM if /i "%~x1"==".vbs" screnc.exe %1 ./%~n1.vbe
 
 ::: "Run VBScript library from lib.vbs" "" "usage: %~n0 vbs [[command...]]"
 :::: "lib.vbs not found"
 :lib\vbs
-    REM cscript.exe //nologo //e:vbscript.encode %*
+    @REM cscript.exe //nologo //e:vbscript.encode %*
     for %%a in (lib.vbs) do if "%%~$path:a"=="" (
         exit /b 1
     ) else cscript.exe //nologo "%%~$path:a" %* 2>&3 || exit /b -1
@@ -3758,16 +3764,16 @@ REM if /i "%~x1"==".vbs" screnc.exe %1 ./%~n1.vbe
 ::     Base     ::
   :: :: :: :: ::
 
-REM set /a 0x7FFFFFFF
-REM -2147483647 ~ 2147483647
+@REM set /a 0x7FFFFFFF
+@REM -2147483647 ~ 2147483647
 
-REM start /b [command...]
+@REM start /b [command...]
 :thread
     call %~pnx1
     goto :eof
 
 ::::: thread valve :::::
-REM usage: :this\thread_valve [count] [name] [commandline]
+@REM usage: :this\thread_valve [count] [name] [commandline]
 :this\thread_valve
     set /a _thread\count+=1
     if %_thread\count% lss %~1 exit /b 0
@@ -3833,7 +3839,7 @@ REM usage: :this\thread_valve [count] [name] [commandline]
     endlocal & set %~1=%_kv%
     exit /b 0
 
-REM errorlevel value is count
+@REM errorlevel value is count
 :this\map\--size
     setlocal
     set _count=0
@@ -3843,7 +3849,7 @@ REM errorlevel value is count
     endlocal & exit /b %_count%
 
 :this\map\--clear
-    call :arg\var\--unset _MAP%~1\
+    call :sub\var\--unset _MAP%~1\
     exit /b 0
 
 
@@ -3868,14 +3874,14 @@ REM errorlevel value is count
     exit /b 0
 
 :this\page\--clear
-    call :arg\var\--unset _page
+    call :sub\var\--unset _page
     exit /b 0
 
-REM load .*.ini config
+@REM load .*.ini config
 :this\load_ini
     if "%~1"=="" exit /b 1
     set _bool_=
-    REM trim ';' and cut it
+    @REM trim ';' and cut it
     for /f "usebackq delims=" %%a in (
         `2^>nul type "%~dp0.*.ini" "%userprofile%\.*.ini"`
     ) do for /f "usebackq tokens=1 delims=;" %%b in (
@@ -3902,7 +3908,7 @@ REM load .*.ini config
 ::                 Framework                 ::
    :: :: :: :: :: :: :: :: :: :: :: :: :: ::
 
-REM Show function list, func info or error message, complete function name
+@REM Show function list, func info or error message, complete function name
 :this\annotation
     setlocal enabledelayedexpansion & set /a _err_code=%errorlevel%
     set _annotation_more=
@@ -3920,33 +3926,33 @@ REM Show function list, func info or error message, complete function name
             if %_err_code% gtr 1 (
                 set _err_msg=%%~a
                 set _un_space=!_err_msg: =!
-                REM match error message
+                @REM match error message
                 if "!_un_space:exit/b%_err_code%=!" neq "!_un_space!" >&2 ^
-                    echo [ERROR] !_err_msg:* REM =! ^(%~f0!_func_eof!^)&& exit /b 1
+                    echo [ERROR] !_err_msg:* @REM =! ^(%~f0!_func_eof!^)&& exit /b 1
 
             ) else if %_err_code%==1 >&2 echo [ERROR] invalid option '%~2' ^(%~f0!_func_eof!^)&& exit /b 1
         )
 
-        REM match arguments, sub function
-        if /i "%%~b\%%~c"==":arg\%~nx1" (
+        @REM match arguments, sub function
+        if /i "%%~b\%%~c"==":sub\%~nx1" (
             set _func_eof=%%~a
             if defined _annotation if %_err_code%==0 call %0\more !_annotation!
             set _annotation=
 
         ) else if /i "%%~b"==":%~n0" (
-            REM match new function, clear function name
+            @REM match new function, clear function name
             if defined _annotation_more exit /b 0
             if defined _err_msg >&2 echo unknown error.& exit /b 1
             set _func_eof=
 
-            REM match target function
+            @REM match target function
             if /i "%%~b\%%~c"=="%~1" (
                 set _func_eof=%%~a
                 if defined _annotation if %_err_code%==0 call %0\more !_annotation!
                 set _annotation=
 
             )
-            REM init func var, for display all func, or show sort func name
+            @REM init func var, for display all func, or show sort func name
             set _prefix_4_auto_complete\%%~c=!_annotation! ""
 
         )
@@ -3956,13 +3962,13 @@ REM Show function list, func info or error message, complete function name
     if defined _annotation_more exit /b 0
     if defined _err_msg >&2 echo unknown error.& exit /b 1
 
-    REM Foreach func list
+    @REM Foreach func list
     call :%~n0\cols _col
     set /a _i=0, _col/=16
     for /f usebackq^ tokens^=1^,2^ delims^=^=^" %%a in (`
         2^>nul set _prefix_4_auto_complete\%~n1
     `) do if "%~1" neq "" (
-        REM " Sort func name expansion
+        @REM " Sort func name expansion
         set /a _i+=1
         if !_i!==1 (
             set _cache_arg=%%~nxa
@@ -3972,17 +3978,17 @@ REM Show function list, func info or error message, complete function name
             ) else set _args=%%~nxa
 
         ) else if !_i!==2 (
-            call :arg\txt\--all-col-left !_cache_arg! %_col%
-            call :arg\txt\--all-col-left %%~nxa %_col%
+            call :sub\txt\--all-col-left !_cache_arg! %_col%
+            call :sub\txt\--all-col-left %%~nxa %_col%
 
-        ) else if !_i! geq 2 call :arg\txt\--all-col-left %%~nxa %_col%
+        ) else if !_i! geq 2 call :sub\txt\--all-col-left %%~nxa %_col%
 
-    ) else call :arg\str\--2col-left %%~nxa "%%~b"
+    ) else call :sub\str\--2col-left %%~nxa "%%~b"
 
-    REM Close lals
-    if !_i! gtr 0 call :arg\txt\--all-col-left 0 0
+    @REM Close lals
+    if !_i! gtr 0 call :sub\txt\--all-col-left 0 0
 
-    REM Display func or call func
+    @REM Display func or call func
     endlocal & if %_i% gtr 1 (
         echo.
         >&2 echo [WARN] function sort name conflict
@@ -4019,7 +4025,7 @@ REM Show function list, func info or error message, complete function name
 :::::::::::::::::::::::::::::::::::::::::::::::
 
 
-REM for :lib\odt
+@REM for :lib\odt
                     ::odt.xml:<^!-- Office 365 client configuration file sample. To be used for Office 365 ProPlus apps,
                     ::odt.xml:     Office 365 Business apps, Project Pro for Office 365 and Visio Pro for Office 365.
                     ::odt.xml:
@@ -4157,11 +4163,11 @@ REM for :lib\odt
                     ::odt.xml:
                     ::odt.xml:</Configuration>
 
-REM for :arg\wim\--new
+@REM for :sub\wim\--new
     ::wim.ini:[ExclusionList]
     ::wim.ini:\$*
     ::wim.ini:\boot*
-; REM fix: \*.sys == *.sys
+; @REM fix: \*.sys == *.sys
     ::wim.ini:\hiberfil.sys
     ::wim.ini:\pagefile.sys
     ::wim.ini:\swapfile.sys
@@ -4210,7 +4216,7 @@ REM for :arg\wim\--new
     ::wim.ini:\Windows\TSSysprep.log
     ::wim.ini:
 
-REM for current hotfix
+@REM for current hotfix
     ::chot.xml:<xsl:transform version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     ::chot.xml:    <xsl:output method="text"/><xsl:template match="/">
     ::chot.xml:        <xsl:for-each select="//References"><xsl:sort select="DownloadURL"/>
@@ -4221,7 +4227,7 @@ REM for current hotfix
     ::chot.xml:    </xsl:template>
     ::chot.xml:</xsl:transform>
 
-REM for unattend.xml
+@REM for unattend.xml
         ::unattend.xml:<?xml version="1.0" encoding="utf-8"?>
         ::unattend.xml:<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
         ::unattend.xml:    <settings pass="oobeSystem">
@@ -4258,7 +4264,7 @@ REM for unattend.xml
         ::unattend.xml:    </settings>
         ::unattend.xml:</unattend>
 
-REM hisecws.inf: Registry Values: 1:REG_SZ 2:REG_EXPAND_SZ 3:REG_BINARY 4:REG_DWORD 7:REG_MULTI_SZ
+@REM hisecws.inf: Registry Values: 1:REG_SZ 2:REG_EXPAND_SZ 3:REG_BINARY 4:REG_DWORD 7:REG_MULTI_SZ
     ::hisecws.inf:[Unicode]
     ::hisecws.inf:Unicode=yes
     ::hisecws.inf:

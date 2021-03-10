@@ -1,5 +1,5 @@
 #!/bin/bash
-#   Copyright 2017-2019 bin jin
+#   Copyright 2017-2021 bin jin
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ __variable_map () {
             eval "printf %s \"\$VARIABLE_MAP_PREFIX_$key\"; VARIABLE_MAP_PREFIX_$key='$value'"
         ;;
         --incrby)
-            eval "printf %d \$VARIABLE_MAP_PREFIX_$key; VARIABLE_MAP_PREFIX_$key=\$((VARIABLE_MAP_PREFIX_$key + $value))"
+            eval "printf %s \$VARIABLE_MAP_PREFIX_$key; : \$((VARIABLE_MAP_PREFIX_$key += $value))"
         ;;
         --get)
             eval printf %s \"\$VARIABLE_MAP_PREFIX_$key\"
