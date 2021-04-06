@@ -208,14 +208,8 @@ __variable_map () {
     local i key value SHARE_DO_POOL=$VARIABLE_MAP_SHARE_DO_POOL;
 
     case $1 in
-        --init)
-            _share_do --init;
-            return 0
-        ;;
-        --destroy)
-            _share_do --destroy;
-            return 0
-        ;;
+        --init) _share_do --init; return 0;;
+        --destroy) _share_do --destroy; return 0;;
         *)
             # have suffix
             if [ "${*%@[0-9]*}" != "$*" ]; then
@@ -242,35 +236,16 @@ __variable_map () {
     value="$3";
 
     case $1 in
-        --put)
-            eval "printf %s \"\$VARIABLE_MAP_PREFIX_$key\"; VARIABLE_MAP_PREFIX_$key='$value'"
-        ;;
-        --incrby)
-            eval "printf %s \$VARIABLE_MAP_PREFIX_$key; : \$((VARIABLE_MAP_PREFIX_$key += $value))"
-        ;;
-        --get)
-            eval printf %s \"\$VARIABLE_MAP_PREFIX_$key\"
-        ;;
-        --remove)
-            eval "printf %s \"\$VARIABLE_MAP_PREFIX_$key\"";
-            unset VARIABLE_MAP_PREFIX_$key
-        ;;
-        --size)
-            # 'grep' will output "\n"
-            printf %d $(set | grep --count '^VARIABLE_MAP_PREFIX_')
-        ;;
-        --clear)
-            # darwin awk not support: --field-separator=
-            unset `set | awk -F '=' '/^VARIABLE_MAP_PREFIX_/{printf " " $1}'`
-        ;;
-        --keys|--values|--arr|--clearall)
-            printf "%s\033[31m%s\033[0m%s\n" "[MAP:ERROR] not implement option: " "$1" >&2;
-            return 1
-        ;;
-        *)
-            printf "%s\033[31m%s\033[0m%s\n" "[MAP:ERROR] invalid option: " "$1" >&2;
-            return 1
-        ;;
+        --put) eval "printf %s \"\$VARIABLE_MAP_PREFIX_$key\"; VARIABLE_MAP_PREFIX_$key='$value'";;
+        --incrby) eval "printf %s \$VARIABLE_MAP_PREFIX_$key; : \$((VARIABLE_MAP_PREFIX_$key += $value))";;
+        --get) eval printf %s \"\$VARIABLE_MAP_PREFIX_$key\";;
+        --remove) eval "printf %s \"\$VARIABLE_MAP_PREFIX_$key\""; unset VARIABLE_MAP_PREFIX_$key;;
+        # 'grep' will output "\n"
+        --size) printf %d $(set | grep --count '^VARIABLE_MAP_PREFIX_');;
+        # darwin awk not support: --field-separator=
+        --clear) unset `set | awk -F '=' '/^VARIABLE_MAP_PREFIX_/{printf " " $1}'`;;
+        --keys|--values|--arr|--clearall) printf "%s\033[31m%s\033[0m%s\n" "[MAP:ERROR] not implement option: " "$1" >&2; return 1;;
+        *) printf "%s\033[31m%s\033[0m%s\n" "[MAP:ERROR] invalid option: " "$1" >&2; return 1;;
     esac
 }
 

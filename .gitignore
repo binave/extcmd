@@ -10,14 +10,13 @@
 !*.py
 !*.sh
 !*.vbs
+!*.xlib
 
 # Avoid ignoring default file
 !.gitignore
 !README.md
 !LICENSE
-!?lib
-!3rd
-!xjar
+!x*
 
 # Ignore some directory
 .*/

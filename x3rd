@@ -50,13 +50,13 @@
 # done
 
 ### Output version and exit.
-_3rd_version () {
+_x3rd_version () {
     printf "0.18.3\n" >&2;
     return 0
 }
 
 ### Lan manage ##Usage: lan [option] [args...] ##    --restart,   -r [lan_name] [[-f|--force]] #        e.g. */1 * * * * 3rd lan --restart en0 ##
-_3rd_lan () {
+_x3rd_lan () {
     local PATH="$PATH:/usr/bin:/usr/sbin:/sbin"; # for 'crontab'
     case $1 in
         --restart|-r)
@@ -80,7 +80,7 @@ _3rd_lan () {
 }
 
 ### git toolsUsage: git [option] [args...] ##    backup        Backup git repositories#    rbundle [[user@host:]target_path] [[user@host:]source_path]#                  Remote git bundle##
-_3rd_git () {
+_x3rd_git () {
     case $1 in
         backup)
             which git >/dev/null 2>&1 || exit 1; # git command not found
@@ -156,13 +156,13 @@ _3rd_git () {
 }
 
 # ### VirtualBox Manage (Not complete) ##Usage: vbox [start|stop|stopall] ##
-# _3rd_vbox () {
+# _x3rd_vbox () {
 #     [ -f /Applications/VirtualBox.app\Contents\MacOS\VBoxManage ] || exit 1; # need install VirtualBox
 #     return 0
 # }
 
 ### Docker batch command ##Usage: moby [option] [args...]##    start                Start all exited containers#    stop                 Stop all running containers#    tags [image_name]    Get docker tags#    bridge               Print containers network info##
-_3rd_moby () {
+_x3rd_moby () {
     [ "$1" == "tags" ] || which docker >/dev/null 2>&1 || exit 1; # docker client command not found
     case $1 in
         start)
@@ -187,7 +187,7 @@ _3rd_moby () {
 }
 
 # ### Camouflage to VDISK for boot2docker ##Usage: camvd [remote_login_info]
-# _3rd_camvd () {
+# _x3rd_camvd () {
 #     ssh $@ <<-SH
 # ver=\`uname -r\`;
 # [ "\${ver#*-}" == "boot2docker" ] || exit;
@@ -202,7 +202,7 @@ _3rd_moby () {
 # }
 
 ### Convert alac,ape,m4a,tta,tak,wav to flac format #Goto workdir and exec cflac command ##
-_3rd_2flac () {
+_x3rd_2flac () {
     local regex='alac|ape|m4a|tta|tak|wav';
     which ffmpeg >/dev/null 2>&1 || exit 1; # ffmpeg command not found
     [[ $OSTYPE == darwin* ]] && {
@@ -214,7 +214,7 @@ _3rd_2flac () {
 }
 
 ### Play all multi-media in directory ##Usage: play [options...] [arg...] ##    --maxdepth, -d [num]     set find depth, default max#    --random,   -r           random play#    --ast,      -a [num]     select desired audio stream#    --skip,     -j [num]     skip some file ##
-_3rd_play () {
+_x3rd_play () {
     which ffplay >/dev/null 2>&1 || exit 1; # ffplay command not found
     which lib >/dev/null 2>&1 || exit 1; # lib command not found
 
@@ -405,7 +405,7 @@ _3rd_play () {
 }
 
 ### Camera tools ##Usage: cam [option] [args] ##    --list, -l          List camera device #    --show, -s   [video_id [audio_id]] [[[width]x[height]] [[num]fps]] #                        Display target camera #                        e.g. #                            cam -s 3 720x480 15fps ##
-_3rd_cam () {
+_x3rd_cam () {
     case $1 in
         --list|-l)
             which ffmpeg >/dev/null 2>&1 || exit 1; # ffmpeg command not found
@@ -467,7 +467,7 @@ _3rd_cam () {
 }
 
 ### Get some urls ##Usage: urls [options] [args...] ##    --chrome,    -c  [mac-arm|mac-intel|win64|win32]  Get chrome url which last stable version #    --jetbrains, -j                     Get jetbrains urls which last stable version #    --eclipse,   -e                     Get last version eclipse and sha1 ##
-_3rd_urls () {
+_x3rd_urls () {
     # https://github.com/google/omaha/blob/master/doc/ServerProtocol.md
     # https://github.com/google/omaha/blob/master/doc/ServerProtocolV3.md
     # https://chromium.googlesource.com/chromium/src.git/+/master/docs/updater/protocol_3_1.md
@@ -556,7 +556,7 @@ _3rd_urls () {
 }
 
 ### Maven repository tools ##usage: m2 [option] #    --download, -d [groupId]/[artifactId][[/version]] #                                       Get Download maven file to $HOME/.m2/repository #    --trim,     -c [[repo_path]]       Print broken file from local maven repository. ##
-_3rd_m2 () {
+_x3rd_m2 () {
     case $1 in
         --download|-d)
             shift;
@@ -652,7 +652,7 @@ _m2_download () {
 }
 
 ### Compress PNG images ##Usage: png [src_dir] [out_dir] ##[WARN] only support ascii name
-_3rd_png () {
+_x3rd_png () {
     which pngquant >/dev/null 2>&1 || exit 1; # pngquant command not found
     [ -d "$1" ] || exit 1; # source path not exist
     [ "$2" ] || exit 1; # output path not set
@@ -667,7 +667,7 @@ _3rd_png () {
 }
 
 ### Convert some png to pdf##Usage: pdf [dir...]
-_3rd_pdf () {
+_x3rd_pdf () {
     which convert >/dev/null 2>&1 || exit 1; # convert command not found
     local i OLDPWD="$PWD";
     for i in "$@"; do
@@ -690,7 +690,7 @@ _3rd_pdf () {
 
 
 ### Replace brew source #rewurl [app_name] #
-# _3rd_brewurl () {
+# _x3rd_brewurl () {
 #     [ "$1" ] || exit 1; # first args is empty
 #     grep -r \'$1\' /usr/local/Library/Formula/* 2>/dev/null;
 #     echo -e "\nNeed replace like file:///Volume/Data/$1";

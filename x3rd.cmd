@@ -58,19 +58,19 @@ if not errorlevel 0 exit /b 1
 if errorlevel 1 call :this\annotation :%~n0\%* & goto :eof
 exit /b 0
 
-:3rd\
-:3rd\--help
-:3rd\-h
+:x3rd\
+:x3rd\--help
+:x3rd\-h
     call :this\annotation
     exit /b 0
 
 ::: "Output version and exit"
-:3rd\version
+:x3rd\version
     >&3 echo 0.20.5.1
     exit /b 0
 
 ::: "Backup git repositories"
-:3rd\gitb
+:x3rd\gitb
     call :sub\path\--contain git.exe || exit /b 2 @REM git command not found
     setlocal enabledelayedexpansion
 
@@ -107,7 +107,7 @@ exit /b 0
     exit /b 0
 
 ::: "Maven repository tools" "" "usage: %~n0 m2 [option]" ""
-:3rd\m2
+:x3rd\m2
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\m2\%* 2>nul
     goto :eof
@@ -151,7 +151,7 @@ exit /b 0
     exit /b 0
 
 ::: "Oracle service start\stop"
-:3rd\orcld
+:x3rd\orcld
     if "%~1"=="" exit /b 2 @REM Sid is empty, default is orcl
     setlocal
     set _sid=OracleService%~1
@@ -169,7 +169,7 @@ exit /b 0
     endlocal
     exit /b 0
 
-@REM For :3rd\orcl
+@REM For :x3rd\orcl
 :orcld
     echo Oracle Service allready %~2, Press {Enter} to %~1
     set /p _input=or type any characters to EXIT.
@@ -179,7 +179,7 @@ exit /b 0
     net.exe %1 %_sid%
     exit /b 0
 
-@REM For :3rd\orcl
+@REM For :x3rd\orcl
 :orcld\setService
     for /f "usebackq tokens=1,3" %%a in (
         `sc.exe qc %_srv%`
@@ -198,7 +198,7 @@ exit /b 0
     exit /b 0
 
 ::: "VirtualBox Manage" "" "usage: %~n0 vbox [args] [[vm_name]]" ""
-:3rd\vbox
+:x3rd\vbox
     setlocal enabledelayedexpansion
     @REM Add vbox path
     set path=%path%;%VBOX_MSI_INSTALL_PATH%
@@ -299,7 +299,7 @@ exit /b 0
 :::::::::::::
 
 ::: "Convert to" "" "usage: %~n0 c2 [option] ..." ""
-:3rd\c2
+:x3rd\c2
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\path\--contain ffmpeg.exe || exit /b 2 @REM ffmpeg command not found
     call :sub\c2\%*
@@ -334,7 +334,7 @@ exit /b 0
 
 ::: "Play all multi-media in directory" "" "usage: %~n0 play [options] ... [directory...]" "" "    --random, -r" "    --ast,    -a " "    --skip,   -j [count]"
 :::: "ffplay command not found" "args is empty"
-:3rd\play
+:x3rd\play
     call :sub\path\--contain ffplay.exe || exit /b 1
     if "%~1"=="" exit /b 2
     setlocal enabledelayedexpansion
@@ -399,7 +399,7 @@ exit /b 0
     ) do if /i "%~x1"==".%%a" start /b /wait /min ffplay.exe -hide_banner -autoexit -af "volume=0.05" %1 2>&1
     exit /b 0
 
-@REM :3rd\cam
+@REM :x3rd\cam
 @REM     if "%~1"=="" call :this\annotation %0 & goto :eof
 @REM     call :sub\path\--contain ffmpeg.exe || exit /b 2 @REM ffmpeg command not found
 @REM     call :sub\cam\%*
@@ -416,7 +416,7 @@ exit /b 0
 @REM     exit /b 0
 
 ::: "Docker batch command" "Usage: %~n0 dockers [start/stop]"
-:3rd\moby
+:x3rd\moby
     call :sub\path\--contain docker.exe || exit /b 2 @REM docker client command not found
     2>nul call :sub\moby\%*
     goto :eof
@@ -442,7 +442,7 @@ exit /b 0
 @REM     exit /b 0
 
 ::: "Compress PNG images" "Usage: %~n0 png [src_dir] [out_dir]"
-:3rd\png
+:x3rd\png
     call :sub\path\--contain pngquant.exe || exit /b 2 @REM pngquant command not found
     if not exist "%~f1" exit /b 3 @REM source path not exist
     if "%~2"=="" exit /b 4 @REM output path not set
@@ -465,9 +465,9 @@ exit /b 0
     exit /b 0
 
 ::: "tar.gz compresses by 7za" "" "Usage: %~n0 tar.gz [path]"
-:3rd\tar.gz
+:x3rd\tar.gz
 ::: "tar.bz2 compresses by 7za" "" "Usage: %~n0 tar.bz2 [path]"
-:3rd\tar.bz2
+:x3rd\tar.bz2
     call :sub\path\--contain 7za.exe || exit /b 10 @REM 7za not fount
     setlocal enabledelayedexpansion
     if not exist "%~1" exit /b 2 @REM target not found
@@ -481,7 +481,7 @@ exit /b 0
     endlocal
     exit /b 0
 
-@REM for :3rd\tar.*
+@REM for :x3rd\tar.*
 :this\tarCompresses
 	if not defined _tarName set _tarName=%~n1
 	if "%~2"=="" call :this\dir\--isdir %1 || for %%a in (
@@ -499,7 +499,7 @@ exit /b 0
 	set _tarName=
 	goto :eof
 
-@REM for :3rd\tar.*
+@REM for :x3rd\tar.*
 :this\tarDecompresses
 	for %%a in ("%~n1") do (
 		7za.exe x %1 -so | 7za.exe x -si -ttar -o. -aoa
@@ -525,7 +525,7 @@ exit /b 0
 @REM 	@REM call %0 "!%~2!" %~2
 @REM 	goto :eof
 
-@REM for :3rd\tar.*
+@REM for :x3rd\tar.*
 :this\equalsDeputySuffix
 	for %%a in (
 		"%~n1"
@@ -533,7 +533,7 @@ exit /b 0
 	exit /b 1
 
 
-@REM :3rd\ftp
+@REM :x3rd\ftp
 @REM 	>%temp%\.bb315509-cf9c-5caa-c096-24d258c3d95d (
 @REM 		call :this\ftp\init [ip] [name] [password] [dir]
 @REM 		if "%~1"=="" (

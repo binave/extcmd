@@ -31,24 +31,24 @@
 '         End Function
 
 ''' Output version and exit
-Function lib_version()
+Function xlib_version()
     printLine "0.18.3"
 ENd Function
 
-''' Sleep some milliseconds 'Usage: lib sleep [ms]
-Function lib_sleep(ms)
+''' Sleep some milliseconds 'Usage: xlib sleep [ms]
+Function xlib_sleep(ms)
     ' Test ms
     If Not IsNumeric(ms) Then setErr "Args not a number"
     WScript.Sleep ms
 End Function
 
-''' Run some command at background 'Usage: lib vbhide "[command]"
-Function lib_vbhide(command)
+''' Run some command at background 'Usage: xlib vbhide "[command]"
+Function xlib_vbhide(command)
     CreateObject("WScript.Shell").Run command, vbhide
 End Function
 
-''' Download and save 'Usage: lib get [url] [output_path]
-Function lib_get(url, output)
+''' Download and save 'Usage: xlib get [url] [output_path]
+Function xlib_get(url, output)
     Set htt = gXmlHttp()
     htt.Open "GET", url, 0
     htt.Send
@@ -59,8 +59,8 @@ Function lib_get(url, output)
     str.SaveToFile output, 2
 End Function
 
-''' Download and print as text 'Usage: lib getprint [url]
-Function lib_getprint(url)
+''' Download and print as text 'Usage: xlib getprint [url]
+Function xlib_getprint(url)
     Set htt = gXmlHttp()
     htt.Open "GET", url, 0
     htt.Send
@@ -68,8 +68,8 @@ Function lib_getprint(url)
 End Function
 
 ' REF http://demon.tw/programming/vbs-unzip-file.html
-''' Create zip file 'Usage: lib zip [source_path] [zip_output_path]
-Function lib_zip(sourcePath, zipPath)
+''' Create zip file 'Usage: xlib zip [source_path] [zip_output_path]
+Function xlib_zip(sourcePath, zipPath)
     Dim emptyZipFile, zipFile
     ' Create empty zip file
     Set emptyZipFile = fso.CreateTextFile(zipPath, true)
@@ -83,8 +83,8 @@ Function lib_zip(sourcePath, zipPath)
 End Function
 
 ' REF http://demon.tw/programming/vbs-unzip-file.html
-''' Uncompress 'Usage: lib unzip [zip_path] [output_path]
-Function lib_unZip(zipPath, targetPath)
+''' Uncompress 'Usage: xlib unzip [zip_path] [output_path]
+Function xlib_unZip(zipPath, targetPath)
     Dim shellApp, source, target
     If not fso.FolderExists(targetPath) Then
         fso.CreateFolder(targetPath)
@@ -96,12 +96,12 @@ Function lib_unZip(zipPath, targetPath)
 End Function
 
 ''' Get clipboard data
-Function lib_gClip()
+Function xlib_gClip()
     printLine gClip()
 End Function
 
-''' Set clipboard data 'Usage: lib sClip [String]
-Function lib_sClip(base64Strng)
+''' Set clipboard data 'Usage: xlib sClip [String]
+Function xlib_sClip(base64Strng)
     Dim fso, logFile, logPath, wshShell
     Set fso = CreateObject("Scripting.FileSystemObject")
     Set wshShell = CreateObject("WScript.Shell")
@@ -120,8 +120,8 @@ Function lib_sClip(base64Strng)
     End If
 End Function
 
-''' Convert base64 to binary file from text 'Usage: lib txt2bin [text_path] [output_path]
-Function lib_txt2bin(source, target)
+''' Convert base64 to binary file from text 'Usage: xlib txt2bin [text_path] [output_path]
+Function xlib_txt2bin(source, target)
     Dim content, text
     ' Read base64 text from file
     Set content = CreateObject("Scripting.FileSystemObject").opentextfile(source, 1)
@@ -130,29 +130,29 @@ Function lib_txt2bin(source, target)
     base64ToBin text, target
 End Function
 
-''' Convert binary file to base64 string 'Usage: lib bin2Base64 [file_path]
-Function lib_bin2Base64(source)
+''' Convert binary file to base64 string 'Usage: xlib bin2Base64 [file_path]
+Function xlib_bin2Base64(source)
     printLine bin2Base64(source)
 End Function
 
 ''' Get guid
-Function lib_guuid()
-    lib_guuid = Left(CreateObject("Scriptlet.TypeLib").Guid, 38)
-    printLine lib_guuid
+Function xlib_guuid()
+    xlib_guuid = Left(CreateObject("Scriptlet.TypeLib").Guid, 38)
+    printLine xlib_guuid
 End Function
 
 ''' Get format time
-Function lib_gnow()
+Function xlib_gnow()
     Dim regEx
     Set regEx = New RegExp
     regEx.Pattern = "[\D]"
     regEx.Global = True
-    lib_gnow = regEx.Replace(Now & right(FormatNumber(timer * 100, 0), 2), "")
-    printLine lib_gnow
+    xlib_gnow = regEx.Replace(Now & right(FormatNumber(timer * 100, 0), 2), "")
+    printLine xlib_gnow
 End Function
 
-''' Convert ansi head to unicode head, or reconvert 'Usage: lib ansi2unic
-Function lib_ansi2unic(path)
+''' Convert ansi head to unicode head, or reconvert 'Usage: xlib ansi2unic
+Function xlib_ansi2unic(path)
     Dim bin, stream
     Set stream = CreateObject("ADODB.Stream")
     stream.Type = 1
@@ -173,8 +173,8 @@ Function lib_ansi2unic(path)
     stream.Close
 End Function
 
-''' Trim *.inf text for drivers 'Usage: lib inftrim [source_path] [target_path]
-Function lib_inftrim(source, target)
+''' Trim *.inf text for drivers 'Usage: xlib inftrim [source_path] [target_path]
+Function xlib_inftrim(source, target)
     Set fso = CreateObject("Scripting.FileSystemObject")
     Set fIn = fso.opentextfile(source)
     text = fIn.readall
@@ -194,8 +194,8 @@ Function lib_inftrim(source, target)
     fOut.close
 End Function
 
-''' XML trans form Node by XSL 'Usage: lib doxsl [xml_path] [xsl_path] [output_path]
-Function lib_doxsl(xml, xsl, output)
+''' XML trans form Node by XSL 'Usage: xlib doxsl [xml_path] [xsl_path] [output_path]
+Function xlib_doxsl(xml, xsl, output)
     Dim ver
     ' ver = 6 '
     ver = 3 ' support NT52
@@ -214,8 +214,8 @@ Function lib_doxsl(xml, xsl, output)
     fso.Close()
 End Function
 
-''' Get target file system drive Letter 'Usage: lib gfsd [NTFS/FAT32/EXFAT]
-Function lib_gfsd(tag)
+''' Get target file system drive Letter 'Usage: xlib gfsd [NTFS/FAT32/EXFAT]
+Function xlib_gfsd(tag)
     Dim drv
     For Each drv in CreateObject("Scripting.FileSystemObject").Drives
         If drv.IsReady Then
@@ -226,8 +226,8 @@ Function lib_gfsd(tag)
     Next
 End Function
 
-''' Create shortcut at desktop ''Usage: lib lnkd [source] [target] ''       [target]: Desktop AllUsersDesktop C:\
-Function lib_lnkd(sourceFilePath, targetFolder)
+''' Create shortcut at desktop ''Usage: xlib lnkd [source] [target] ''       [target]: Desktop AllUsersDesktop C:\
+Function xlib_lnkd(sourceFilePath, targetFolder)
     Set WshShell = WScript.CreateObject("WScript.Shell")
     Set Fso = CreateObject("Scripting.FileSystemObject")
 
@@ -253,7 +253,7 @@ End Function
 ''''''''''''''''
 
 ''' Tag date time each line 'Usage: [command] | log [strftime format]
-Function lib_log(format)
+Function xlib_log(format)
     format = Replace(format, "$F", "yyyy-MM-dd")
     format = Replace(format, "$T", "hh:mm:ss")
     format = Replace(format, "$Y", "yyyy")
@@ -275,7 +275,7 @@ Function lib_log(format)
     Loop
 End Function
 
-' Function lib_log(separator)
+' Function xlib_log(separator)
 '     Set StdIn = WScript.StdIn
 '     Do While Not StdIn.AtEndOfStream
 '         line = StdIn.ReadLine
@@ -294,8 +294,8 @@ Function gXmlHttp()
 End Function
 
 ' BKDRHash
-''' BKDR Hash 'Usage: lib hash [strng]
-Function lib_hash(key)
+''' BKDR Hash 'Usage: xlib hash [strng]
+Function xlib_hash(key)
     Dim seed, hash, i
     seed = 131 ' 31 131 1313 13131 131313
     hash = 0
@@ -617,7 +617,7 @@ Sub main()
                 i = 0
                 Exit For ' Will print all function introduction
             End If
-            ' e.g. lib_func(
+            ' e.g. xlib_func(
             MethoParas = ScriptName & Chr(95) & arg & Chr(40)
             funcName = arg
         ElseIf i = 2 Then
@@ -628,16 +628,16 @@ Sub main()
                 i = -1
                 Exit For
             End If
-            ' e.g. lib_func("arg1"
+            ' e.g. xlib_func("arg1"
             MethoParas = MethoParas & Chr(34) & arg & Chr(34)
         Else
-            ' e.g. lib_func("arg1","arg2"
+            ' e.g. xlib_func("arg1","arg2"
             MethoParas = MethoParas & Chr(44) & Chr(34) & arg & Chr(34)
         End If
     Next
 
     if i > 0 Then
-        ' e.g. lib_func(...)
+        ' e.g. xlib_func(...)
         If Len(MethoParas) > 0 Then MethoParas = MethoParas & Chr(41)
         On Error Resume Next
         ' Run Function by Arguments

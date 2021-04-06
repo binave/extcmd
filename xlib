@@ -35,13 +35,13 @@
 #         }
 
 ### Output version and exit.
-_lib_version () {
+_xlib_version () {
     printf "0.18.9\n" >&2;
     return 0
 }
 
 ### Cursor # ##Usage: cur [option] ##    --hide, -    hidden cursor#    --show, +    show cursor ##
-_lib_cur () {
+_xlib_cur () {
     case $1 in
         --hide|-)
             printf '\033[?25l'
@@ -62,7 +62,7 @@ _lib_cur () {
 }
 
 ### Create/Convert package file ##Usage: pkg [options] [path] ##    --dmg,     -n  [folder]          Create DMG #    --verify,  -t  [dmg_file]        verify dmg #    --dmg2iso, -di [dmg_file_path]   Convert a DMG file to ISO #    --iso2dmg, -id [iso_file_path]   Convert an ISO file to DMG format #    --udf,     -u  [dir_path]        Create ISO by directory#    --dd,      -w  [img_path] [disk_path] #                                     Write img to disk #    --get,     -g  [[countdown_min]] Get apk file from AppStore #                                  1. Login AppStore and Install App #                                  2. Run this command before download complete #                                  3. Keep shell open ##
-_lib_pkg () {
+_xlib_pkg () {
     [[ $OSTYPE == darwin* ]] || exit 1; # Only support macOS (OS X)
     local tmp;
     case $1 in
@@ -126,7 +126,7 @@ _lib_pkg () {
                     rm "${1%.*}.dmg";
                     # sudo dd if="${1%.*}.dmg" of=$target bs=4m & while killall -USR1 dd; do
                     #     sleep 10;
-                    # done | _lib_prefix "%F %T, "
+                    # done | _xlib_prefix "%F %T, "
                 ;;
                 gz)
                     which gzcat >/dev/null 2>&1 || exit 1; # gzcat command not found
@@ -185,8 +185,8 @@ __get_pkg () {
             printf "SIZE: ";
             du -h "$1" | awk '{print $1}'
             printf "TIME: ";
-            _lib_str --dhms $(($(date +%s) - $sec_on));
-            _lib_hash "$1"
+            _xlib_str --dhms $(($(date +%s) - $sec_on));
+            _xlib_hash "$1"
             mv "$1" ~/Downloads 2>/dev/null || {
                 cp "$1" ~/Downloads && printf "\033[31m$1 still exist\033[0m\n"
             }
@@ -252,14 +252,14 @@ __get_pkg () {
             sleep 0.2
         done;
 
-    } | _lib_prefix "%F %T, GPKG, "
+    } | _xlib_prefix "%F %T, GPKG, "
 
     # wait all thread over
     wait
 }
 
 ### Remote tools ##Usage: remote [option] [args...] ##    -ed25519 [[user@]host] [[alias]]  Copy ed25519 public key to remote #    -tar [option] [[user@host:]target_path] [[user@host:]source_path] #                                  remote tar command #    -scp [pass_word] [command...] Auto scp with password ##
-_lib_remote () {
+_xlib_remote () {
     case $1 in
         -ed25519)
             shift;
@@ -279,7 +279,7 @@ _lib_remote () {
     esac
 }
 
-# for _lib_remote
+# for _xlib_remote
 __remote_ed25519 () {
      [ "$1" ] || exit 1; # first args is empty
     local ed25519_pub;
@@ -302,7 +302,7 @@ chmod 700 ~/.ssh
     return 0
 }
 
-# for _lib_remote
+# for _xlib_remote
 __remote_auto_scp () {
     local password;
     password=$1;
@@ -429,7 +429,7 @@ __remote_tar () {
 }
 
 ### OS globle setting ##Usage: oset [option] [args...] ##    --version,    -v          Get OS version #    --allow,      -a          Allow all app install #    --hidden,     - [yes|no]  Hidden all privite file or directory #    --re-launch,  -rl         Reset LaunchPad #    --set-launch, -sl [rows] [cols] #                              Setting LaunchPad columes rows#    --uuid,       -u          Get uuid by username. default: [current]#    --sid,        -s          Get sid by username. default: [current]##
-_lib_oset () {
+_xlib_oset () {
     [[ $OSTYPE == darwin* ]] || exit 1; # Only support macOS (OS X)
     case $1 in
         --version|-v)
@@ -527,7 +527,7 @@ _lib_oset () {
 }
 
 ### Certificate tools ##Usage: cert [option] [args...] ##    https --host [cn] --email [e]    Create certificate for https #    ssh   [[suffix]]                 Certificate for ssh ##
-_lib_cert () {
+_xlib_cert () {
     case $1 in
         https)
             # nginx
@@ -622,7 +622,7 @@ _lib_cert () {
 }
 
 ### Display device info
-_lib_drv () {
+_xlib_drv () {
     case $1 in
         --info|-v)
             if [[ $OSTYPE == darwin* ]]; then
@@ -641,7 +641,7 @@ _lib_drv () {
 }
 
 ### Print md5,sha1,sha256 checksums ##Usage: hash [file_path] ##
-_lib_hash () {
+_xlib_hash () {
     which openssl >/dev/null 2>&1 || exit 1; # openssl command not found
     local h_code;
     for h_code in $(
@@ -665,7 +665,7 @@ _lib_hash () {
 }
 
 ### Volume info or edit ##    --wipes, -w  [path]   Wipes the free space on the volume #    --createinstallmedia, -im [device_path] #                          Create instatll media, by Install*.app
-_lib_vol () {
+_xlib_vol () {
     case $1 in
         # --encrypts-all|-eca)
         #     local args;
@@ -729,7 +729,7 @@ _lib_vol () {
 # }
 
 ### Directory tools ##Usage: dir [option] [args...] ##    --unhidden, -uh [dir_path]   No hidden directory #    --own           [dir_path]   Set directory owner #    --boot          [dir_path]   Rebuild boot file #    --count,    -c  [[dir_path]] Get file count #    --unique,   -u  [[dir_path]] Search for duplicate files##
-_lib_dir () {
+_xlib_dir () {
     case $1 in
         --unhidden|-uh)
             shift;
@@ -831,7 +831,7 @@ _lib_dir () {
 }
 
 ### String manage ##Usage: str [option] ...##    --random,   -r   [count]      Print random string #    --lower,    -l   [str]        Convert lower case #    --upper,    -u   [str]        Convert upper case #    --tac            [[file]]#    --xmlvalue, -xv  [tag_name]   Get xml value #    --unascii,  -ua  [dir_path]   Print text not in ASCII char #    --dhms,     -t   [secends]    Format Unix timestamp to ??d ??h ??m ??s #    --passwd,   -pw  [passwd_str] Get password for stdin chpasswd -e ##
-_lib_str () {
+_xlib_str () {
     case $1 in
         --lower|-l)
             shift;
@@ -897,7 +897,7 @@ _lib_str () {
             [[ $OSTYPE == darwin* ]] && uuidgen
         ;;
         --dhms|-t)
-            _lib_inum $2 || exit 1; # Not number
+            _xlib_inum $2 || exit 1; # Not number
             local out=$(($2 % 60))s;
             [ $2 -ge 60 ] && {
                 out=$(($2 % 3600 / 60))m\ $out;
@@ -920,7 +920,7 @@ _lib_str () {
 }
 
 ### show cpu times.
-_lib_cpu () {
+_xlib_cpu () {
     [[ $OSTYPE == darwin* ]] && exit 1; # Not support macOS (OS X)
     local REPLY;
     while true; do
@@ -931,7 +931,7 @@ _lib_cpu () {
 }
 
 ### Show/find IPv4 ##Usage: ip [option] [args...] ##    --list, -l            Show IPv4 #    --find, -f [mac_addr] Search IPv4 by MAC or Host name, #                          support alias, see lib hosts #    --test, -t [str]      Test string is ipv4 ##
-_lib_ip () {
+_xlib_ip () {
     case $1 in
         --list|-l)
             # netstat -rn | grep "default"
@@ -940,7 +940,7 @@ _lib_ip () {
         ;;
         --find|-f)
             shift;
-            source "$(cd `dirname $0`; pwd)/_lib";
+            source "$(cd `dirname $0`; pwd)/bash.xlib";
             __ip_find "$@"
         ;;
         --test|-t)
@@ -964,7 +964,7 @@ _lib_ip () {
     esac
 }
 
-# for _lib_ip
+# for _xlib_ip
 __ip_find () {
     [ "$1" ] || exit 1; # MAC addr or Host name is empty
 
@@ -1004,7 +1004,7 @@ __ip_find () {
             # cache max variable length
             [ ${#arg} -gt $max_len ] && max_len=${#arg};
             # convert lowercase
-            mac_addr=`_lib_str --lower $mac_addr`;
+            mac_addr=`_xlib_str --lower $mac_addr`;
 
             if [[ $OSTYPE == darwin* ]]; then
                 # trim ^0, 0a:0b:1c:1d:1e:1f -> a:b:1c:1d:1e:1f
@@ -1070,7 +1070,7 @@ __ip_find () {
         mac_addr=(${mac_addr//[@|]/ });
         unset mac_addr[0];
         for i in ${mac_addr[@]}; do
-            _lib_ip --test $i && printf "%-${max_len}s$i\n" $key
+            _xlib_ip --test $i && printf "%-${max_len}s$i\n" $key
         done
     done
 
@@ -1096,8 +1096,8 @@ __ip_find () {
 # }
 
 ### Update hosts by ini #    will read ini config from HOME or script path. #    ini file context like: # #[hosts] #abc.org=01-12-23-34-45-56 #lib-233=67-78-89-9a-ab-bc #www.a.com=192.168.1.1 ##
-_lib_hosts () {
-    source "$(cd `dirname $0`; pwd)/_lib";
+_xlib_hosts () {
+    source "$(cd `dirname $0`; pwd)/bash.xlib";
 
     # load ini in map1
     __load_ini hosts 1 || exit 1; # Not found ini configure
@@ -1109,11 +1109,11 @@ _lib_hosts () {
 
     while read line; do
         # override mac addr in map1, if value not ipv4
-        _lib_ip --test "$(_map 1 --get ${line%% *})" || {
+        _xlib_ip --test "$(_map 1 --get ${line%% *})" || {
             _map 1 --put $line >/dev/null;
             printf "%s\n" "$line"
         }
-    done < <(_lib_ip --find ${MAP2ARRAY[@]});
+    done < <(_xlib_ip --find ${MAP2ARRAY[@]});
 
     # clear map0, sip command use it before
     _map --clear;
@@ -1122,7 +1122,7 @@ _lib_hosts () {
     _map 1 --arr || exit 1; # Unknown error
 
     for ((i=0; i<${#MAP2ARRAY[@]}; i+=2)); do
-        _lib_ip --test ${MAP2ARRAY[i + 1]} && _map --put "${MAP2ARRAY[$i]}" "${MAP2ARRAY[i + 1]}" >/dev/null;
+        _xlib_ip --test ${MAP2ARRAY[i + 1]} && _map --put "${MAP2ARRAY[$i]}" "${MAP2ARRAY[i + 1]}" >/dev/null;
     done
 
     while read line; do
@@ -1161,29 +1161,29 @@ _lib_hosts () {
 # }
 
 ### Connect vnc server ##Usage: vnc [ipv4][:[port]] ##server listening port 5900 ##
-_lib_vnc () {
+_xlib_vnc () {
     [[ $OSTYPE == darwin* ]] || exit 1; # Only support macOS (OS X)
-    _lib_ip --test $1 || exit 1; # Args not a ipv4
+    _xlib_ip --test $1 || exit 1; # Args not a ipv4
     open vnc://$1;
     return 0
 }
 
 ### Test str is num ##Usage: inum [str] ##
-_lib_inum () {
+_xlib_inum () {
     [ "$1" ] || return 2;
     [[ $1 != *[^0-9]* && $1 != 0[0-9]* ]] || return 1;
     return 0
 }
 
 ### Tag prefix each line, support `date` format ##Usage: [command] | prefix [strftime format] ##
-_lib_prefix () {
+_xlib_prefix () {
     [ "$1" ] || exit 1; # Args is empty
-    source "$(cd `dirname $0`; pwd)/_lib";
+    source "$(cd `dirname $0`; pwd)/bash.xlib";
     _prefix "$@"
 }
 
 ### Plist editer ##Usage: plist [option] [path...] ##    --xml,    -x [plist_path]   print plist as xml format #    --json,   -j [plist_path]   print plist as xml format #    --binary, -b [plist_path]   serialize plist to stdout #    --load       [plist_path]   load plist #    --unload     [plist_path]   unload plist ##
-_lib_plist () {
+_xlib_plist () {
     [[ $OSTYPE == darwin* ]] || exit 1; # Only support macOS (OS X)
     which plutil >/dev/null 2>&1 || xcode-select --install 2>/dev/null
     [ $# -lt 2 ] && exit 1; # invalid option
@@ -1237,7 +1237,7 @@ __load_ini () {
     # # read environment variable
     # while read line; do
     #     [ "$line" == "" -o "${line/=/}" == "$line" ] && continue;
-    #     _lib_ip --test ${line#*=} || {
+    #     _xlib_ip --test ${line#*=} || {
     #         __imac ${line#*=} || continue
     #     };
     #     _map $2 --put "${line%%=*}" "${line#*=}" >/dev/null;

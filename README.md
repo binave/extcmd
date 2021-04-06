@@ -1,14 +1,14 @@
-# External Command
+# eXternal Command
 command-line wrapper for batch and shell.
 
 一些常用的 batch 和 shell 方法合集。
-<br/>`lib` 将仅使用第一方工具，做到零依赖和开箱即用。包括子命令在内实用命令达到数十个。
-<br/>`3rd` 则对一些第三方命令行工具，进行了二次命令封装。
+<br/>`xlib` 将仅使用第一方工具，做到零依赖和开箱即用。包括子命令在内实用命令达到数十个。
+<br/>`x3rd` 则对一些第三方命令行工具，进行了二次命令封装。
 
 ---------
 # Licensing
-extcmd is licensed under the Apache License, Version 2.0. See
-[LICENSE](https://github.com/binave/extcmd/blob/master/LICENSE) for the full
+xcmd is licensed under the Apache License, Version 2.0. See
+[LICENSE](https://github.com/binave/xcmd/blob/master/LICENSE) for the full
 license text.
 
 ---------
@@ -23,26 +23,26 @@ license text.
 A:
 
 1. 准备一个 `FAT32` 格式的 `USB` 存储设备，连接到计算机，用于存放开机密钥。
-2. 下载 `lib.cmd` 到本地计算机，执行
+2. 下载 `xlib.cmd` 到本地计算机，执行
 
     ```bat
-    lib vol --encrypts-all
+    xlib vol --encrypts-all
     ```
 
     2.1. 或者从 `smb` 服务器（如 `192.168.1.1`）的 `UNC` 路径执行
 
     ```bat
-    \\192.168.1.1\extcmd\lib vol --encrypts-all
+    \\192.168.1.1\xcmd\xlib vol --encrypts-all
     ```
 3. 如果需要隐藏磁盘上的加密标识和消除右键菜单上的 `BitLocker` 菜单，执行
 
     ```bat
-    lib vol --hide-bitlocker
+    xlib vol --hide-bitlocker
     ```
 4. 更详细的操作方法（包括禁止外接磁盘写操作，指定 `USB` 存储设备盘符等），可以使用
 
     ```bat
-    lib vol --help
+    xlib vol --help
     ```
 
     进行查询。
@@ -52,10 +52,10 @@ A:
 ### Q: 如何在 `macOS` 系统上截获 `AppStore` 原版 `pkg` 安装包。
 A:
 
-1. 下载 `lib` 到本地计算机执行
+1. 下载 `xlib` 到本地计算机执行
 
     ```sh
-    lib pkg -g 5
+    xlib pkg -g 5
     ```
 
 2. 打开 `AppStore` 下载（而不是更新）任意若干个应用。
@@ -85,10 +85,10 @@ A:
     range=1-120
     ```
 
-3. 在 `Windows` 系统下下载 `lib.cmd` 或在 `macOS` 系统下下载 `lib` 执行
+3. 在 `Windows` 系统下下载 `xlib.cmd` 或在 `macOS` 系统下下载 `xlib` 执行
 
     ```
-    lib hosts
+    xlib hosts
     ```
 
     等待打印搜寻结果，结果会写入 `hosts` 文件中，所以需要管理员权限执行命令。
@@ -98,19 +98,19 @@ A:
 ### Q: 如何搭建一个最新版 `Microsoft Office` 可定制安装服务。
 A:
 
-1. 搭建一个 `smb` 服务（比如 `192.168.1.1`），并建立目录 `extcmd\`
-2. 下载 `lib.cmd` 并执行
+1. 搭建一个 `smb` 服务（比如 `192.168.1.1`），并建立目录 `xcmd\`
+2. 下载 `xlib.cmd` 并执行
 
     ```bat
-    lib odt -d \\192.168.1.1\extcmd
+    xlib odt -d \\192.168.1.1\xcmd
     ```
 
     以下载最新的 `Microsoft Office` 安装文件。
-3. 复制 `lib.cmd` 到 `\\192.168.1.1\extcmd`。建议同时复制 `%temp%\27af1be6-dd20-4cb4-b154-ebab8a7d4a7e` 下的 `odt.exe`。
+3. 复制 `xlib.cmd` 到 `\\192.168.1.1\xcmd`。建议同时复制 `%temp%\27af1be6-dd20-4cb4-b154-ebab8a7d4a7e` 下的 `odt.exe`。
 4. 服务搭建完成，在目标计算机上执行
 
     ```bat
-    \\192.168.1.1\extcmd\lib odt -i word excel powerpoint
+    \\192.168.1.1\xcmd\xlib odt -i word excel powerpoint
     ```
     安装 `word` `excel` `powerpoint`，其余 `office` 组件将被忽略。
 
@@ -118,17 +118,17 @@ A:
 ### Q: 我有 `kms` 服务部署在 `192.168.1.1` 上，如何快速激活 `Windows` 和 `office`。
 A:
 
-1. 下载 `lib.cmd` 并执行
+1. 下载 `xlib.cmd` 并执行
 
     ```bat
-    lib kms -s 192.168.1.1
+    xlib kms -s 192.168.1.1
     ```
 
     激活  `Windows`。
     <br/>执行
 
     ```bat
-    lib kms -o 192.168.1.1
+    xlib kms -o 192.168.1.1
     ```
 
     激活 `office`
@@ -424,26 +424,26 @@ A:
 
 --------
 
-### 关于 `lib.cmd` 的补充说明
+### 关于 `xlib.cmd` 的补充说明
 
 >    1.  Support for /f command.
 >        支持在 for /f 中使用，进行判断操作时需要使用 call 命令。
 >
 >    2.  Support sort function name.
 >        函数支持简名，会从左逐个字符进行命令匹配，直到匹配唯一的命>令。
->            如 call lib addpath ， a 是全局唯一，可用 call lib a >来代替。
+>            如 call xlib addpath ， a 是全局唯一，可用 call xlib a >来代替。
 >            注意：简化命令会增加执行时间，请在其他脚本中调用时使用>全名。
 >
 >    3.  支持简单的多进程控制。（`hosts` 函数）
 >
 >    4.  包含“虚拟磁盘控制”，“`wim` 文件控制”，“字符喘操作”，“`hash` 计算”等功能
 >
->    5.  使用 `lib vbs` 命令会调用 `lib.vbs` 脚本中的方法。进行诸如下载、转码一类的操作。
+>    5.  使用 `xlib vbs` 命令会调用 `xlib.vbs` 脚本中的方法。进行诸如下载、转码一类的操作。
 >
 
 --------
 
-### 关于 `lib` 、 `_lib` 的说明
+### 关于 `xlib` 、 `bash.xlib` 的说明
 
 >    1.  包含 shell 实现的复杂数据结构。如“字典”、“队列”等
 >

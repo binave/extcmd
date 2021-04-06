@@ -74,19 +74,19 @@ exit /b 0
 :: functions ::
   :::::::::::
 
-:lib\
-:lib\--help
-:lib\-h
+:xlib\
+:xlib\--help
+:xlib\-h
     call :this\annotation
     exit /b 0
 
 ::: "Output version and exit"
-:lib\version
+:xlib\version
     >&3 echo 0.20.5.1
     exit /b 0
 
 ::: "Variable tool" "" "usage: %~n0 var [option] [...]" ""
-:lib\var
+:xlib\var
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\var\%*
     goto :eof
@@ -203,7 +203,7 @@ exit /b 0
 
 
 ::: "Run by ..." "" "usage: %~n0 run [option]" ""
-:lib\run
+:xlib\run
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\run\%*
     goto :eof
@@ -223,11 +223,11 @@ exit /b 0
     @REM mshta.exe VBScript:CreateObject("WScript.Shell").Run("""%~1"" %~2", 0)(Window.close)
     @REM see https://docs.microsoft.com/zh-tw/windows/desktop/shell/shell-shellexecute#code-snippet-1
     @REM mshta.exe VBScript:CreateObject("Shell.Application").ShellExecute("%~1","%2 %3 %4 %5 %6 %7 %8 %9","","open",0)(window.close)
-    call :lib\vbs vbhide "%~1"
+    call :xlib\vbs vbhide "%~1"
     exit /b 0
 
 ::: "Test string status" "" "usage: %~n0 is [option] [[string]]" ""
-:lib\is
+:xlib\is
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\is\%*
     goto :eof
@@ -279,7 +279,7 @@ exit /b 0
     exit /b 0
 
 ::: "Process tools" "" "usage: %~n0 ps [[option] [...]]" ""
-:lib\ps
+:xlib\ps
     call :sub\ps\%*
     goto :eof
 
@@ -320,7 +320,7 @@ exit /b 0
     exit /b 0
 
 ::: "Calculating time intervals, print use time" "" "must be run it before and after function"
-:lib\ctime
+:xlib\ctime
     setlocal
     set time=
     for /f "tokens=1-4 delims=:." %%a in (
@@ -336,7 +336,7 @@ exit /b 0
     exit /b 0
 
 ::: "Update hosts by ini"
-:lib\hosts
+:xlib\hosts
     setlocal enabledelayedexpansion
     @REM load ini config
     call :this\load_ini hosts 1 || exit /b 2 @REM no ini file found
@@ -385,7 +385,7 @@ exit /b 0
     goto :eof
 
 ::: "Ipv4 tools" "" "usage: %~n0 ip [option]" ""
-:lib\ip
+:xlib\ip
     if "%~1"=="" call :this\annotation %0 & goto :eof
     2>nul call :sub\ip\%*
     goto :eof
@@ -394,7 +394,7 @@ exit /b 0
 :sub\ip\--test
 :sub\ip\-t
     if "%~1"=="" exit /b 12 @REM host name is empty
-    @REM [WARN] use usebackq will set all variable global, by :lib\hosts
+    @REM [WARN] use usebackq will set all variable global, by :xlib\hosts
     for /f "tokens=1-4 delims=." %%a in (
         "%~1"
     ) do (
@@ -516,7 +516,7 @@ exit /b 0
     exit /b 0
 
 ::: "Directory tools" "" "usage: %~n0 dir [option] [...]" ""
-:lib\dir
+:xlib\dir
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\dir\%*
     goto :eof
@@ -644,7 +644,7 @@ exit /b 0
 
 
 ::: "Operating system setting" "" "usage: %~n0 oset [option] [...]" ""
-:lib\oset
+:xlib\oset
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\oset\%*
     goto :eof
@@ -888,7 +888,7 @@ exit /b 0
         if !_file_time! gtr 7 erase %temp%\%_oset_uuid%\wsusscn2.cab
     )
 
-    if not exist %temp%\%_oset_uuid%\wsusscn2.cab call :lib\download ^
+    if not exist %temp%\%_oset_uuid%\wsusscn2.cab call :xlib\download ^
         http://download.windowsupdate.com/microsoftupdate/v6/wsusscan/wsusscn2.cab ^
             %temp%\%_oset_uuid%\wsusscn2.cab || exit /b 112 @REM Parameter is empty or Not a float
 
@@ -921,7 +921,7 @@ exit /b 0
     >%temp%\%_oset_uuid%\chot.xsl call :sub\txt\--subtxt "%~f0" chot.xml 3000
 
     @REM split xml -> log
-    call :lib\vbs doxsl ^
+    call :xlib\vbs doxsl ^
             "%temp%\results_%_odt_now%.xml" ^
             %temp%\%_oset_uuid%\chot.xsl ^
             %temp%\hotlist_%_odt_now%.log || exit /b 111 @REM invalid option
@@ -971,8 +971,8 @@ exit /b 0
     set PATH=%temp%\%~1;%PATH%
     if not exist %temp%\%~1\mbsacli.exe (
         2>nul mkdir %temp%\%~1
-        @REM call :lib\download http://download.microsoft.com/download/A/1/0/A1052D8B-DA8D-431B-8831-4E95C00D63ED/MBSASetup-x%processor_architecture:~-2%-EN.msi %temp%\%~1\MBSASetup.msi || exit /b 1
-        call :lib\download ^
+        @REM call :xlib\download http://download.microsoft.com/download/A/1/0/A1052D8B-DA8D-431B-8831-4E95C00D63ED/MBSASetup-x%processor_architecture:~-2%-EN.msi %temp%\%~1\MBSASetup.msi || exit /b 1
+        call :xlib\download ^
             http://download.microsoft.com/download/8/E/1/8E16A4C7-DD28-4368-A83A-282C82FC212A/MBSASetup-x%processor_architecture:~-2%-EN.msi ^
                 %temp%\%~1\MBSASetup.msi || exit /b 1
 
@@ -1123,7 +1123,7 @@ exit /b 0
     exit /b 0
 
 ::: "Thread lock" "" "usage: %~n0 lock [option] [...]" ""
-:lib\lock
+:xlib\lock
     @REM TODO
     goto :eof
 
@@ -1161,7 +1161,7 @@ exit /b 0
     exit /b 1
 
 ::: "Volume info or edit" "" "usage: %~n0 vol [option] [...]" ""
-:lib\vol
+:xlib\vol
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\vol\%*
     goto :eof
@@ -1550,7 +1550,7 @@ exit /b 0
     exit /b -1
 
 ::: "Convert int to hex" "" "usage: %~n0 2hex [int]"
-:lib\2hex
+:xlib\2hex
     setlocal
     set _0f=0123456789abcdef
     set /a _int=%~1
@@ -1566,7 +1566,7 @@ exit /b 0
     goto :eof
 
 ::: "Uncompress package" "" "usage: %~n0 un [target_path]"
-:lib\un
+:xlib\un
     call :sub\un\%~x1 %1
     goto :eof
 
@@ -1584,7 +1584,7 @@ exit /b 0
     setlocal
     set "_output=.\%~n1"
     if "%~2" neq "" set "_output=%~2"
-    call :lib\vbs unzip "%~f1" "%_output%"
+    call :xlib\vbs unzip "%~f1" "%_output%"
     endlocal
     exit /b 0
 
@@ -1623,7 +1623,7 @@ exit /b 0
 
 
 ::: "Compresses the specified files." "" "usage: %~n0 pkg [option]" ""
-:lib\pkg
+:xlib\pkg
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\pkg\%*
     goto :eof
@@ -1634,7 +1634,7 @@ exit /b 0
     setlocal
     set "_output=.\%~n1"
     if "%~2" neq "" set "_output=%~2"
-    if /i "%~x1" neq ".zip" call :lib\vbs zip "%~f1" "%_output%.zip"
+    if /i "%~x1" neq ".zip" call :xlib\vbs zip "%~f1" "%_output%.zip"
     endlocal
     @REM >.\zip.ZFSendToTarget (
     @REM     echo [Shell]
@@ -1743,7 +1743,7 @@ exit /b 0
 @REM for :init\?, printf cab | md5sum -> 16ecfd64-586e-c6c1-ab21-2762c2c38a90
 :this\getCab [file_name] [uri_sub] [cab] [file]
     2>nul mkdir %temp%\16ecfd64-586e-c6c1-ab21-2762c2c38a90
-    call :lib\download ^
+    call :xlib\download ^
         http://download.microsoft.com/download/%~2/Installers/%~3.cab ^
             %temp%\16ecfd64-586e-c6c1-ab21-2762c2c38a90\%~1.cab
 
@@ -1758,7 +1758,7 @@ exit /b 0
     exit /b 0
 
 ::: "Change file/directory owner !username!" "" "usage: %~n0 own [path]"
-:lib\own
+:xlib\own
     if not exist "%~1" exit /b 2 @REM path not found
     call :sub\dir\--isdir %1 ^
         && takeown.exe /f %1 /r /d y ^
@@ -1775,7 +1775,7 @@ exit /b 0
 ::::::::::::::::
 
 ::: "Download something" "" "usage: %~n0 download [url] [output]"
-:lib\download
+:xlib\download
     if "%~2"=="" exit /b 2 @REM output path is empty
     @REM certutil.exe -urlcache -split -f %1 %2
     @REM windows 10 1803+
@@ -1787,11 +1787,11 @@ exit /b 0
                         -ExecutionPolicy Unrestricted ^
                         -Command "Invoke-WebRequest -uri %1 -OutFile %2 -UseBasicParsing" && exit /b 0
 
-    call :lib\vbs get %1 %2 || exit /b 4 @REM download error
+    call :xlib\vbs get %1 %2 || exit /b 4 @REM download error
     exit /b 0
 
 ::: "Boot tools" "" "usage: %~n0 boot [option] [args...]" ""
-:lib\boot
+:xlib\boot
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\boot\%*
     goto :eof
@@ -1913,7 +1913,7 @@ exit /b 0
     goto :eof
 
 ::: "Add or Remove Web Credential" "" "usage: %~n0 crede [option] [args...]" ""
-:lib\crede
+:xlib\crede
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\crede\%*
     goto :eof
@@ -1951,7 +1951,7 @@ exit /b 0
 
 
 ::: "Mount / Umount SMB" "" "usage: %~n0 smb [option] [args...]" ""
-:lib\smb
+:xlib\smb
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\smb\%*
     goto :eof
@@ -1977,7 +1977,7 @@ exit /b 0
     exit /b 0
 
 ::: "Mount / Umount NFS" "" "usage: %~n0 nfs [option] [args...]" ""
-:lib\nfs
+:xlib\nfs
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\nfs\%*
     exit /b 0
@@ -2025,7 +2025,7 @@ exit /b 0
 :::::::::
 
 ::: "Virtual Hard Disk manager" "" "usage: %~n0 vhd [option] [args...]" ""
-:lib\vhd
+:xlib\vhd
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\vhd\%*
     goto :eof
@@ -2112,7 +2112,7 @@ exit /b 0
     if /i ".vhd" neq "%~x1" if /i ".vhdx" neq "%~x1" exit /b 42 @REM file suffix not vhd/vhdx
     call :sub\is\--integer %~2 || exit /b -1
     @REM unmount vhd
-    call :lib\vumount %1 > nul
+    call :xlib\vumount %1 > nul
     setlocal
     set /a _size=%~2 * 1024 + 8
     (
@@ -2158,7 +2158,7 @@ exit /b 0
 ::::::::::
 
 ::: "Wim manager" "" "usage: %~n0 wim [option] [args ...]" ""
-:lib\wim
+:xlib\wim
     if "%~1"=="" call :this\annotation %0 & goto :eof
     if /i "%username%"=="System" if not defined SCRATCH_DIR exit /b 2 @REM SCRATCH_DIR variable not set
     2>nul mkdir %temp% %tmp%
@@ -2441,7 +2441,7 @@ exit /b 0
     goto :eof
 
 ::: "Drivers manager" "" "usage: %~n0 drv [option] [args...]" ""
-:lib\drv
+:xlib\drv
     if "%~1"=="" call :this\annotation %0 & goto :eof
     if /i "%username%"=="System" if not defined SCRATCH_DIR exit /b 7 @REM SCRATCH_DIR variable not set
     setlocal
@@ -2525,7 +2525,7 @@ exit /b 0
         @REM Cache inf file path
         set _drv\inf\!i!=%%a
         @REM trim file in a new path
-        call :lib\vbs inftrim "%%~a" %_out%\!i!.tmp
+        call :xlib\vbs inftrim "%%~a" %_out%\!i!.tmp
         for %%b in (%_out%\!i!.tmp) do if "%%~zb"=="0" type "%%~a" > %_out%\!i!.tmp
     )
     @REM Print hit file
@@ -2642,7 +2642,7 @@ exit /b 0
 :::::::::
 
 ::: "KMS Client" "" "usage: %~n0 kms [option] [args...]" ""
-:lib\kms
+:xlib\kms
     title kms
     if "%~1"=="" call :this\annotation %0 & goto :eof
     setlocal
@@ -2657,7 +2657,7 @@ exit /b 0
     endlocal
     goto :eof
 
-@REM [WARN] must call from ':lib\kms'
+@REM [WARN] must call from ':xlib\kms'
 ::: "    --all, -a [[host[:port]]]     Active operating system and office"
 :sub\kms\--all
 :sub\kms\-a
@@ -2665,7 +2665,7 @@ exit /b 0
     call :sub\kms\--odt %*
     exit /b 0
 
-@REM for Operating System, [WARN] must call from ':lib\kms'
+@REM for Operating System, [WARN] must call from ':xlib\kms'
 ::: "    --os,  -s [[host[:port]]]     Active operating system"
 :sub\kms\--os
 :sub\kms\-s
@@ -2781,7 +2781,7 @@ exit /b 0
 
     exit /b 0
 
-@REM for Office Deployment Tool only, [WARN] must call from ':lib\kms'
+@REM for Office Deployment Tool only, [WARN] must call from ':xlib\kms'
 ::: "    --odt, -o [[host[:port]]]     Active office, which install by Office Deployment Tool" "    e.g." "        %~n0 kms --os 192.168.1.1"
 :sub\kms\--odt
 :sub\kms\-o
@@ -2857,7 +2857,7 @@ exit /b 0
     exit /b 0
 
 ::: "Office Deployment Tool" "" "usage: %~n0 odt [option] [[2016/2019]]"
-:lib\odt
+:xlib\odt
     title odt
     if "%~1"=="" call :this\annotation %0 & goto :eof
     setlocal
@@ -2940,7 +2940,7 @@ exit /b 0
     >&3 echo install complete. will try to activate
 
     @REM can not call '\private\' function.
-    call :lib\kms --odt
+    call :xlib\kms --odt
     exit /b 0
 
 @REM convert to volume license, for 2016 or 2013
@@ -3068,7 +3068,7 @@ exit /b 0
     @REM Version 16.0.13328.20292
     @REM Version 16.0.13426.20308
 
-    call :lib\download ^
+    call :xlib\download ^
             https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A7D4A7E/officedeploymenttool_13426-20308.exe ^
             %temp%\%~1\officedeploymenttool16.exe || exit /b 1
 
@@ -3080,7 +3080,7 @@ exit /b 0
     exit /b 0
 
 ::: "Visual Studio Installer" "" "usage: %~n0 vsi [branch] [option] [args]" "    branch:" "        enterprise" "        professional" "        community" "        core         (build tools without IDE)" "" "    option:"
-:lib\vsi
+:xlib\vsi
     title vsi
     if "%~1"=="" call :this\annotation %0 & goto :eof
     if "%~2"=="" exit /b 2
@@ -3158,7 +3158,7 @@ exit /b 0
     set PATH=%temp%\%~1;%PATH%
     if exist %temp%\%~1\vs_%~2.exe exit /b 0
     2>nul mkdir %temp%\%~1
-    call :lib\download https://aka.ms/vs/16/release/vs_%~2.exe %temp%\%~1\vs_%~2.exe || exit /b 1
+    call :xlib\download https://aka.ms/vs/16/release/vs_%~2.exe %temp%\%~1\vs_%~2.exe || exit /b 1
     exit /b 0
 
 :::::::::::
@@ -3170,7 +3170,7 @@ exit /b 0
 :::::::::::::
 
 ::: "Edit the Registry" "" "usage: %~n0 reg [option]" ""
-:lib\reg
+:xlib\reg
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\reg\%*
     goto :eof
@@ -3285,7 +3285,7 @@ exit /b 0
 @REM     exit /b 0
 
 ::: "String manage" "" "usage: %~n0 str [option] ..." ""
-:lib\str
+:xlib\str
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\str\%*
     goto :eof
@@ -3522,7 +3522,7 @@ exit /b 0
 
 
 ::: "Print text to standard output." "" "usage: %~n0 txt [option] [...]" ""
-:lib\txt
+:xlib\txt
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\txt\%*
     goto :eof
@@ -3634,7 +3634,7 @@ exit /b 0
 @REM     set _exec=
 @REM     exit /b 0
 
-@REM @REM text format for :lib\execline
+@REM @REM text format for :xlib\execline
 @REM EOF !temp!\!_now!.log "echo "
 @REM some codes
 @REM EOF nul set
@@ -3643,13 +3643,13 @@ exit /b 0
 
 
 ::: "Print or check MD5 (128-bit) checksums." "" "usage: %~n0 md5 [file]"
-:lib\MD5
+:xlib\MD5
 ::: "Print or check SHA1 (160-bit) checksums." "" "usage: %~n0 sha1 [file]"
-:lib\SHA1
+:xlib\SHA1
 ::: "Print or check SHA256 (256-bit) checksums." "" "usage: %~n0 sha256 [file]"
-:lib\SHA256
+:xlib\SHA256
 ::: "Print or check SHA512 (512-bit) checksums." "" "usage: %~n0 sha512 [file]"
-:lib\SHA512
+:xlib\SHA512
     for /f "usebackq delims=" %%a in (
         `2^>nul dir /a-d /b /s %*`
     ) do for %%b in (%0) do call :this\hash %%~nb "%%~a" || exit /b 2 @REM hash error
@@ -3715,7 +3715,7 @@ exit /b 0
     goto :eof
 
 @REM ::: "Delete Login Notes"
-@REM :lib\delLoginNote
+@REM :xlib\delLoginNote
 @REM     net.exe use * /delete
 @REM     exit /b 0
 
@@ -3733,7 +3733,7 @@ exit /b 0
     exit /b 0
 
 ::: "Run PowerShell script" "" "usage: %~n0 ps1 [ps1_script_path]"
-:lib\ps1
+:xlib\ps1
     if not exist "%~1" exit /b 3 @REM ps1 script not found
     if /i "%~x1" neq ".ps1" exit /b 2 @REM file suffix error
     PowerShell.exe -NoLogo -NonInteractive -ExecutionPolicy Unrestricted -File %*
@@ -3748,7 +3748,7 @@ exit /b 0
 
 ::: "Run VBScript library from lib.vbs" "" "usage: %~n0 vbs [[command...]]"
 :::: "lib.vbs not found"
-:lib\vbs
+:xlib\vbs
     @REM cscript.exe //nologo //e:vbscript.encode %*
     for %%a in (lib.vbs) do if "%%~$path:a"=="" (
         exit /b 1
@@ -3756,8 +3756,8 @@ exit /b 0
     goto :eof
 
 ::: "Tag date time each line" "" "usage: %~n0 log [strftime format]"
-:lib\log
-    call :lib\vbs log %*
+:xlib\log
+    call :xlib\vbs log %*
     goto :eof
 
 ::::::::::::::::::
@@ -4009,7 +4009,7 @@ exit /b 0
     exit /b 0
 
 ::: "Get cmd cols" "" "usage: %~n0 cols [[var_name]]"
-:lib\cols
+:xlib\cols
     for /f "usebackq skip=4 tokens=2" %%a in (
         `mode.com con`
     ) do (
@@ -4025,7 +4025,7 @@ exit /b 0
 :::::::::::::::::::::::::::::::::::::::::::::::
 
 
-@REM for :lib\odt
+@REM for :xlib\odt
                     ::odt.xml:<^!-- Office 365 client configuration file sample. To be used for Office 365 ProPlus apps,
                     ::odt.xml:     Office 365 Business apps, Project Pro for Office 365 and Visio Pro for Office 365.
                     ::odt.xml:
