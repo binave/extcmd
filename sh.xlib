@@ -27,7 +27,7 @@
 #    --remove  [key]              remove value by key
 #    --size                       get map size
 #    --clear                      clear map
-#    --keys    [[key's prefix]]   list keys by pool and key's prefix
+#    --keys    [[key's prefix]]   list keys by po*l and key's pr*fix
 __variable_map () {
     [ "$1" ] || return 1;
     __vmap_encode() {
@@ -66,7 +66,7 @@ __variable_map () {
         --remove) [ "$key" ] && unset VARIABLE_MAP${pool}_PREFIX_$key;;
         --size) printf %d $(set | grep -c '^VARIABLE_MAP'${pool}_PREFIX_);;
         --clear) unset `set | awk -F '=' '/^VARIABLE_MAP'${pool}'_PREFIX_/{printf " " $1}'`;;
-        --keys) for key in `set | awk -F '_PREFIX_|=' '/^VARIABLE_MAP'${pool}'_PREFIX_'${key}'/{printf " " $2}'`; do printf "%s\n" `__vmap_decode $key`; done;;
+        --keys) for key in `set | awk -F '_PREFIX_|=' '/^VARIABLE_MAP'${pool//_x42x/".*"}'_PREFIX_'${key//_x42x/".*"}'/{printf " " $2}'`; do printf "%s\n" `__vmap_decode $key`; done;;
         *) printf "%s\033[31m%s\033[0m%s\n" "[MAP:ERROR] invalid option: " "$1" >&2; return 1;;
     esac
 
