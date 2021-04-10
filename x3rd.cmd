@@ -305,8 +305,9 @@ exit /b 0
     call :sub\c2\%*
     goto :eof
 
-::: "    2flac        Convert alac,ape,m4a,tta,tak,wav to flac format" "" "    need changes the current directory at target"
-:sub\c2\2flac
+::: "    --2flac, -2f        Convert alac,ape,m4a,tta,tak,wav to flac format" "                        need changes the current directory at target"
+:sub\c2\--2flac
+:sub\c2\-2f
     pushd "%cd%"
     for /r . %%a in (
         *.alac *.ape *.m4a *.tta *.tak *.wav
@@ -317,8 +318,9 @@ exit /b 0
     popd
     exit /b 0
 
-::: "vob2   [drive:] [output_file_path]    Convert dvd" "  e.g. %~n0 vob2 D: E:\out.mkv"
-:sub\c2\vob2
+::: "" "    --vob2, -b2         [drive:] [output_file_path]" "                        Convert dvd drive to video file" "                   e.g. %~n0 c2 -b D: E:\out.mkv"
+:sub\c2\--vob2
+:sub\c2\-b2
     if not exist "%~dp2" exit /b 22 @REM output path not found
     if "%~x2"=="" exit /b 23 @REM no output suffix
     @REM if /i "%~d1"=="%~d2" exit /b 4
@@ -331,6 +333,38 @@ exit /b 0
     ) else set _src=%~d1\%%a
     endlocal & ffmpeg.exe -hide_banner -i concat:"%_src%" "%~f2"
     goto :eof
+
+::: "" "    --2gif, -2g         [video_file] [time-range]" "                        Convert video to gif" "                   e.g. %~n0 c2 -g D:\src.mp4 796-797"
+:sub\c2\--2gif
+:sub\c2\-2g
+::: "" "    --screenshot, -ss   [video_file] [time-range]" "                        Screenshot video by time range"
+:sub\c2\--screenshot
+:sub\c2\-ss
+    if not exist "%~1" exit /b 32 @REM input video path not found
+    if "%~2"=="" exit /b 33 @REM time range not set
+    setlocal
+    set "_range=%~2"
+    if "%_range:-=%"=="%~2" exit /b 34 @REM time range format error
+    set _out=%~n1_%_range::=%
+
+    for /f "usebackq tokens=3 delims=2" %%a in ('%0') do goto c2\gif
+
+    ::: screenshot :::
+    mkdir "%_out%"
+    ffmpeg.exe -hide_banner -ss %_range:-= -to % -i %1 -y -qscale:v 3 "%_out%\screenshot_%%d.png"
+    endlocal
+    goto :eof
+
+    ::: gif :::
+    :c2\gif
+    set /a _width=480, _fps=10
+    @REM ffmpeg.exe -hide_banner -ss %_range:-= -to % -i %1 -r %_fps% -vf "fps=%_fps%,scale=%_width%:-1" -y -f gif "%_out%.gif"
+    ffmpeg.exe -hide_banner -ss %_range:-= -to % -i %1 -r %_fps% -vf fps=%_fps%,scale=%_width%:-1:flags=lanczos,palettegen -y "%tmp%\%_out%.png"
+    ffmpeg.exe -hide_banner -ss %_range:-= -to % -i %1 -i "%tmp%\%_out%.png" -r %_fps% -lavfi fps=%_fps%,scale=%_width%:-1:flags=lanczos[x];[x][1:v]paletteuse -y -f gif "%_out%.gif"
+    erase "%tmp%\%_out%.png"
+    endlocal
+    goto :eof
+
 
 ::: "Play all multi-media in directory" "" "usage: %~n0 play [options] ... [directory...]" "" "    --random, -r" "    --ast,    -a " "    --skip,   -j [count]"
 :::: "ffplay command not found" "args is empty"
@@ -441,8 +475,8 @@ exit /b 0
 @REM     ) do echo %%~a %1:%%~b
 @REM     exit /b 0
 
-::: "Compress PNG images" "Usage: %~n0 png [src_dir] [out_dir]"
-:x3rd\png
+::: "Compress PNG images" "Usage: %~n0 cpng [src_dir] [out_dir]"
+:x3rd\cpng
     call :sub\path\--contain pngquant.exe || exit /b 2 @REM pngquant command not found
     if not exist "%~f1" exit /b 3 @REM source path not exist
     if "%~2"=="" exit /b 4 @REM output path not set
