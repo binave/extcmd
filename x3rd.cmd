@@ -106,7 +106,7 @@ exit /b 0
     endlocal
     exit /b 0
 
-::: "Maven repository tools" "" "usage: %~n0 m2 [option]" ""
+::: "Maven repository tools, Use '-h' for a description of the options" "" "usage: %~n0 m2 [option]" ""
 :x3rd\m2
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\m2\%* 2>nul
@@ -197,7 +197,7 @@ exit /b 0
     )
     exit /b 0
 
-::: "VirtualBox Manage" "" "usage: %~n0 vbox [args] [[vm_name]]" ""
+::: "VirtualBox Manage, Use '-h' for a description of the options" "" "usage: %~n0 vbox [args] [[vm_name]]" ""
 :x3rd\vbox
     setlocal enabledelayedexpansion
     @REM Add vbox path
@@ -298,7 +298,7 @@ exit /b 0
 :: Convert ::
 :::::::::::::
 
-::: "Convert to" "" "usage: %~n0 c2 [option] ..." ""
+::: "Convert to media, Use '-h' for a description of the options" "" "usage: %~n0 c2 [option] ..." ""
 :x3rd\c2
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\path\--contain ffmpeg.exe || exit /b 2 @REM ffmpeg command not found
@@ -318,7 +318,7 @@ exit /b 0
     popd
     exit /b 0
 
-::: "" "    --vob2, -b2         [drive:] [output_file_path]" "                        Convert dvd drive to video file" "                   e.g. %~n0 c2 -b D: E:\out.mkv"
+::: "" "    --vob2, -b2         [drive:] [output_file_path]" "                        Convert dvd drive to video file" "                   e.g. %~n0 c2 -b2 D: E:\out.mkv"
 :sub\c2\--vob2
 :sub\c2\-b2
     if not exist "%~dp2" exit /b 22 @REM output path not found
@@ -334,7 +334,7 @@ exit /b 0
     endlocal & ffmpeg.exe -hide_banner -i concat:"%_src%" "%~f2"
     goto :eof
 
-::: "" "    --2gif, -2g         [video_file] [time-range]" "                        Convert video to gif" "                   e.g. %~n0 c2 -g D:\src.mp4 796-797"
+::: "" "    --2gif, -2g         [video_file] [time-range]" "                        Convert video to gif" "                   e.g. %~n0 c2 -2g D:\src.mp4 796-797"
 :sub\c2\--2gif
 :sub\c2\-2g
 ::: "" "    --screenshot, -ss   [video_file] [time-range]" "                        Screenshot video by time range"
@@ -449,7 +449,7 @@ exit /b 0
 @REM     ffplay.exe -hide_banner -f dshow -video_size $size -framerate 25 -pixel_format 0rgb -probesize 10M -i "0":"0" 2>&1
 @REM     exit /b 0
 
-::: "Docker batch command" "Usage: %~n0 dockers [start/stop]"
+::: "Docker batch command, Use '-h' for a description of the options" "Usage: %~n0 dockers [start/stop]"
 :x3rd\moby
     call :sub\path\--contain docker.exe || exit /b 2 @REM docker client command not found
     2>nul call :sub\moby\%*

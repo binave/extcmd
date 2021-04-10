@@ -85,7 +85,7 @@ exit /b 0
     >&3 echo 0.20.5.1
     exit /b 0
 
-::: "Variable tool" "" "usage: %~n0 var [option] [...]" ""
+::: "Variable tool, Use '-h' for a description of the options" "" "usage: %~n0 var [option] [...]" ""
 :xlib\var
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\var\%*
@@ -278,7 +278,7 @@ exit /b 0
     endlocal
     exit /b 0
 
-::: "Process tools" "" "usage: %~n0 ps [[option] [...]]" ""
+::: "Process tools, Use '-h' for a description of the options" "" "usage: %~n0 ps [[option] [...]]" ""
 :xlib\ps
     call :sub\ps\%*
     goto :eof
@@ -384,7 +384,7 @@ exit /b 0
     endlocal
     goto :eof
 
-::: "Ipv4 tools" "" "usage: %~n0 ip [option]" ""
+::: "Ipv4 tools, Use '-h' for a description of the options" "" "usage: %~n0 ip [option]" ""
 :xlib\ip
     if "%~1"=="" call :this\annotation %0 & goto :eof
     2>nul call :sub\ip\%*
@@ -515,7 +515,7 @@ exit /b 0
     ) do set %1=%%a
     exit /b 0
 
-::: "Directory tools" "" "usage: %~n0 dir [option] [...]" ""
+::: "Directory tools, Use '-h' for a description of the options" "" "usage: %~n0 dir [option] [...]" ""
 :xlib\dir
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\dir\%*
@@ -643,7 +643,7 @@ exit /b 0
     goto :eof
 
 
-::: "Operating system setting" "" "usage: %~n0 oset [option] [...]" ""
+::: "Operating system setting, Use '-h' for a description of the options" "" "usage: %~n0 oset [option] [...]" ""
 :xlib\oset
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\oset\%*
@@ -1790,7 +1790,7 @@ exit /b 0
     call :xlib\vbs get %1 %2 || exit /b 4 @REM download error
     exit /b 0
 
-::: "Boot tools" "" "usage: %~n0 boot [option] [args...]" ""
+::: "Boot tools, Use '-h' for a description of the options" "" "usage: %~n0 boot [option] [args...]" ""
 :xlib\boot
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\boot\%*
@@ -2024,7 +2024,7 @@ exit /b 0
 :: vhd ::
 :::::::::
 
-::: "Virtual Hard Disk manager" "" "usage: %~n0 vhd [option] [args...]" ""
+::: "Virtual Hard Disk manager, Use '-h' for a description of the options" "" "usage: %~n0 vhd [option] [args...]" ""
 :xlib\vhd
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\vhd\%*
@@ -2157,7 +2157,7 @@ exit /b 0
 :: dism ::
 ::::::::::
 
-::: "Wim manager" "" "usage: %~n0 wim [option] [args ...]" ""
+::: "Wim manager, Use '-h' for a description of the options" "" "usage: %~n0 wim [option] [args ...]" ""
 :xlib\wim
     if "%~1"=="" call :this\annotation %0 & goto :eof
     if /i "%username%"=="System" if not defined SCRATCH_DIR exit /b 2 @REM SCRATCH_DIR variable not set
@@ -2440,7 +2440,7 @@ exit /b 0
     endlocal
     goto :eof
 
-::: "Drivers manager" "" "usage: %~n0 drv [option] [args...]" ""
+::: "Drivers manager, Use '-h' for a description of the options" "" "usage: %~n0 drv [option] [args...]" ""
 :xlib\drv
     if "%~1"=="" call :this\annotation %0 & goto :eof
     if /i "%username%"=="System" if not defined SCRATCH_DIR exit /b 7 @REM SCRATCH_DIR variable not set
@@ -2641,7 +2641,7 @@ exit /b 0
 :: KMS ::
 :::::::::
 
-::: "KMS Client" "" "usage: %~n0 kms [option] [args...]" ""
+::: "KMS Client, Use '-h' for a description of the options" "" "usage: %~n0 kms [option] [args...]" ""
 :xlib\kms
     title kms
     if "%~1"=="" call :this\annotation %0 & goto :eof
@@ -2856,7 +2856,7 @@ exit /b 0
     echo ---------------------------------------
     exit /b 0
 
-::: "Office Deployment Tool" "" "usage: %~n0 odt [option] [[2016/2019]]"
+::: "Office Deployment Tool, Use '-h' for a description of the options" "" "usage: %~n0 odt [option] [[2016/2019]]"
 :xlib\odt
     title odt
     if "%~1"=="" call :this\annotation %0 & goto :eof
@@ -3284,7 +3284,7 @@ exit /b 0
 @REM     ) else call :this\getCab %%~na 0/A/A/0AA382BA-48B4-40F6-8DD0-BEBB48B6AC18/adk eacac0698d5fa03569c86b25f90113b5 fil6e1d5042624c9d5001511df2bfe4c40b
 @REM     exit /b 0
 
-::: "String manage" "" "usage: %~n0 str [option] ..." ""
+::: "String manage, Use '-h' for a description of the options" "" "usage: %~n0 str [option] ..." ""
 :xlib\str
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\str\%*
