@@ -82,7 +82,7 @@ exit /b 0
 
 ::: "Output version and exit"
 :xlib\version
-    >&3 echo 0.20.5.1
+    >&3 echo 0.21.6.22
     exit /b 0
 
 ::: "Variable tool, Use '-h' for a description of the options" "" "usage: %~n0 var [option] [...]" ""
@@ -201,6 +201,12 @@ exit /b 0
     endlocal
     exit /b 0
 
+::: "sleep some milliseconds" "" "usage: %~n0 sleep [integer]"
+:xlib\sleep
+    call :sub\is\--integer %~1 || exit /b 22 @REM arg not integer
+    @REM start /min /w mshta.exe vbscript:setTimeout("window.close()",1200)
+    start /w MsHta.exe JavaScript:document.write();setTimeout('close()',%~1);
+    exit /b 0
 
 ::: "Run by ..." "" "usage: %~n0 run [option]" ""
 :xlib\run
@@ -319,20 +325,79 @@ exit /b 0
     @REM taskkill.exe /f /im %~1.exe
     exit /b 0
 
-::: "Calculating time intervals, print use time" "" "must be run it before and after function"
-:xlib\ctime
+::: "Time tools, Use '-h' for a description of the options" "" "usage: %~n0 time [[option] [...]]" ""
+:xlib\time
+    if "%~1"=="" call :this\annotation %0 & goto :eof
+    call :sub\time\%*
+    goto :eof
+
+::: "    --timestamp, -ts [var_name]    Get unix timestamp equals `date +%%s`"
+:sub\time\--timestamp
+:sub\time\-ts
+    if "%~1"=="" exit /b 12 @REM variable name is empty
     setlocal
-    set time=
-    for /f "tokens=1-4 delims=:." %%a in (
-        "%time%"
-    ) do set /a _tmp=%%a*360000+1%%b%%100*6000+1%%c%%100*100+1%%d%%100
-    if defined _ctime (
-        set /a _tmp-=_ctime
-        set /a _h=_tmp/360000,_min=_tmp%%360000/6000,_s=_tmp%%6000/100,_cs=_tmp%%100
-        set _tmp=
+    :: Win32_UTCTime = Win32_LocalTime - (Win32_TimeZone.Bias * 60)
+    for /f "usebackq tokens=1* delims==" %%a in (`
+        wmic.exe /namespace:\\root\cimv2 path Win32_UTCTime GET /value
+    `) do if "%%~b" neq "" set _%%a=%%b
+
+    if %_Month% lss 3 set /a _Year-=1, _Month+=12
+    set /a _timestamp=^
+        (^
+            _Year * 365 + _Year / 4 - _Year / 100 + _Year / 400 + ^
+            (153 * _Month - 457) / 5 + ^
+            _Day - 306 - 719163 ^
+        ) * 24 * 60 * 60 + ^
+            _Hour * 3600 + _Minute * 60 + _Second
+
+    endlocal & set /a %~1=%_timestamp%
+    goto :eof
+
+
+::: "    --now,       -n  [var_name] [[head_str]] [[tail_str]]" "                                   Display Time at [YYYYMMDDhhmmss]"
+:sub\time\--now
+:sub\time\-n
+    if "%~1"=="" exit /b 12 @REM variable name is empty
+    @REM set date=
+    @REM set time=
+    @REM @REM en zh
+    @REM for /f "tokens=1-8 delims=-/:." %%a in (
+    @REM   "%time: =%.%date: =.%"
+    @REM ) do if %%e gtr 1970 (
+    @REM     set %~1=%~2%%e%%f%%g%%a%%b%%c%~3
+    @REM ) else if %%g gtr 1970 set %~1=%~2%%g%%e%%f%%a%%b%%c%~3
+
+    setlocal
+    for /f "usebackq tokens=1,2 delims==+" %%a in (`
+        wmic.exe /namespace:\\root\cimv2 path Win32_OperatingSystem GET LocalDateTime /value
+    `) do if "%%~b" neq "" set _%%a=%%b
+    endlocal & set %~1=%~2%_LocalDateTime:~0,-3%%~3
+    exit /b 0
+
+::: "    --calculate, -c                Calculate time intervals, print use time" "" "must be run it before and after function"
+:sub\time\--calculate
+:sub\time\-c
+    setlocal
+    :: 1970/01/01 - 1601/01/01 = 134774 days = 11644473600 seconds
+    for /f "usebackq tokens=1* delims==" %%a in (`
+        wmic.exe /namespace:\\root\cimv2 path Win32_TimeZone GET Bias /value ^&
+        wmic.exe /namespace:\\root\cimv2 path Win32_PerfRawData_PerfOS_System get Timestamp_Sys100NS /value
+    `) do if "%%~b" neq "" set _%%a=%%b
+
+    set _Timestamp_Milliseconds=%_Timestamp_Sys100NS:~0,-5%
+    set _Timestamp_Seconds=%_Timestamp_Milliseconds:~0,-3%
+    set _Milliseconds_part=%_Timestamp_Milliseconds:~-3%
+
+    for /f "usebackq delims=" %%a in (`
+        set /a %_Timestamp_Seconds:~0,-2% - 116444736 - _Bias * 60 / 100
+    `) do set _timestamp=%%a%_Timestamp_Seconds:~-2%.%_Milliseconds_part%
+
+    if defined _calculate_time (
+        set /a "_diff_Timestamp=(%_timestamp:~0,-4% - %_calculate_time:~0,-4%) * 1000 + (%_timestamp:~-3% - %_calculate_time:~-3%)"
+        set /a _Day=_diff_Timestamp / 86400000, _Hour=_diff_Timestamp %% 86400000 / 3600000, _Minute=_diff_Timestamp %% 3600000 / 60000, _Second=_diff_Timestamp %% 60000 / 1000, _Milliseconds=_diff_Timestamp %% 1000
     )
-    if defined _ctime echo %_h%h %_min%min %_s%s %_cs%cs
-    endlocal & set _ctime=%_tmp%
+    if defined _calculate_time echo %_Day%d %_Hour%h %_Minute%min %_Second%s %_Milliseconds%ms
+    endlocal & set _calculate_time=%_timestamp%
     exit /b 0
 
 ::: "Update hosts by ini"
@@ -643,6 +708,10 @@ exit /b 0
     goto :eof
 
 
+::: "Windows Remote Management, Use '-h' for a description of the options" "" "usage: %~n0 dir [option] [...]" ""
+:xlib\wrm
+    goto :eof
+
 ::: "Operating system setting, Use '-h' for a description of the options" "" "usage: %~n0 oset [option] [...]" ""
 :xlib\oset
     if "%~1"=="" call :this\annotation %0 & goto :eof
@@ -832,6 +901,178 @@ exit /b 0
     ) do dism.exe /Online /Enable-Feature /FeatureName:%%a /NoRestart
     exit /b 0
 
+::: "    --disable-apps,   -da                         Disable Apps auto install"
+:sub\oset\--disable-apps
+:sub\oset\-da
+    reg.exe ^
+        add HKCU\Software\Policies\Microsoft\Windows\CloudContent ^
+            /v DisableWindowsConsumerFeatures ^
+            /t REG_QWORD ^
+            /d 0x1 /f
+
+    reg.exe ^
+        add HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager ^
+            /v SilentInstalledAppsEnabled ^
+            /t REG_DWORD ^
+            /d 0x0 /f
+
+    exit /b 0
+
+::: "    --re-update,      -ru                         Fix windows update: 0x80070002"
+:sub\oset\--re-update
+:sub\oset\-ru
+    sfc.exe /scannow
+    sc.exe config wuauserv start= auto
+    :: sc.exe config bits start= auto
+    sc.exe config cryptsvc start= auto
+    :: sc.exe config trustedinstaller start= auto
+    sc.exe config wuauserv type=share
+    net.exe stop wuauserv
+    net.exe stop cryptSvc
+    :: net.exe stop bits
+    :: net.exe stop msiserver
+    rmdir /s /q %SystemRoot%\SoftwareDistribution
+    net.exe start wuauserv
+    net.exe start cryptSvc
+    :: net.exe start bits
+    :: net.exe start msiserver
+    exit /b 0
+
+::: "    --srv-desktop,    -sd                         Convert windows server at desktop setting." "                                                  [DANGER!] This is an irreversible operation"
+:sub\oset\--srv-desktop
+:sub\oset\-sd
+    set _editionid=
+    for /f "usebackq tokens=3" %%a in (
+        `reg.exe query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v EditionID`
+    ) do set _editionid=%%a
+    if /i "%_editionid:~0,6%" neq "Server" exit /b 98 @REM not server operating system
+
+    SecEdit.exe /export /cfg %windir%\Setup\hisecws.inf~ /log %windir%\Temp\hisecws.log
+    >%windir%\Setup\hisecws.inf call :sub\txt\--subtxt "%~f0" hisecws.inf 4300
+    SecEdit.exe /configure /db %windir%\Setup\hisecws.sdb /cfg %windir%\Setup\hisecws.inf /log %windir%\Temp\hisecws.log /quiet
+    sc.exe start Audiosrv
+    sc.exe config Audiosrv start= auto
+    exit /b 0
+
+::: "    --allow-guest,    -ag                         Allow guest for samba"
+:sub\oset\--allow-guest
+:sub\oset\-ag
+    reg.exe ^
+        add HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters ^
+            /v AllowInsecureGuestAuth ^
+            /t REG_DWORD ^
+            /d 0x1 /f
+    goto :eof
+
+::: "    --freed-7g,       -f7                         Disable ShippedWithReserves"
+:sub\oset\--allow-guest
+:sub\oset\-ag
+    reg.exe ^
+        add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager ^
+            /v ShippedWithReserves ^
+            /t REG_DWORD ^
+            /d 0x0 /f
+    goto :eof
+
+::: "    --intel-amd,      -ia                         Run this before Chang CPU"
+:sub\oset\--intel-amd
+:sub\oset\-ia
+    call :sub\oset\--vergeq 6.0 || exit /b 12 @REM OS version is too low
+
+    if "%~1"=="" (
+        setlocal
+        set /p _i=[Warning] Reg vhd will be change, Yes^|No:
+        if /i "%_i%" neq "y" if /i "%_i%" neq "yes" exit /b 0
+        call :regedit\on
+        call :sub\oset\delInteltag system
+        call :regedit\off
+        endlocal
+        exit /b 0
+    )
+
+    setlocal
+    set _target=%~f1
+    if "%_target:~-1%"=="\" set _target=%_target:~0,-1%
+    if not exist "%_target%\Windows\System32\config\SYSTEM" exit /b 23 @REM Not windows directory
+    call :regedit\on
+    set _load_point=HKLM\load-point%random%
+    reg.exe load %_load_point% "%_target%\Windows\System32\config\SYSTEM" && call :sub\oset\delInteltag tmp
+    reg.exe unload %_load_point%
+    call :regedit\off
+    endlocal
+    exit /b 0
+
+@REM for :sub\oset\--intel-amd
+:sub\oset\delInteltag
+    for /f "tokens=1,4 delims=x	 " %%a in (
+        'reg.exe query HKLM\%1\Select'
+    ) do if /i "%%a"=="Default" 2>nul reg.exe delete HKLM\%1\ControlSet00%%b\Services\intelppm /f
+    exit /b 0
+
+@REM winpe \$windows.~bt -> ""
+::: "    --replace-reg,    -rr  [file_path] [src_str] [tag_str]" "                                                  Replace reg string"
+:sub\oset\--replace-reg
+:sub\oset\-rr
+    if "%~2"=="" exit /b 24 @REM source string empty
+    setlocal
+    call :regedit\on
+    @REM valueName: (Default) -> /ve
+    for /f "usebackq" %%a in (
+        `reg.exe query HKLM /ve`
+    ) do set "_ve=%%a"
+
+    set _load_point=HKLM\load-point%random%
+    if exist "%~1" (
+        reg.exe load %_load_point% "%~1" && call :reg\replace %_load_point% %2 %3
+        reg.exe unload %_load_point%
+    ) else call :reg\replace %1 %2 %3
+    call :regedit\off
+    endlocal
+    goto :eof
+
+:reg\replace
+    setlocal enabledelayedexpansion
+    set _src=%~2
+    set _src=%_src:"=\"%
+
+    set _tag=%~3
+    if defined _tag set _tag=!_tag:"=\"!
+
+    set _count=0
+    @REM replace
+    for /f "usebackq delims=" %%a in (
+        `reg.exe query %1 /f %2 /s`
+    ) do >nul (
+        set _line=%%a
+        if "!_line:\%~n1=!"=="!_line!" (
+            set _line=!_line:    =`!
+            @REM /d "X:\" /f -> /d "X:\\" /f
+            set _line=!_line:\`=\\`!
+            @REM /v "X:\" /t -> /v "X:\\" /t
+            if "!_line:~-1!"=="\" set _line=!_line!\
+            set _line=!_line:"=\"!
+            for /f "tokens=1,2* delims=`" %%b in (
+                "!_line:%_src%=%_tag%!"
+            ) do if "%%c" neq "" (
+
+                if "%%b" neq "%_ve%" (
+                    reg.exe add "!_key!" /v "%%b" /t %%c /d "%%d" /f || exit /b 25 @REM reg error
+
+                    @REM delete
+                    for /f "delims=`" %%e in (
+                        "!_line!"
+                    ) do if "%%b" neq "%%e" reg.exe delete "!_key!" /v "%%e" /f || exit /b 25
+
+                ) else reg.exe add "!_key!" /ve /t %%c /d "%%d" /f || exit /b 25
+
+                set /a _count+=1
+            )
+        ) else set _key=!_line:HKEY_LOCAL_MACHINE=HKLM!
+    )
+    echo all '%_count%' change.
+    endlocal
+    goto :eof
+
 ::: "    --set-power,      -sp                         Set power config as server type"
 :sub\oset\--set-power
 :sub\oset\-sp
@@ -873,7 +1114,7 @@ exit /b 0
     call :oset\hot\setup %_oset_uuid%
 
     @REM http://go.microsoft.com/fwlink/?LinkId=76054
-    call :sub\str\--now _odt_now
+    call :sub\time\--now _odt_now
 
     if exist %temp%\%_oset_uuid%\wsusscn2.cab (
         for %%a in (
@@ -1122,45 +1363,76 @@ exit /b 0
     endlocal
     exit /b 0
 
-::: "Thread lock" "" "usage: %~n0 lock [option] [...]" ""
+::: "Lock, Use '-h' for a description of the options" "" "usage: %~n0 lock [option] [...]" ""
 :xlib\lock
-    @REM TODO
+    if "%~1"=="" call :this\annotation %0 & goto :eof
+    setlocal
+    call :sub\lock\%*
+    endlocal
     goto :eof
 
-::: "    --ratelimit, -rl   [dir_path] [sec]       rate limit"
-:lock\--ratelimit   [dir_path] [sec]
-:lock\-rl
-    call :sub\is\--integer %~2 || exit /b 12 @REM args not int
-    setlocal
-    @REM rate limit
+::: "    --get, -g      [dir_path] [sec]     Get lock"
+:sub\lock\--get   [dir_path] [[sec]]
+:sub\lock\-g
+    set _arg1=%~1
+    if "%_arg1:~-1%"=="\" set _arg1=%_arg1:~0,-1%
 
-    call :sub\str\--now now_stamp
+    2>nul set /a _Timeout=%~2
+    if not defined _Timeout set _Timeout=180
+
+    :: limit: 60 * 60 * 24 * 365 * 68
+    call :sub\time\--timestamp _timestamp
 
     @REM get lock success
-    2>nul mkdir "%~1\ratelimit.lock" && (
-        >"%~1\ratelimit.lock\timestamp.log" echo %now_stamp%
+    2>nul mkdir "%_arg1%\.lock" && (
+        >"%_arg1%\.lock\.timestamp" echo __timestamp=%_timestamp%, __Timeout=%_Timeout%
         exit /b 0
     )
 
     @REM get lock failed, read log
-    set timestamp=
-    for /f "usebackq delims=" %%a in (
-        "%~1\ratelimit.lock\timestamp.log"
-    ) do if "%%~a" neq "" set timestamp=%%~a
+    set _formula=
+    2>nul (
+        set /p _formula=< "%_arg1%\.lock\.timestamp"
+    ) || exit /b -1
 
-    call :sub\is\--integer %timestamp% && (
-        for /f "usebackq delims=" %%a in (`
-            set /a 1%now_stamp:~6% - 1%timestamp:~6%
-        `) do if %%a gtr %~2 (
-            rmdir /s /q "%~1\ratelimit.lock"
-            goto lock\--ratelimit
-        ) else exit /b 1
-    )
-    endlocal
-    if not exit exist "%~1\ratelimit.lock" goto lock\--ratelimit
-    exit /b 1
+    2>nul set /a %_formula% || exit /b -1
+    set _formula=
 
-::: "Volume info or edit" "" "usage: %~n0 vol [option] [...]" ""
+    for /f "usebackq delims=" %%a in (`
+        set /a _timestamp - __timestamp
+    `) do set /a _diff_sec=%%a - __Timeout
+
+    if %_diff_sec% geq 0 (
+        rmdir /s /q "%_arg1%\.lock"
+        @REM sleep random second
+        goto sub\lock\--get
+    ) else if %_diff_sec% lss -%__Timeout% exit /b 23 @REM time err
+
+    >&3 echo busy, wait '%_diff_sec:~1%' secends.
+    exit /b -1
+
+::: "    --renewal, -r  [dir_path] [[sec]]   Renewal lock timeout"
+:sub\lock\--renewal   [dir_path] [[sec]]
+:sub\lock\-r
+    set _arg1=%~1
+    if "%_arg1:~-1%"=="\" set _arg1=%_arg1:~0,-1%
+    if not exist "%_arg1%\.lock" exit /b 24 @REM lock not found.
+
+    set /a _Timeout=%~2
+    if not defined _Timeout set _Timeout=180
+    call :sub\time\--timestamp _timestamp
+    >"%_arg1%\.lock\.timestamp" echo __timestamp=%_timestamp%, __Timeout=%_Timeout%
+    exit /b 0
+
+::: "    --delete, -d   [dir_path]           Delete lock"
+:sub\lock\--delete   [dir_path]
+:sub\lock\-d
+    set _arg1=%~1
+    if "%_arg1:~-1%"=="\" set _arg1=%_arg1:~0,-1%
+    rmdir /s /q "%_arg1%\.lock" || exit /b 25 @REM lock not found.
+    exit /b 0
+
+::: "Volume info or edit, Use '-h' for a description of the options" "" "usage: %~n0 vol [option] [...]" ""
 :xlib\vol
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\vol\%*
@@ -1380,7 +1652,7 @@ exit /b 0
 
     2>nul mkdir %_removable_letter%\keys
     set /a _suf=%random% %% 900 + 100
-    call :sub\str\--now _log %_removable_letter%\keys\key- %_suf%.log
+    call :sub\time\--now _log %_removable_letter%\keys\key- %_suf%.log
     >>%_log% (
         echo.
         echo =====================================================================================================
@@ -2199,7 +2471,7 @@ exit /b 0
     @REM New or Append
     if exist ".\%_name%.wim" (set _create=Append) else set _create=Capture
 
-    call :sub\str\--now _conf "%tmp%\" .ini
+    call :sub\time\--now _conf "%tmp%\" .ini
     set _args=
     set _description=
     set _load_point=HKLM\load-point%random%
@@ -2515,7 +2787,7 @@ exit /b 0
     call :sub\dir\--isdir %2 || exit /b 66 @REM drivers path error
     @REM Create inf trim vbs
     setlocal enabledelayedexpansion
-    call :sub\str\--now _out %temp%\inf-
+    call :sub\time\--now _out %temp%\inf-
     mkdir %_out%
     set i=0
     for /r %2 %%a in (
@@ -3165,115 +3437,6 @@ exit /b 0
 :: other ::
 :::::::::::
 
-:::::::::::::
-:: regedit ::
-:::::::::::::
-
-::: "Edit the Registry" "" "usage: %~n0 reg [option]" ""
-:xlib\reg
-    if "%~1"=="" call :this\annotation %0 & goto :eof
-    call :sub\reg\%*
-    goto :eof
-
-::: "    --intel-amd, -ia                   Run this before Chang CPU"
-:sub\reg\--intel-amd
-:sub\reg\-ia
-    call :sub\oset\--vergeq 6.0 || exit /b 12 @REM OS version is too low
-
-    if "%~1"=="" (
-        setlocal
-        set /p _i=[Warning] Reg vhd will be change, Yes^|No:
-        if /i "%_i%" neq "y" if /i "%_i%" neq "yes" exit /b 0
-        call :regedit\on
-        call :sub\reg\delInteltag system
-        call :regedit\off
-        endlocal
-        exit /b 0
-    )
-
-    setlocal
-    set _target=%~f1
-    if "%_target:~-1%"=="\" set _target=%_target:~0,-1%
-    if not exist "%_target%\Windows\System32\config\SYSTEM" exit /b 23 @REM Not windows directory
-    call :regedit\on
-    set _load_point=HKLM\load-point%random%
-    reg.exe load %_load_point% "%_target%\Windows\System32\config\SYSTEM" && call :sub\reg\delInteltag tmp
-    reg.exe unload %_load_point%
-    call :regedit\off
-    endlocal
-    exit /b 0
-
-@REM for :sub\reg\--intel-amd
-:sub\reg\delInteltag
-    for /f "tokens=1,4 delims=x	 " %%a in (
-        'reg.exe query HKLM\%1\Select'
-    ) do if /i "%%a"=="Default" 2>nul reg.exe delete HKLM\%1\ControlSet00%%b\Services\intelppm /f
-    exit /b 0
-
-@REM winpe \$windows.~bt -> ""
-::: "    --replace,   -x   [file_path] [src_str] [tag_str]" "                                       Replace reg string"
-:sub\reg\--replace
-:sub\reg\-x
-    if "%~2"=="" exit /b 24 @REM source string empty
-    setlocal
-    call :regedit\on
-    @REM valueName: (Default) -> /ve
-    for /f "usebackq" %%a in (
-        `reg.exe query HKLM /ve`
-    ) do set "_ve=%%a"
-
-    set _load_point=HKLM\load-point%random%
-    if exist "%~1" (
-        reg.exe load %_load_point% "%~1" && call :reg\replace %_load_point% %2 %3
-        reg.exe unload %_load_point%
-    ) else call :reg\replace %1 %2 %3
-    call :regedit\off
-    endlocal
-    goto :eof
-
-:reg\replace
-    setlocal enabledelayedexpansion
-    set _src=%~2
-    set _src=%_src:"=\"%
-
-    set _tag=%~3
-    if defined _tag set _tag=!_tag:"=\"!
-
-    set _count=0
-    @REM replace
-    for /f "usebackq delims=" %%a in (
-        `reg.exe query %1 /f %2 /s`
-    ) do >nul (
-        set _line=%%a
-        if "!_line:\%~n1=!"=="!_line!" (
-            set _line=!_line:    =`!
-            @REM /d "X:\" /f -> /d "X:\\" /f
-            set _line=!_line:\`=\\`!
-            @REM /v "X:\" /t -> /v "X:\\" /t
-            if "!_line:~-1!"=="\" set _line=!_line!\
-            set _line=!_line:"=\"!
-            for /f "tokens=1,2* delims=`" %%b in (
-                "!_line:%_src%=%_tag%!"
-            ) do if "%%c" neq "" (
-
-                if "%%b" neq "%_ve%" (
-                    reg.exe add "!_key!" /v "%%b" /t %%c /d "%%d" /f || exit /b 25 @REM reg error
-
-                    @REM delete
-                    for /f "delims=`" %%e in (
-                        "!_line!"
-                    ) do if "%%b" neq "%%e" reg.exe delete "!_key!" /v "%%e" /f || exit /b 25
-
-                ) else reg.exe add "!_key!" /ve /t %%c /d "%%d" /f || exit /b 25
-
-                set /a _count+=1
-            )
-        ) else set _key=!_line:HKEY_LOCAL_MACHINE=HKLM!
-    )
-    echo all '%_count%' change.
-    endlocal
-    goto :eof
-
 @REM @REM from Window 10 aik, will download imagex.exe at script path
 @REM :init\imagex
 @REM     for %%a in (_%0) do if %processor_architecture:~-2%==64 (
@@ -3289,20 +3452,6 @@ exit /b 0
     if "%~1"=="" call :this\annotation %0 & goto :eof
     call :sub\str\%*
     goto :eof
-
-::: "    --now,    -n [var_name] [[head_str]] [[tail_str]]    Display Time at [YYYYMMDDhhmmss]"
-:sub\str\--now
-:sub\str\-n
-    if "%~1"=="" exit /b 12 @REM variable name is empty
-    set date=
-    set time=
-    @REM en zh
-    for /f "tokens=1-8 delims=-/:." %%a in (
-      "%time: =%.%date: =.%"
-    ) do if %%e gtr 1970 (
-        set %~1=%~2%%e%%f%%g%%a%%b%%c%~3
-    ) else if %%g gtr 1970 set %~1=%~2%%g%%e%%f%%a%%b%%c%~3
-    exit /b 0
 
 ::: "    --uuid,   -u [[var_name]]                            Get UUID string"
 :sub\str\--uuid
@@ -3355,6 +3504,27 @@ exit /b 0
             -Command ^
             "[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(\"%1OfflineAdministratorPassword\"))"`
     ) do if "%~2"=="" (echo %%a) else set %~2=%%a
+    exit /b 0
+
+::: "    --to-unix-path, -tup  [path] [var_name] [[prefix]]   Convert windows path to unix style"
+:sub\str\--to-unix-path        [nt_path] [var_name] [[prefix]]
+:sub\str\-tup
+    if "%~2"=="" exit /b 1
+    if "%~1" neq "%~f1" set %~2=%~1& exit /b 0
+    if not exist "%~1" exit /b 2
+    setlocal enabledelayedexpansion
+
+    set _drive=%~d1
+    set _drive=%_drive::=%
+    set _char=#abcdefghijklmnopqrstuvwxyz
+    set _drive=!_char:%_drive%=.!
+    for %%a in (!_drive!) do set _drive=!_char:%%~na=!
+
+    set _path_name=%~pnx1
+    set _path_name=%_path_name:\=/%
+    set _path_name=!_drive:~0,1!%_path_name%
+
+    endlocal & set "%~2=%~3/%_path_name%"
     exit /b 0
 
 ::: "    --length,      -l     [string] [[var_name]]          Get string length"
@@ -3880,22 +4050,24 @@ exit /b 0
 @REM load .*.ini config
 :this\load_ini
     if "%~1"=="" exit /b 1
-    set _bool_=
-    @REM trim ';' and cut it
+    set b%%l=
+    @REM ' %%a' for skip '#' and ';', '%%c^^' for empty value
     for /f "usebackq delims=" %%a in (
         `2^>nul type "%~dp0.*.ini" "%userprofile%\.*.ini"`
-    ) do for /f "usebackq tokens=1 delims=;" %%b in (
-        '%%a'
-    ) do for /f "usebackq tokens=1* delims==" %%c in (
-        '%%b^^'
-    ) do if "%%d"=="" (
-        if /i "%%c"=="[%~1]^" (
-            set _bool_=true
-        ) else set _bool_=
-    ) else if defined _bool_ for /f "usebackq delims=^" %%e in (
-        '%%d'
-    ) do set _MAP%~2\%%c=%%e
-    set _bool_=
+    ) do for /f "usebackq tokens=1 delims=#;" %%b in (
+        ' %%a'
+    ) do for /f "usebackq tokens=*" %%c in (
+        '%%b'
+    ) do if not "%%c"=="" for /f "usebackq tokens=1* delims==" %%d in (
+        '%%c^^'
+    ) do if "%%e"=="" (
+        if /i "%%d"=="[%~1]^" (
+            set b%%l=true
+        ) else set b%%l=
+    ) else if defined b%%l for /f "usebackq delims=^" %%f in (
+        '%%e'
+    ) do set _MAP%~2\%%d=%%f
+    set b%%l=
 
     call :map --size %~2 && exit /b 1
     exit /b 0

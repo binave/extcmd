@@ -51,7 +51,7 @@
 
 ### Output version and exit.
 _x3rd_version () {
-    printf "0.18.3\n" >&2;
+    printf "0.21.4.11\n" >&2;
     return 0
 }
 
@@ -531,7 +531,7 @@ _x3rd_urls () {
         ;;
         --jetbrains|-j)
             curl --location --connect-timeout 20 \
-                'https://data.services.jetbrains.com/products/releases?code=IIC,IIU,PCP,PCC,WS,PS,RD,CL,DG,RM,AC,GO&latest=true&type=release' \
+                'https://data.services.jetbrains.com/products/releases?code=IIC,IIU,PCP,PCC,WS,PS,RD,CL,DG,DS,RM,AC,GO&latest=true&type=release' \
                 2>/dev/null | awk -F \" '{for(i=1; i<=NF; i++) {if($i ~ /download\.jetbrains\.com\// && $i !~ /-no-|-patch-/){print $i}}}' | uniq
         ;;
         --eclipse|-e)

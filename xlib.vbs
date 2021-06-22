@@ -32,7 +32,7 @@
 
 ''' Output version and exit
 Function xlib_version()
-    printLine "0.18.3"
+    printLine "0.21.4.11"
 ENd Function
 
 ''' Sleep some milliseconds 'Usage: xlib sleep [ms]

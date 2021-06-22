@@ -36,7 +36,7 @@
 
 ### Output version and exit.
 _xlib_version () {
-    printf "0.18.9\n" >&2;
+    printf "0.21.4.11\n" >&2;
     return 0
 }
 
@@ -52,7 +52,8 @@ _xlib_cur () {
         ;;
         "")
             local p=;
-            printf '\e[6n';read -sdR p;
+            printf '\e[6n';
+            read -sdR p;
             printf "${p#*[}\n"
         ;;
         *)
@@ -67,40 +68,45 @@ _xlib_pkg () {
     local tmp;
     case $1 in
         --dmg|-n)
-            [ -d "$2" ] || exit 1; # target folder not found.
-            # trim, # linux:${2:0:-1} -> darwin:${2:0:${#2}-1}
-            [ "${2:0-1}" == "/" ] && tmp="${2:0:${#2}-1}" || tmp="$2";
+            shift;
+            [ -d "$1" ] || exit 1; # target folder not found.
+            # trim, # linux:${1:0:-1} -> darwin:${1:0:${#1}-1}
+            [ "${1:0-1}" == "/" ] && tmp="${1:0:${#1}-1}" || tmp="$1";
             tmp=${tmp##*/};
-            hdiutil create -srcfolder "$2" -skipunreadable -format UDZO "$tmp.dmg" || return 1
+            hdiutil create -srcfolder "$1" -skipunreadable -format UDZO "$tmp.dmg" || return 1
         ;;
         --verify|-t)
-            [ "${2##*.}" == "dmg" -o "${2##*.}" == "DMG" ] || exit 1; # format error
-            hdiutil verify "$2"
+            shift;
+            [ "${1##*.}" == "dmg" -o "${1##*.}" == "DMG" ] || exit 1; # format error
+            hdiutil verify "$1"
         ;;
         --dmg2iso|-di)
-            [ -f "$2" ] || exit 1; # dmg file not found
-            [ "${2##*.}" == "dmg" -o "${2##*.}" == "DMG" ] || exit 1; # file not dmg
-            tmp=${2##*/};
+            shift;
+            [ -f "$1" ] || exit 1; # dmg file not found
+            [ "${1##*.}" == "dmg" -o "${1##*.}" == "DMG" ] || exit 1; # file not dmg
+            tmp=${1##*/};
             tmp=${tmp%.*};
-            hdiutil convert "$2" -format UDTO -o "$tmp.iso";
+            hdiutil convert "$1" -format UDTO -o "$tmp.iso";
         ;;
         --iso2dmg|-id)
-            [ -f "$2" ] || exit 1; # iso file not found
-            [ "${2##*.}" == "iso" -o "${2##*.}" == "ISO" ] || exit 1; # file not iso
-            tmp=${2##*/};
+            shift;
+            [ -f "$1" ] || exit 1; # iso file not found
+            [ "${1##*.}" == "iso" -o "${1##*.}" == "ISO" ] || exit 1; # file not iso
+            tmp=${1##*/};
             tmp=${tmp%.*};
-            hdiutil convert "$2" -format UDRW -o "$tmp.dmg";
+            hdiutil convert "$1" -format UDRW -o "$tmp.dmg";
         ;;
         --udf|-u)
+            shift;
             [[ $OSTYPE == darwin* ]] || exit 1; # Only support macOS (OS X)
-            [ -d "$2" ] || exit 1; # directory not found
+            [ -d "$1" ] || exit 1; # directory not found
             # hdiutil makehybrid -iso -joliet -o win8.iso win8.cdr
-            hdiutil makehybrid -udf -udf-version 1.02 -o "$2.iso" "$2";
+            hdiutil makehybrid -udf -udf-version 1.02 -o "$1.iso" "$1";
             return 0
         ;;
         --dd|-w)
             shift;
-                # caller 0;
+            # caller 0;
             [ -f "$1" ] || exit 1; # img file not found
             local target i j k l;
             [ "${2:0:9}" == "/dev/disk" ] && {
@@ -198,7 +204,7 @@ __get_pkg () {
 
     {
 
-        printf "Init...\n"
+        printf "Wait...\n"
 
         store_agent=$(find /private/var/folders -type d -regex ".*/com.apple.appstoreagent/com.apple.appstore" 2>/dev/null);
 
@@ -443,19 +449,21 @@ _xlib_oset () {
             sudo spctl --master-disable;
         ;;
         --hidden|-)
-            [ "$2" == "yes" -o "$2" == "no" ] || exit 1; # must select 'yes' or 'no'
-            defaults write com.apple.finder AppleShowAllFiles $2;
+            shift;
+            [ "$1" == "yes" -o "$1" == "no" ] || exit 1; # must select 'yes' or 'no'
+            defaults write com.apple.finder AppleShowAllFiles $1;
         ;;
         --re-launch|-rl)
             defaults write com.apple.dock ResetLaunchPad -bool true;
             killall Dock
         ;;
         --set-launch|-sl)
-            if [ "$3" ]; then
-                defaults write com.apple.dock springboard-rows -int $2
-                defaults write com.apple.dock springboard-columns -int $3
+            shift;
+            if [ "$2" ]; then
+                defaults write com.apple.dock springboard-rows -int $1
+                defaults write com.apple.dock springboard-columns -int $2
                 killall Dock
-            elif [ "$2" ]; then
+            elif [ "$1" ]; then
                 exit 1; # columns not set
             else
                 defaults write com.apple.dock springboard-rows Default
@@ -464,12 +472,14 @@ _xlib_oset () {
             fi
         ;;
         --uuid|-u)
-            [ "$2" ] || set "" $USER;
-            dsmemberutil getuuid -U $2
+            shift;
+            [ "$1" ] || set "" $USER;
+            dsmemberutil getuuid -U $1
         ;;
         --sid|-s)
-            [ "$2" ] || set "" $USER;
-            dsmemberutil getsid -U $2
+            shift;
+            [ "$1" ] || set "" $USER;
+            dsmemberutil getsid -U $1
         ;;
         --lock-screen|-l)
             # Ctrl + Command + Q
@@ -489,7 +499,7 @@ _xlib_oset () {
             ' | osascript
         ;;
         --notify)
-            shift
+            shift;
             if [ "$3" ]; then
                 osascript -e 'display notification "'"$1"'" with title "'"$2"'" subtitle "'"$3"'"'
             elif [ "$2" ]; then
@@ -499,12 +509,21 @@ _xlib_oset () {
             fi
         ;;
         --button-wait)
-            osascript -e 'display dialog "'"$2"'" buttons "Yes" with icon note'
+            shift;
+            osascript -e 'display dialog "'"$1"'" buttons "Yes" with icon note'
         ;;
         --button-choose)
-            osascript -e 'display dialog "'"$2"'"'
+            shift;
+            osascript -e 'display dialog "'"$1"'"'
         ;;
-
+        --set-time)
+            shift;
+            if [ "$1" ]; then
+                date +%m%d%H%M%Y.%S
+            else
+                date $1
+            fi
+        ;;
         # Screenshots
         # defaults write com.apple.screencapture location $1
 
@@ -520,16 +539,22 @@ _xlib_oset () {
         --sleep)
             sudo osascript -e 'tell application "Finder" to sleep'
         ;;
+        --allow-app|-aa)
+            shift;
+            [ -d "$1" ] || exit 1; # app file not set or found.
+            sudo spctl --master-disable
+            sudo xattr -d com.apple.quarantine "$1"
+        ;;
         *)
             exit 1; # invalid option
         ;;
     esac
 }
 
-### Certificate tools ##Usage: cert [option] [args...] ##    https --host [cn] --email [e]    Create certificate for https #    ssh   [[suffix]]                 Certificate for ssh ##
+### Certificate tools ##Usage: cert [option] [args...] ##    selfsign --host [cn] --email [e]    Create certificate for selfsign #    rsa   [[suffix]]                 Certificate for rsa ##
 _xlib_cert () {
     case $1 in
-        https)
+        selfsign)
             # nginx
             shift;
             local host email country="CN" state="BJ" city="BJ" company="ORG" section="dev" days=365;
@@ -612,8 +637,13 @@ _xlib_cert () {
             openssl x509 -req -days $days -in $SERVER_CSR -CA $CA_CERT -CAkey $CA_KEY -set_serial 01 -out $SERVER_CERT;
 
         ;;
-        ssh)
-            ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa$2;
+        rsa)
+            shift;
+            ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa$1;
+        ;;
+        ed25519)
+            shift;
+            ssh-keygen -t ed25519 -P "" -C "$USER@$HOSTNAME" -f ~/.ssh/id_ed25519$1;
         ;;
         *)
             exit 1; # invalid option
@@ -678,15 +708,17 @@ _xlib_vol () {
         #     __vol_list
         # ;;
         --wipes|-w)
-            [ -d "$2" ] || exit 1; # Target path not found
-            diskutil secureErase freespace 3 $2
+            shift;
+            [ -d "$1" ] || exit 1; # Target path not found
+            diskutil secureErase freespace 3 $1
         ;;
         --createinstallmedia|-im)
-            [ -d "$2" ] || exit 1; # target device not found
-            [ -d "$3" ] || set "" "$2" "/Applications/Install";
+            shift;
+            [ -d "$1" ] || exit 1; # target device not found
+            [ -d "$2" ] || set "" "$1" "/Applications/Install";
             while read tmp; do
                 break;
-            done < <(find "$3"* -iname "createinstallmedia" 2>/dev/null);
+            done < <(find "$2"* -iname "createinstallmedia" 2>/dev/null);
             [ -f "$tmp" ] || exit 1; # install source not found
             [ -f "${tmp%Resources*}SharedSupport/InstallInfo.plist" ] || {
                 if [ -f "/macOS Install Data/InstallInfo.plist" ]; then
@@ -696,8 +728,8 @@ _xlib_vol () {
                     exit 1; # need to run the 'install app' and exit before 'reboot'
                 fi
             };
-            # sudo "$tmp" --volume "$2" --applicationpath "${tmp%/Contents*}" --nointeraction;
-            sudo "$tmp" --volume "$2" --nointeraction;
+            # sudo "$tmp" --volume "$1" --applicationpath "${tmp%/Contents*}" --nointeraction;
+            sudo "$tmp" --volume "$1" --nointeraction;
         ;;
         *)
             exit 1; # invalid option
@@ -751,18 +783,20 @@ _xlib_dir () {
         ;;
         --boot)
             [[ $OSTYPE == darwin* ]] || exit 1; # Only support macOS (OS X)
-            [ -f "$2/com.apple.recovery.boot/kernelcache" ] || exit 1; # Boot file not found
-            sudo bless --folder "$2/com.apple.recovery.boot" --label "Recovery HD";
+            shift;
+            [ -f "$1/com.apple.recovery.boot/kernelcache" ] || exit 1; # Boot file not found
+            sudo bless --folder "$1/com.apple.recovery.boot" --label "Recovery HD";
             # 426F6F74-0000-11AA-AA11-00306543ECAC
             # [ "${1##*/}" == "dmtest" -a "${2##*/}" == "BaseSystem.dmg" -a -d "$3" ] && "$2" ensureRecoveryPartition "$3" "$2" 0 0 "${2%.*}.chunklist"
         ;;
         --count|-c)
-            [ "$2" ] && {
-                [ -d "$2" ] || exit 1; # target not found or not directory
+            shift;
+            [ "$1" ] && {
+                [ -d "$1" ] || exit 1; # target not found or not directory
                 :
-            } || set "" \.;
-            # ls -alR "$2" 2>/dev/null | grep -c '^-'
-            find "$2" -type f | grep -c '\/'
+            } || set -- \.;
+            # ls -alR "$1" 2>/dev/null | grep -c '^-'
+            find "$1" -type f | grep -c '\/'
         ;;
         --unique|-u)
             [[ $OSTYPE == darwin* ]] && exit 1; # Not support macOS (OS X)
@@ -846,20 +880,22 @@ _xlib_str () {
             } || tr "[:lower:]" "[:upper:]"
         ;;
         --xmlvalue|-xv)
-            [ "$2" ] || exit 1; # Args is empty
-            # grep -oP '(?<=\>)[\d\w_]+(?=\<\/'$2')' && return 0;
-            perl -ne 'STDOUT->autoflush; print m/(?<=\>)[\d\w_]+(?=\<\/'"$2"')/g, "\n"' && return 0;
+            shift;
+            [ "$1" ] || exit 1; # Args is empty
+            # grep -oP '(?<=\>)[\d\w_]+(?=\<\/'$1')' && return 0;
+            perl -ne 'STDOUT->autoflush; print m/(?<=\>)[\d\w_]+(?=\<\/'"$1"')/g, "\n"' && return 0;
             return 1
         ;;
         --tac)
+            shift;
             if which perl >/dev/null; then
-                [ "$2" ] && {
-                    perl -e 'print reverse <>' "$2"
+                [ "$1" ] && {
+                    perl -e 'print reverse <>' "$1"
                     :
                 } || perl -e 'print reverse <>'
             else
-                [ "$2" ] && {
-                    sed '1!G;h;$!d' "$2"
+                [ "$1" ] && {
+                    sed '1!G;h;$!d' "$1"
                     :
                 } || sed '1!G;h;$!d'
             fi
@@ -871,17 +907,19 @@ _xlib_str () {
         # ;;
         # --spacetrim|-st)
         #     -st [text_file_path]  Replace all space to one space
-        #     [ -f "$2" ] || exit 1; # File not found
+        #     shift;
+        #     [ -f "$1" ] || exit 1; # File not found
         #     [ "`uname`" == "Linux" ] && {
-        #         sed -r ':1;N;$!b1;s/\s+/ /g' "$2"
+        #         sed -r ':1;N;$!b1;s/\s+/ /g' "$1"
         #         :
-        #     } || perl -i -pe 's/\s+/ /g' "$2"
+        #     } || perl -i -pe 's/\s+/ /g' "$1"
         # ;;
         --unascii|-ua)
-            if [ -d "$2" ]; then
-                grep -r '[^[:alnum:][:punct:][:space:]]' "$2";
-            elif [ -f "$2" ]; then
-                grep '[^[:alnum:][:punct:][:space:]]' "$2";
+            shift;
+            if [ -d "$1" ]; then
+                grep -r '[^[:alnum:][:punct:][:space:]]' "$1";
+            elif [ -f "$1" ]; then
+                grep '[^[:alnum:][:punct:][:space:]]' "$1";
             else
                 grep '[^[:alnum:][:punct:][:space:]]'
             fi
@@ -890,28 +928,31 @@ _xlib_str () {
             date +%Y%m%d%H%M%S
         ;;
         --random|-r)
+            shift;
             # local rand=`dd if=/dev/random bs=1 count=${1:-32} 2>/dev/null | base64 | tr -d '\n'`; # tr -d '\n' support linux
-            openssl rand -base64 ${2:-9} | tr -d '\n' | sed "s/[^0-9A-Za-z]/${RANDOM:0:1}/g"
+            openssl rand -base64 ${1:-9} | tr -d '\n' | sed "s/[^0-9A-Za-z]/${RANDOM:0:1}/g"
         ;;
         --uuid|-u)
-            [[ $OSTYPE == darwin* ]] && uuidgen
+            uuidgen
         ;;
         --dhms|-t)
-            _xlib_inum $2 || exit 1; # Not number
-            local out=$(($2 % 60))s;
-            [ $2 -ge 60 ] && {
-                out=$(($2 % 3600 / 60))m\ $out;
-                [ $2 -ge 3600 ] && {
-                    out=$(($2 % 86400 / 3600))h\ $out;
-                    [ $2 -ge 86400 ] && out=$(($2 / 86400))d\ $out
+            shift;
+            _xlib_inum $1 || exit 1; # Not number
+            local out=$(($1 % 60))s;
+            [ $1 -ge 60 ] && {
+                out=$(($1 % 3600 / 60))m\ $out;
+                [ $1 -ge 3600 ] && {
+                    out=$(($1 % 86400 / 3600))h\ $out;
+                    [ $1 -ge 86400 ] && out=$(($1 / 86400))d\ $out
                 }
             };
             printf "$out\n"
         ;;
         --passwd|-pw)
+            shift;
             which openssl >/dev/null 2>&1 || exit 1; # openssl command not found
-            [ "$2" ] || exit 1; # Args is empty
-            openssl passwd -1 "$2"
+            [ "$1" ] || exit 1; # Args is empty
+            openssl passwd -1 "$1"
         ;;
         *)
             exit 1; # invalid option
@@ -957,6 +998,51 @@ _xlib_ip () {
                 [ $a -gt 255 ] && return 1;
             done
             return 0
+        ;;
+        # convert CIDR Prefix (e.g. 1.1.1.0/24) to Subnet Mask (e.g. 1.1.1.0 255.255.255.0)
+        # see https://doc.m0n0.ch/quickstartpc/intro-CIDR.html
+        --cidr2subnet|-c2s)
+            shift;
+            [ "$1" ] || exit 1; # arg is empty
+            set ${1/\// };
+
+            local submask i=0 octets=$(($2 / 8)) \
+                sub_octet=$((256 - 2 ** (8 - ($2 % 8) ) ));
+
+            for ((; i < 4; i += 1))
+            do
+                if [ $i -lt $octets ]; then
+                    submask+=".255";
+
+                elif [ $i == $octets ]; then
+                    submask+=".$sub_octet";
+
+                else
+                    submask+=".0"
+
+                fi
+            done
+            printf "$1 ${submask:1}"
+        ;;
+        # convert Subnet Mask (e.g. 1.1.1.0 255.255.255.0) to CIDR Prefix (e.g. 1.1.1.0/24)
+        --subnet2cidr|-s2c)
+            shift;
+            [ "$2" ] || exit 1; # arg is empty
+
+            function _exponent() {
+                local base=$1 power=2 exponent=0;
+                while [ $((base /= $power)) -gt 0 ]; do
+                    ((exponent += 1));
+                done
+                printf $exponent;
+
+            }
+
+            local mask prefix=0
+            for mask in ${2//\./ }; do
+                (( prefix += 8 - $(_exponent $((256 - $mask))) ))
+            done
+            printf $1/$prefix
         ;;
         *)
             exit 1; # invalid option
@@ -1168,6 +1254,20 @@ _xlib_vnc () {
     return 0
 }
 
+### Start a disposable http server ##Usage: httpd [port] [[file_path]]
+_xlib_httpd () {
+    _xlib_inum $1 || exit 1; # arg not a port
+    if [ -s "$2" ]; then
+        {
+            printf "HTTP/1.1 200 OK\n\n";
+            cat "$2";
+        } | nc -l $1
+    else
+        printf "HTTP/1.1 200 OK\n\nNETCAT\n" | nc -l $1
+
+    fi
+}
+
 ### Test str is num ##Usage: inum [str] ##
 _xlib_inum () {
     [ "$1" ] || return 2;
@@ -1190,25 +1290,30 @@ _xlib_plist () {
     [ "${2##*.}" == "plist" ] || exit 1; # file format not support
     case $1 in
         --xml|-x)
-            [ -f "$2" ] || exit 1; # file not exist
-            plutil -convert xml1 "$2" -o - || exit 1; # plutil error
+            shift;
+            [ -f "$1" ] || exit 1; # file not exist
+            plutil -convert xml1 "$1" -o - || exit 1; # plutil error
         ;;
         --json|-j)
-            [ -f "$2" ] || exit 1; # file not exist
-            plutil -convert json -r "$2" -o - || exit 1; # plutil error
+            shift;
+            [ -f "$1" ] || exit 1; # file not exist
+            plutil -convert json -r "$1" -o - || exit 1; # plutil error
             printf "\n"
         ;;
         --binary|-b)
-            [ -f "$2" ] && exit 1; # file aleady exist
-            sudo plutil -convert binary1 -o "$2" - || exit 1; # plutil error
+            shift;
+            [ -f "$1" ] && exit 1; # file aleady exist
+            sudo plutil -convert binary1 -o "$1" - || exit 1; # plutil error
         ;;
         --load)
-            [ -f "$2" ] || exit 1; # file not exist
-            sudo launchctl load -wF "$2"
+            shift;
+            [ -f "$1" ] || exit 1; # file not exist
+            sudo launchctl load -wF "$1"
         ;;
         --unload)
-            [ -f "$2" ] || exit 1; # file not exist
-            sudo launchctl unload -w "$2"
+            shift;
+            [ -f "$1" ] || exit 1; # file not exist
+            sudo launchctl unload -w "$1"
         ;;
         *)
             exit 1; # invalid option
