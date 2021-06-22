@@ -1385,6 +1385,7 @@ exit /b 0
 
     @REM get lock success
     2>nul mkdir "%_arg1%\.lock" && (
+        attrib.exe +h "%_arg1%\.lock"
         >"%_arg1%\.lock\.timestamp" echo __timestamp=%_timestamp%, __Timeout=%_Timeout%
         exit /b 0
     )
@@ -1429,6 +1430,7 @@ exit /b 0
 :sub\lock\-d
     set _arg1=%~1
     if "%_arg1:~-1%"=="\" set _arg1=%_arg1:~0,-1%
+    >nul attrib.exe -h "%_arg1%\.lock"
     rmdir /s /q "%_arg1%\.lock" || exit /b 25 @REM lock not found.
     exit /b 0
 
