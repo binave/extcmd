@@ -13,6 +13,30 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+# Redirec stdout and stderr to target files
+# Usage: _redirect [pid] [out_file] [[err_file]]
+_redirect() {
+    which gdb >/dev/null || return 1;
+    [ -s "$2" ] && return 1;
+    if [ "$3" ]; then
+        [ -s "$3" ] && return 1;
+    else
+        set -- "$1" "$2" "/dev/pts/0";
+    fi
+    mkdir -p "${2%/*}" "${3%/*}" || return 1;
+    touch "$2" "$3"
+    gdb -p $1 >/dev/null 2>&1 <<GDB
+set scheduler-locking on
+print close(1)
+print open("$2", 1)
+print close(2)
+print open("$3", 1)
+quit
+GDB
+
+}
+
+
 # Tag prefix each line, support `date` format
 # Usage: | _prefix "[str|%F %T]"
 _prefix () {
