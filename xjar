@@ -307,7 +307,7 @@ case $1 in
             printf "[\033[1;31mERROR\033[0m] '\033[32m%s\033[0m' server directory must exist.\n" $1 >&2;
             exit 1
         };
-        xj_cron_expression="0 0 * * * $(which xjar) -d $1 redirect";
+        xj_cron_expression="0 0 * * * $(which xjar) -d ${1%/} redirect";
         xj_cron_text=$(crontab -l 2>/dev/null);
         xj_cron_text_trim=$(crontab -l 2>/dev/null | awk -F \# '{if($1 !~ /^[[:space:]]*$/) print $1}');
         if [ "$xj_cron_text_trim" ]; then
